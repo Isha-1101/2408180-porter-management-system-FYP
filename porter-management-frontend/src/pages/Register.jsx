@@ -1,187 +1,132 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label";
 import {
-  Package,
-  User,
-  Briefcase,
-  Shield,
-  Mail,
-  Lock,
-  Phone,
-  AlertCircle,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card.jsx";
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  const [form, setForm] = useState({
     name: "",
+    email: "",
     phone: "",
+    password: "",
     role: "user",
   });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+
+  const changeHandler = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        form
+      );
+      alert("User Registered Successfully");
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        role: "user",
+      });
+    } catch (error) {
+      alert(error.response?.data?.message || "Registration Failed");
+    }
+  };
+
   return (
-    <div className="min-h-screen  flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg  overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="bg-white/10 p-3 rounded-full">
-                <Package className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <h1 className="text-3xl font-bold text-white">Create Account</h1>
-            <p className="text-green-100 mt-2">Join our platform</p>
-          </div>
+    <div className="flex h-screen w-full">
+      {/* LEFT SIDE IMAGE */}
+      <div className="hidden md:block w-1/2 h-full">
+        <img
+          src="/images/Logo2_1.png"
+          alt="Register illustration"
+          className="w-full h-full object-cover"
+        />
+      </div>
 
-          <div className="p-8">
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+      {/* RIGHT SIDE FORM */}
+      <div className="flex justify-center items-center w-full md:w-1/2 bg-gray-100 px-4">
+        <Card className="w-[400px] shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-center">Register</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={submitHandler} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="John Doe"
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                  />
-                </div>
+                <Label>Name</Label>
+                <Input
+                  name="name"
+                  value={form.name}
+                  onChange={changeHandler}
+                  placeholder="Enter name"
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="you@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                  />
-                </div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={changeHandler}
+                  placeholder="Enter email"
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="+977 98XXXXXXXX"
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                  />
-                </div>
+                <Label>Phone</Label>
+                <Input
+                  name="phone"
+                  value={form.phone}
+                  onChange={changeHandler}
+                  placeholder="98XXXXXXXX"
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    placeholder="••••••••"
-                    minLength={6}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                  />
-                </div>
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={changeHandler}
+                  placeholder="Enter password"
+                />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-3">
-                  Register As
-                </label>
-                <div className=" border flex items-center justify-center gap-6 p-4 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: "user" })}
-                    className={`p-3 rounded-lg border-2 transition text-center ${
-                      formData.role === "user"
-                        ? "border-green-600 bg-green-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                  >
-                    <User className="w-5 h-5 mx-auto mb-1" />
-                    <span className="text-xs font-medium">Customer</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: "porter" })}
-                    className={`p-3 rounded-lg border-2 transition text-center ${
-                      formData.role === "porter"
-                        ? "border-green-600 bg-green-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                  >
-                    <Briefcase className="w-5 h-5 mx-auto mb-1" />
-                    <span className="text-xs font-medium">Porter</span>
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-              >
-                {loading ? "Creating Account..." : "Create Account"}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-gray-600 text-sm">
-                Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="text-green-600 hover:text-green-700 font-semibold"
+                <Label>Role</Label>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={changeHandler}
+                  className="border rounded-md w-full p-2"
                 >
-                  Sign in here
-                </Link>
-              </p>
-            </div>
-          </div>
-        </div>
+                  <option value="user">User</option>
+                  <option value="porter">Porter</option>
+                </select>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full cursor-pointer"
+                variant={"default"}
+              >
+                Register
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
