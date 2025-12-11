@@ -1,12 +1,19 @@
 import { useState } from "react";
-
+import { useLogin } from "../apis/hooks/authHooks";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Label } from "../components/ui/label";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 export default function Login() {
+  const navigate = useNavigate();
+
+  const { mutateAsync: login, isPending: loginLoading } = useLogin();
+  
   const [formData, setFormData] = useState({
-    email: "",
+    phone: "",
     password: "",
   });
-
-  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -15,16 +22,20 @@ export default function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.email || !formData.password) {
-      setError("Email and password are required.");
+    if (!formData.phone || !formData.password) {
+      toast.error("Phone and password are required.");
       return;
     }
 
-    // Add your login API here
-    console.log("Login data:", formData);
+    try {
+      await login(formData);
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error?.response?.data?.message);
+    }
   };
 
   return (
@@ -34,30 +45,26 @@ export default function Login() {
           Login
         </h2>
 
-        {error && (
-          <p className="text-red-600 text-center mb-4 text-sm">{error}</p>
-        )}
-
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
+              phone
+            </Label>
+            <Input
+              type="phone"
+              name="phone"
+              placeholder="Enter your phone"
+              value={formData.phone}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
               Password
-            </label>
-            <input
+            </Label>
+            <Input
               type="password"
               name="password"
               placeholder="Enter your password"
@@ -67,12 +74,12 @@ export default function Login() {
             />
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="w-full bg-blue-600 text-white rounded-md py-3 font-medium hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white rounded-md py-3 font-medium hover:bg-blue-700 transition cursor-pointer"
           >
-            Login
-          </button>
+            {loginLoading ? "Proceeding.." : "Login"}
+          </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">
@@ -84,7 +91,10 @@ export default function Login() {
 
         <p className="mt-2 text-center text-sm text-gray-600">
           Don't have an account?{" "}
-          <span className="text-blue-600 cursor-pointer hover:underline">
+          <span
+            className="text-blue-600 cursor-pointer hover:underline"
+            onClick={() => navigate("/register")}
+          >
             Sign Up
           </span>
         </p>

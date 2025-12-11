@@ -1,7 +1,7 @@
 import Dashboard from "../pages/Dashboard";
 
 const ProtectedRoute = () => {
-  const isLoggedIn = localStorage.getItem("token");
+  const isLoggedIn = localStorage.getItem("access_token");
   if (!isLoggedIn) return <Navigate to="/login" replace />;
 
   return (

@@ -5,7 +5,7 @@ import LandingPage from "../pages/LandingPage.jsx";
 import Register from "../pages/Register.jsx";
 
 const PublicRoute = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
   if (token) {
     return <Navigate to="/dashboard" replace />;

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label";
@@ -9,8 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card.jsx";
+import { useRegister } from "../apis/hooks/authHooks";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -23,14 +26,24 @@ const Register = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const { mutateAsync: register, isPending: registerPending } = useRegister();
+
   const submitHandler = async (e) => {
     e.preventDefault();
+    if (
+      !form.name ||
+      !form.email ||
+      !form.phone ||
+      !form.password ||
+      !form.role
+    ) {
+      toast.error("All fields are required");
+      return;
+    }
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        form
-      );
-      alert("User Registered Successfully");
+      await register(form);
+      navigate("/login");
+
       setForm({
         name: "",
         email: "",
@@ -39,7 +52,7 @@ const Register = () => {
         role: "user",
       });
     } catch (error) {
-      alert(error.response?.data?.message || "Registration Failed");
+      console.log(error);
     }
   };
 
@@ -48,7 +61,7 @@ const Register = () => {
       {/* LEFT SIDE IMAGE */}
       <div className="hidden md:block w-1/2 h-full">
         <img
-          src="/images/Logo2_1.png"
+          src="/images/Logo.png"
           alt="Register illustration"
           className="w-full h-full object-cover"
         />
@@ -122,7 +135,7 @@ const Register = () => {
                 className="w-full cursor-pointer"
                 variant={"default"}
               >
-                Register
+                {registerPending ? "Registering..." : "Register"}
               </Button>
             </form>
           </CardContent>
