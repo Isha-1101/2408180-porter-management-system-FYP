@@ -3,6 +3,15 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
 
 export const register = async (req, res) => {
+  if (
+    !req.body.name ||
+    !req.body.email ||
+    !req.body.phone ||
+    !req.body.password ||
+    !req.body.role
+  ) {
+    return res.status(400).json({ success: false, message: "Invalid request" });
+  }
   try {
     const { name, email, phone, password, role } = req.body;
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
@@ -26,7 +35,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      user: {
+      data: {
         id: createdUser._id,
         name: createdUser.name,
         email: createdUser.email,
@@ -59,13 +68,12 @@ export const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Login successful",
-      user: {
-        id: user._id,
+      data: {
         name: user.name,
         email: user.email,
         phone: user.phone,
         role: user.role,
-        token: generateToken(user),
+        access_token: generateToken(user),
       },
     });
   } catch (error) {
