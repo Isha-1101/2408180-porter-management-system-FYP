@@ -350,9 +350,10 @@ import {
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import Logo from "../common/Logo";
 const NavBar = () => {
+  const navigate = useNavigate();
   const [isDark, setIsDark] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -481,12 +482,13 @@ const NavBar = () => {
           {/* Logo */}
           <div className="flex items-center min-w-0">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-50 h-50 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden">
-                <img
+              <div className="">
+                {/* <img
                   src="/images/doko_namlo.png"
                   alt="Logo"
                   className="w-full h-full object-contain"
-                />
+                /> */}
+                <Logo text={false} className="h-15 w-15" />
               </div>
               <span
                 className={`text-lg sm:text-xl font-bold font-serif tracking-wide transition-colors duration-300 text-white`}
@@ -558,17 +560,14 @@ const NavBar = () => {
             </button>
 
             <Button
-              onClick={() => {
-                localStorage.clear();
-                window.location.reload();
-              }}
+              onClick={() => navigate("/register")}
               className={`rounded-full px-6 sm:px-8 py-2 hover:scale-105 transition-all duration-300 font-medium cursor-pointer ${
                 isScrolled
                   ? "bg-white hover:bg-white/90 text-[hsl(220,50%,20%)]"
                   : "bg-primary hover:bg-primary/90 text-white"
               }`}
             >
-              {!isAuthenticated ? "Join Now" : "Logout"}
+              Join Now
             </Button>
           </div>
         </div>

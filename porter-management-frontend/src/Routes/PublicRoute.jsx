@@ -3,11 +3,11 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "../pages/LandingPage.jsx";
 import Login from "../pages/authPages/Login.jsx";
 import Register from "../pages/authPages/Register.jsx";
+import { useAuthStore } from "../store/auth.store.js";
 
 const PublicRoute = () => {
-  const token = localStorage.getItem("access_token");
-
-  if (token) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 

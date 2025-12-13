@@ -175,6 +175,18 @@ import { io } from "socket.io-client";
 import { getDistanceKm } from "../../utils/haversine";
 import { fetchRouteCoords } from "../../utils/osrm";
 import RouteLayer from "./RouteLayer";
+import {
+  MapPin,
+  Navigation,
+  Users,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Locate,
+} from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 // Use environment variable or ensure correct URL
 const SOCKET_URL = "http://localhost:5000";
@@ -210,7 +222,7 @@ function Recenter({ pos }) {
   const map = useMap();
   useEffect(() => {
     if (pos) map.setView(pos, 14);
-  }, [pos]);
+  }, [pos, map]);
   return null;
 }
 
@@ -221,20 +233,25 @@ export default function UserMap({ className = "", showSidebar = true }) {
   const [selectedPorter, setSelectedPorter] = useState(null);
   const [routeCoords, setRouteCoords] = useState([]);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  // Location inputs
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
 
   useEffect(() => {
-    console.log("Socket connecting to:", SOCKET_URL);
-
     // Ask browser for user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (p) => {
           const newPos = [p.coords.latitude, p.coords.longitude];
           setUserPos(newPos);
-          console.log("User position:", newPos);
+          setLoadingLocation(false);
         },
         (err) => {
           console.error("Geolocation error:", err);
+          setLoadingLocation(false);
           // Keep default Kathmandu position
         },
         {
@@ -243,34 +260,26 @@ export default function UserMap({ className = "", showSidebar = true }) {
           maximumAge: 0,
         }
       );
+    } else {
+      setLoadingLocation(false);
     }
 
     // Socket connection events
     socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
       setSocketConnected(true);
-
       // Request initial porter locations
       socket.emit("get-porter-locations");
     });
 
     socket.on("disconnect", () => {
-      console.log("Socket disconnected");
       setSocketConnected(false);
     });
 
     socket.on("all-porter-locations", (data) => {
-      console.log(
-        "Received porter locations:",
-        Object.keys(data).length,
-        "porters"
-      );
-      console.log("Porter data sample:", data);
       setPorters(data);
     });
 
     socket.on("porter-location-update", (data) => {
-      console.log("Single porter update:", data);
       setPorters((prev) => ({
         ...prev,
         [data.porterId]: {
@@ -307,23 +316,16 @@ export default function UserMap({ className = "", showSidebar = true }) {
       };
     });
 
-    console.log(
-      "All porters distances:",
-      arr.map((p) => ({ id: p.id, distance: p.distance }))
-    );
-
     // Sort by distance
     arr.sort((a, b) => a.distance - b.distance);
 
     // Filter by radius
     const filtered = arr.filter((p) => p.distance <= radiusKm);
-    console.log(`Nearby porters within ${radiusKm}km:`, filtered.length);
 
     return filtered;
   }, [porters, userPos, radiusKm]);
 
   const handleClickPorter = async (porter) => {
-    console.log("Selected porter:", porter);
     setSelectedPorter(porter);
 
     if (userPos) {
@@ -334,7 +336,6 @@ export default function UserMap({ className = "", showSidebar = true }) {
           porter.lat,
           porter.lng
         );
-        console.log("Route coordinates:", coords);
         setRouteCoords(coords);
       } catch (error) {
         console.error("Error fetching route:", error);
@@ -342,150 +343,215 @@ export default function UserMap({ className = "", showSidebar = true }) {
     }
   };
 
-  // Simulate test porters for debugging
-  const addTestPorters = () => {
-    const testPorters = {
-      "porter-1": {
-        lat: 27.72,
-        lng: 85.33,
-        teamId: "team-1",
-        timestamp: Date.now(),
-      },
-      "porter-2": {
-        lat: 27.715,
-        lng: 85.32,
-        teamId: "team-1",
-        timestamp: Date.now(),
-      },
-      "porter-3": {
-        lat: 27.71,
-        lng: 85.315,
-        teamId: "team-2",
-        timestamp: Date.now(),
-      },
-    };
-    setPorters(testPorters);
+  const handleGetCurrentLocation = () => {
+    setLoadingLocation(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          const newPos = [p.coords.latitude, p.coords.longitude];
+          setUserPos(newPos);
+          setFromLocation(`${newPos[0].toFixed(4)}, ${newPos[1].toFixed(4)}`);
+          setLoadingLocation(false);
+        },
+        (err) => {
+          console.error("Geolocation error:", err);
+          setLoadingLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    }
   };
 
   return (
     <div
       className={`grid ${
-        showSidebar ? "grid-cols-1 lg:grid-cols-[320px_1fr]" : "grid-cols-1"
-      } gap-3 h-full ${className}`}
+        showSidebar && !isMapExpanded
+          ? "grid-cols-1 lg:grid-cols-[280px_1fr]"
+          : "grid-cols-1"
+      } gap-4 h-full ${className}`}
     >
-      {showSidebar && (
-        <div className="bg-white/80 rounded-xl border border-gray-100 p-3 overflow-auto">
-          <div className="flex justify-between items-center mb-3">
-            <div className="font-semibold text-gray-900">Nearby Porters</div>
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  socketConnected ? "bg-green-500" : "bg-red-500"
-                }`}
-              ></div>
-              <span className="text-xs text-gray-500">
-                {socketConnected ? "Connected" : "Disconnected"}
-              </span>
+      {showSidebar && !isMapExpanded && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-primary/5 to-blue-50">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-gray-900">Route Planning</h3>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    socketConnected ? "bg-green-500" : "bg-red-500"
+                  } animate-pulse`}
+                ></div>
+                <span className="text-xs text-gray-600">
+                  {socketConnected ? "Live" : "Offline"}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-600">
+              {nearby.length} porter{nearby.length !== 1 ? "s" : ""} within{" "}
+              {radiusKm}km
+            </p>
+          </div>
+
+          {/* Location Controls */}
+          <div className="p-4 border-b border-gray-200 space-y-3">
+            <div>
+              <Label
+                htmlFor="from-location"
+                className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2"
+              >
+                <MapPin className="w-4 h-4 text-primary" />
+                From Location
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="from-location"
+                  type="text"
+                  placeholder="Enter pickup location"
+                  value={fromLocation}
+                  onChange={(e) => setFromLocation(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={handleGetCurrentLocation}
+                  title="Use current location"
+                >
+                  <Locate className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label
+                htmlFor="to-location"
+                className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2"
+              >
+                <Navigation className="w-4 h-4 text-primary" />
+                To Location
+              </Label>
+              <Input
+                id="to-location"
+                type="text"
+                placeholder="Enter destination"
+                value={toLocation}
+                onChange={(e) => setToLocation(e.target.value)}
+              />
             </div>
           </div>
 
-          <div className="mb-3">
-            <button
-              onClick={addTestPorters}
-              className="w-full bg-blue-100 text-blue-700 rounded-lg px-3 py-2 text-sm font-medium hover:bg-blue-200 transition"
-            >
-              Add Test Porters
-            </button>
-          </div>
-
-          <div className="mt-3">
-            <label className="text-sm text-gray-600">Search Radius (km)</label>
-            <div className="flex items-center gap-2 mt-2">
+          {/* Radius Control */}
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Search Radius
+            </label>
+            <div className="flex items-center gap-3">
               <input
                 type="range"
                 min="1"
                 max="50"
                 value={radiusKm}
                 onChange={(e) => setRadiusKm(Number(e.target.value))}
-                className="flex-1"
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
               />
-              <span className="text-sm font-medium text-gray-700">
-                {radiusKm}km
-              </span>
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg min-w-[70px] justify-center">
+                <span className="text-sm font-bold text-gray-900">
+                  {radiusKm}
+                </span>
+                <span className="text-xs text-gray-500">km</span>
+              </div>
             </div>
-            <input
-              type="number"
-              value={radiusKm}
-              onChange={(e) => setRadiusKm(Math.max(1, Number(e.target.value)))}
-              className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30"
-            />
           </div>
 
-          <div className="mt-4 space-y-2">
-            <div className="text-sm text-gray-500">
-              Found {nearby.length} porters within {radiusKm}km
-            </div>
-
-            {nearby.length > 0 ? (
-              nearby.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handleClickPorter(p)}
-                  className={`w-full text-left rounded-xl border transition px-3 py-2 cursor-pointer ${
-                    selectedPorter?.id === p.id
-                      ? "border-primary bg-blue-50"
-                      : "border-gray-100 hover:border-primary/30 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="font-medium text-gray-900">{p.id}</div>
-                    <div className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                      {p.distance.toFixed(1)} km
+          {/* Porter List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {loadingLocation ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
+                <p className="text-sm text-gray-600">
+                  Getting your location...
+                </p>
+              </div>
+            ) : nearby.length > 0 ? (
+              <div className="space-y-2">
+                {nearby.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => handleClickPorter(p)}
+                    className={`w-full text-left rounded-xl border transition-all duration-200 p-3 ${
+                      selectedPorter?.id === p.id
+                        ? "border-primary bg-blue-50 shadow-sm"
+                        : "border-gray-200 hover:border-primary/40 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-gray-900 text-sm">
+                        {p.id}
+                      </div>
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                        <Navigation className="w-3 h-3" />
+                        <span className="text-xs font-medium">
+                          {p.distance.toFixed(1)}km
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    Team: {p.teamId || "Unassigned"}
-                  </div>
-                </button>
-              ))
+                    <div className="text-xs text-gray-600">
+                      Team: {p.teamId || "Unassigned"}
+                    </div>
+                  </button>
+                ))}
+              </div>
             ) : (
-              <div className="text-center py-4">
-                <div className="text-gray-400 mb-2">No porters found</div>
-                <div className="text-sm text-gray-500">
-                  {userPos
-                    ? `No porters within ${radiusKm}km of your location.`
-                    : "Waiting for your location..."}
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                  <MapPin className="w-8 h-8 text-gray-400" />
                 </div>
+                <p className="text-sm font-medium text-gray-900 mb-1">
+                  No porters nearby
+                </p>
+                <p className="text-xs text-gray-500">
+                  {userPos
+                    ? `Try increasing the search radius`
+                    : "Waiting for location..."}
+                </p>
               </div>
             )}
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="text-xs text-gray-500">
-              Debug Info:
-              <div>
-                User Pos:{" "}
-                {userPos
-                  ? `${userPos[0].toFixed(4)}, ${userPos[1].toFixed(4)}`
-                  : "Unknown"}
-              </div>
-              <div>Total Porters: {Object.keys(porters).length}</div>
-            </div>
           </div>
         </div>
       )}
 
-      <div className="rounded-xl overflow-hidden border border-gray-100 h-full min-h-[400px]">
+      {/* Map Container */}
+      <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow-sm h-full min-h-[400px]">
+        {/* Map Expansion Toggle */}
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            size="icon"
+            variant="secondary"
+            onClick={() => setIsMapExpanded(!isMapExpanded)}
+            className="shadow-lg bg-white hover:bg-gray-100"
+            title={isMapExpanded ? "Show sidebar" : "Expand map"}
+          >
+            {isMapExpanded ? (
+              <Minimize2 className="w-4 h-4" />
+            ) : (
+              <Maximize2 className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+
         <MapContainer
           center={userPos}
           zoom={14}
           style={{ height: "100%", width: "100%" }}
-          whenCreated={(map) => {
-            console.log("Map created");
-            map.on("click", (e) => {
-              console.log("Map clicked at:", e.latlng);
-            });
-          }}
+          className="z-0"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -512,25 +578,24 @@ export default function UserMap({ className = "", showSidebar = true }) {
               icon={porterIcon}
               eventHandlers={{
                 click: () => {
-                  console.log("Porter marker clicked:", p.id);
                   handleClickPorter(p);
                 },
               }}
             >
               <Popup>
                 <div className="min-w-[200px]">
-                  <div className="font-bold text-gray-900">{p.id}</div>
+                  <div className="font-bold text-gray-900 mb-1">{p.id}</div>
                   <div className="text-sm text-gray-600 mb-2">
                     Distance: {p.distance.toFixed(2)} km
                   </div>
                   <div className="text-xs text-gray-500 mb-3">
-                    Last updated: {new Date(p.timestamp).toLocaleTimeString()}
+                    Team: {p.teamId || "Unassigned"}
                   </div>
                   <button
                     onClick={() => handleClickPorter(p)}
-                    className="w-full rounded-md bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition cursor-pointer"
+                    className="w-full rounded-lg bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition cursor-pointer"
                   >
-                    Show Route to Porter
+                    Show Route
                   </button>
                 </div>
               </Popup>

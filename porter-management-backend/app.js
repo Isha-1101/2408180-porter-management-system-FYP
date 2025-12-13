@@ -9,7 +9,9 @@ import authRouter from "./routes/authRoutes.js";
 import porterRouter from "./routes/porterRoutes.js";
 import locationRouter from "./routes/locationRoutes.js";
 
-dotenv.config();
+dotenv.config({
+  path: new URL("./.env", import.meta.url),
+});
 connectDB();
 
 const app = express();

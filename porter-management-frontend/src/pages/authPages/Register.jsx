@@ -189,6 +189,7 @@ import {
   Building,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import Logo from "../../components/common/Logo";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -292,15 +293,13 @@ const Register = () => {
               transition={{ delay: 0.2, type: "spring" }}
               className="mb-8"
             >
-              <div className="w-16 h-16 bg-primary rounded-full  mb-4">
-                <img
+              <div className="">
+                {/* <img
                   src="/images/doko_namlo.png"
                   className="h-12 w-12 bg-white rounded-full"
-                />
+                /> */}
+                <Logo text={true} />
               </div>
-              <h1 className="text-4xl font-bold text-secondary mb-4">
-                Join <span className="text-primary">DOKO Namlo</span> Today
-              </h1>
               <p className="text-lg text-gray-600 mb-8">
                 Create your account and start managing your delivery operations
                 efficiently. Join thousands of businesses already using DOKO

@@ -1,5 +1,7 @@
 // components/Footer.jsx
 
+import Logo from "../common/Logo";
+
 const LINKS = [
   {
     title: "Company",
@@ -21,6 +23,9 @@ export default function Footer() {
   return (
     <footer className="px-8 pt-24 pb-8">
       <div className="container max-w-6xl mx-auto flex flex-col">
+        <div className="">
+          <Logo text={true} />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 w-full">
           <div className="flex flex-col md:flex-row col-span-2 gap-10 mb-10 lg:mb-0 md:gap-36">
             {LINKS.map(({ title, items }) => (
@@ -80,15 +85,13 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
         <p className="text-center mt-16 text-gray-700">
           &copy; {CURRENT_YEAR} Doko-Namlo.{" "}
           <a
             href="https://www.creative-tim.com"
             target="_blank"
             className="underline"
-          >
-          </a>{" "}
+          ></a>{" "}
           | Made by{" "}
           <a
             href="https://heraldcollege.edu.np/"

@@ -1,0 +1,29 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export const useAuthStore = create(
+  persist(
+    (set) => ({
+      user: null,
+      access_token: null,
+      isAuthenticated: false,
+
+      setAuth: (user, access_token) =>
+        set({
+          user,
+          access_token,
+          isAuthenticated: true,
+        }),
+
+      logout: () =>
+        set({
+          user: null,
+          access_token: null,
+          isAuthenticated: false,
+        }),
+    }),
+    {
+      name: "auth-storage",
+    }
+  )
+);
