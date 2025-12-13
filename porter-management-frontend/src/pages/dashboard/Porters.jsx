@@ -1,7 +1,12 @@
 import ComingSoon from "./ComingSoon";
+import PorterDashboard from "./PorterDashboard";
 
 const Porters = () => {
-  return <ComingSoon title="Porters" />;
+  return (
+    <PorterDashboard />  
+  )
+  
+  // return <ComingSoon title="Porters" />;
 };
 
 export default Porters;

@@ -37,7 +37,7 @@ export default function PorterDashboard() {
           { enableHighAccuracy: true }
         );
       }
-    }, 5000); // every 5 seconds
+    }, 10000); // every 10 seconds
   };
 
   const stopAutoLocation = () => {

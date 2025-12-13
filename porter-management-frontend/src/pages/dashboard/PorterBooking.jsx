@@ -177,8 +177,6 @@ const PorterBooking = () => {
         </div>
       </div>
 
-      {/* Porter Dashboard Stats */}
-      <PorterDashboard />
     </div>
   );
 };
