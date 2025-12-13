@@ -13,7 +13,8 @@ const server = http.createServer(app);
 // Create Socket.IO server
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all (adjust later if needed)
+    origin: [process.env.CLIENT_URL_DEV, process.env.CLIENT_URL_PROD],
+    credentials: true,
   },
 });
 

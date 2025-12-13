@@ -189,7 +189,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 // Use environment variable or ensure correct URL
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 const socket = io(SOCKET_URL, {
   transports: ["websocket", "polling"],
   reconnection: true,
@@ -277,6 +277,7 @@ export default function UserMap({ className = "", showSidebar = true }) {
 
     socket.on("all-porter-locations", (data) => {
       setPorters(data);
+      console.log(data);
     });
 
     socket.on("porter-location-update", (data) => {
@@ -324,7 +325,8 @@ export default function UserMap({ className = "", showSidebar = true }) {
 
     return filtered;
   }, [porters, userPos, radiusKm]);
-
+  console.log(porters, "porters");
+  console.log(nearby, "nearby");
   const handleClickPorter = async (porter) => {
     setSelectedPorter(porter);
 
