@@ -13,7 +13,7 @@ export const useLogin = () => {
       localStorage.setItem("access_token", response?.data?.data?.access_token);
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message);
+      toast.error(error?.response?.data?.message || "Login failed");
     },
   });
 };
@@ -29,7 +29,7 @@ export const useRegister = () => {
       localStorage.setItem("access_token", response?.data?.data?.access_token);
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message);
+      toast.error(error?.response?.data?.message || "Registration failed");
     },
   });
 };

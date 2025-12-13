@@ -1,48 +1,57 @@
-import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 import dotenv from "dotenv";
-import cors from "cors";
-//config
-import connectDB from "./config/db.js";
-import { swaggerSpec, swaggerUiMiddleware } from "./config/swaggerConfig.js";
-//router imports
-import authRouter from "./routes/authRoutes.js";
+import app from "./app.js";
 
 dotenv.config();
-const app = express(); // creation of the server
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5000",
-      process.env.API_URL,
-      process.env.CLIENT_URL,
-    ],
-    credentials: true,
-  })
-);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-connectDB();
 
-//apis routes
-app.use("/core-api/auth", authRouter);
+// Create HTTP server
+const server = http.createServer(app);
 
-//swagger routes
-app.use(
-  "/core-api/docs",
-  swaggerUiMiddleware.serve,
-  swaggerUiMiddleware.setup(swaggerSpec)
-);
+// Create Socket.IO server
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Allow all (adjust later if needed)
+  },
+});
 
-//default route
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Porter_management_server is running",
+// In-memory store for porter locations
+let porterLocations = {};
+
+// Socket handlers
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  socket.on("porter-location", (data) => {
+    const { porterId, lat, lng, teamId } = data;
+
+    console.log("Received:", porterId, lat, lng, teamId);
+
+    // if (!porterId) {
+    //   console.log("❌ ERROR: PorterId missing");
+    //   return;
+    // }
+
+    // Save location in memory
+    porterLocations[porterId] = {
+      lat,
+      lng,
+      teamId: teamId || null,
+      timestamp: Date.now(),
+    };
+
+    // Send updated list to all users
+    io.emit("all-porter-locations", porterLocations);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
   });
 });
 
+// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`porter_management_server is running at ${PORT}`);
+
+server.listen(PORT, () => {
+  console.log(`🚀 porter_management_server running at ${PORT}`);
 });

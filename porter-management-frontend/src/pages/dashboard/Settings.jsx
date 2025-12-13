@@ -1,0 +1,7 @@
+import ComingSoon from "./ComingSoon";
+
+const Settings = () => {
+  return <ComingSoon title="Settings" />;
+};
+
+export default Settings;

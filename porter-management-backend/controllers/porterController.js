@@ -1,4 +1,4 @@
-import { Porters } from "../models/Porters.js";
+import Porters from "../models/Porters.js";
 /**
  *
  * @param {*} req
