@@ -38,7 +38,7 @@ export const createPorter = async (req, res) => {
 
     // Create a new porter instance
     const newPorter = new Porters({
-      userId: req.user._id,
+      userId: req.user.id,
       teamId: null,
       fullName,
       phone,
@@ -64,12 +64,20 @@ export const createPorter = async (req, res) => {
 };
 
 export const getAllPortersDetails = async (req, res) => {
+  const { page, limit } = req.query;
   try {
-    const porters = await porters.find();
+    const porters = await Porters.find()
+      .skip((page - 1) * limit)
+      .limit(limit);
     if (!porters) {
       return res
         .status(404)
         .json({ success: false, message: "No porters found" });
+    }
+    if (porters.length === 0) {
+      return res
+        .status(204)
+        .json({ success: true, message: "No porters found" });
     }
     res.status(200).json({
       success: true,

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 export const authenticate = (req, res, next) => {
   const secrete_key = process.env.JWT_SECRETE;
   try {
-    const token = req.headers.authorization.split(" ")[1];
+    const token = req.headers?.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
@@ -23,7 +23,6 @@ export const authenticate = (req, res, next) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-      
     });
   }
 };
