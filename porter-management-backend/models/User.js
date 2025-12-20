@@ -31,6 +31,22 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "porter", "admin"],
       default: "user",
     },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    remarks: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
