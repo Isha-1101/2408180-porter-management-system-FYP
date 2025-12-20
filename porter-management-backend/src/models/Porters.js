@@ -31,7 +31,10 @@ const PortersSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
+    porterPhoto: {
+      type: String,
+      default: null,
+    },
     porterType: {
       type: String,
       enum: ["individual", "team_member"],
@@ -48,12 +51,25 @@ const PortersSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     isVerified: {
       type: Boolean,
       default: false,
     },
 
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      default: null,
+    },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
     latitude: {
       type: Number,
       default: null,
@@ -67,6 +83,18 @@ const PortersSchema = new mongoose.Schema(
     lastLocationUpdate: {
       type: Date,
       default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    remarks: {
+      type: String,
+      default: "",
     },
   },
   {

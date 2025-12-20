@@ -24,6 +24,7 @@ const PorterRouter = express.Router();
  *             phone: "9800000000"
  *             address: Kathmandu, Nepal
  *             porterType: individual
+ *             porterPhoto: "photo.jpg"
  *     responses:
  *       201:
  *         description: Porter created successfully
@@ -46,6 +47,11 @@ PorterRouter.post("/", authenticate, authorizeRole("porter"), createPorter);
  *       - BearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: searchText
+ *         schema:
+ *           type: string
+ *           example: "Ram"
+ *       - in: query
  *         name: page
  *         schema:
  *           type: integer
@@ -55,6 +61,16 @@ PorterRouter.post("/", authenticate, authorizeRole("porter"), createPorter);
  *         schema:
  *           type: integer
  *           example: 10
+ *       - in: query
+ *         name: teamId
+ *         schema:
+ *           type: string
+ *           example: "team123"
+ *       - in: query
+ *         name: porterType
+ *         schema:
+ *           type: string
+ *           example: "individual"
  *     responses:
  *       200:
  *         description: List of porters

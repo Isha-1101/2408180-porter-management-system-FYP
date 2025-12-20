@@ -177,13 +177,7 @@ export default function Login() {
           className="hidden lg:flex flex-col justify-center p-8 relative"
         >
           <div className="relative h-full w-full rounded-full overflow-hidden shadow-2xl">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                // backgroundImage: "url('/images/doko_namlo.png')",
-                backgroundColor: "#1c5493",
-              }}
-            >
+            <div className="absolute inset-0 bg-cover bg-center bg-primary">
               <div className="absolute inset-0 bg-cover bg-center bg-white rounded-full h-5/6 w-5/6 bg-[url('/images/doko_namlo.png')]"></div>
             </div>
           </div>

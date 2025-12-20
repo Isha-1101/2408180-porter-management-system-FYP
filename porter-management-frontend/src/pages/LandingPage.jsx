@@ -18,6 +18,7 @@ import {
   Truck,
   Smartphone,
 } from "lucide-react";
+import Chatbot from "../components/common/ChatBox";
 
 const LandingPage = () => {
   const [currentFeature, setCurrentFeature] = useState(0);
@@ -197,7 +198,7 @@ const LandingPage = () => {
               transition={{ delay: 0.3 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             >
-              <span className="bg-gradient-to-br from-blue-300 to-blue-600 bg-clip-text text-8xl text-transparent">
+              <span className="bg-gradient-to-br from-primary to-red-200 bg-clip-text text-8xl text-transparent">
                 DOKO Namlo
               </span>
               <br />
@@ -352,7 +353,7 @@ const LandingPage = () => {
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Powerful Features for{" "}
-              <span className="bg-gradient-to-r from-indigo-950 via-blue-950  to-blue-950 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-yellow-600 bg-clip-text text-transparent">
                 Seamless Operations
               </span>
             </h2>
@@ -624,16 +625,8 @@ const LandingPage = () => {
       </section>
 
       {/* Floating Action Button */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className="fixed z-50 right-6 bottom-24 sm:bottom-16 md:bottom-10 md:right-6 lg:bottom-6 lg:right-6 bg-primary text-primary-foreground p-4 rounded-full shadow-2xl cursor-pointer"
-      >
-        <MessageSquareText className="w-6 h-6" />
-      </motion.button>
+
+      <Chatbot />
 
       <style>{`
         @keyframes blob {

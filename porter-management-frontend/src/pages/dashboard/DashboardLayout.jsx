@@ -1,104 +1,3 @@
-// import { NavLink, Outlet, useNavigate } from "react-router-dom";
-// import {
-//   MapPinned,
-//   ClipboardList,
-//   Users,
-//   Settings,
-//   LogOut,
-//   LayoutDashboard,
-//   User,
-// } from "lucide-react";
-// import Logo from "../../components/common/Logo";
-// import { useAuthStore } from "../../store/auth.store";
-
-// const DashboardLayout = () => {
-//   const navigate = useNavigate();
-//   const logout = useAuthStore((state) => state.logout);
-//   const user = useAuthStore((state) => state.user);
-//   const navItems = [
-//     {
-//       label: "Porter Booking",
-//       to: "/dashboard",
-//       icon: <MapPinned className="w-5 h-5" />,
-//       end: true,
-//     },
-//     {
-//       label: "Orders",
-//       to: "/dashboard/orders",
-//       icon: <ClipboardList className="w-5 h-5" />,
-//     },
-//     {
-//       label: "Porters",
-//       to: "/dashboard/porters",
-//       icon: <Users className="w-5 h-5" />,
-//     },
-//     {
-//       label: "Settings",
-//       to: "/dashboard/settings",
-//       icon: <Settings className="w-5 h-5" />,
-//     },
-//   ];
-
-//   const linkBase =
-//     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition";
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-screen">
-//         <aside className="bg-white border-r border-gray-200 px-4 py-5">
-//           <div className="flex items-center gap-3 px-2">
-//             <Logo />
-//             <div>
-//               <div className="font-bold text-primary">DOKO Namlo</div>
-//               <div className="text-xs text-secondary">Dashboard</div>
-//             </div>
-//           </div>
-
-//           <nav className="mt-6 space-y-1">
-//             {navItems.map((item) => (
-//               <NavLink
-//                 key={item.to}
-//                 to={item.to}
-//                 end={item.end}
-//                 className={({ isActive }) =>
-//                   `${linkBase} ${
-//                     isActive
-//                       ? "bg-primary text-white"
-//                       : "text-gray-700 hover:bg-gray-100"
-//                   }`
-//                 }
-//               >
-//                 {item.icon}
-//                 <span>{item.label}</span>
-//               </NavLink>
-//             ))}
-//             <div className="flex gap-3">
-//               <User size={18} className="text-primary font-bold" />
-//               <p className="capitalize text-secondary">{user.name}</p>
-//             </div>
-//           </nav>
-
-//           <div className="mt-8 pt-6 border-t border-gray-200">
-//             <button
-//               onClick={logout}
-//               className="w-full flex items-center justify-center gap-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 transition px-3 py-2.5 text-sm font-semibold cursor-pointer"
-//             >
-//               <LogOut className="w-4 h-4" />
-//               Logout
-//             </button>
-//           </div>
-//         </aside>
-
-//         <main className="px-4 sm:px-6 lg:px-8 py-6">
-//           <Outlet />
-//         </main>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default DashboardLayout;
-
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   MapPinned,
@@ -131,7 +30,7 @@ const DashboardLayout = () => {
   });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(3);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const navItems = [
     {
@@ -257,7 +156,7 @@ const DashboardLayout = () => {
 
               <div className="relative group">
                 <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="w-9 h-9 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
+                  <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
                     {user?.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                 </button>
@@ -335,7 +234,7 @@ const DashboardLayout = () => {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-md shadow-primary/20"
+                        ? "bg-primary  text-white shadow-md shadow-primary/20"
                         : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     }`
                   }

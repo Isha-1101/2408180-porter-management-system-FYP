@@ -31,9 +31,17 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import DashboardLayout from "../pages/dashboard/DashboardLayout";
 import DashboardHome from "../pages/dashboard/DashboardHome";
-import Orders from "../pages/dashboard/Orders";
-import Porters from "../pages/dashboard/Porters";
-import Settings from "../pages/dashboard/Settings";
+
+// this wlll for porter specific routes
+import PorterRegister from "../pages/dashboard/porter/PorterRegister";
+import PorterGuards from "../guards/PorterGuards";
+import PorterPending from "../pages/dashboard/porter/PorterPending";
+import PorterRegisterGuard from "../guards/PorterRegisterGuard";
+import PorterPendingGuard from "../guards/PorterPendingGuard";
+import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
+import PorterBooking from "../pages/dashboard/user/PorterBooking";
+import Orders from "../pages/dashboard/user/Orders";
+import Settings from "../pages/dashboard/user/Settings";
 
 // Import pages that should NOT use Layout
 
@@ -57,8 +65,32 @@ const MainRoute = () => {
           <Route element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="orders" element={<Orders />} />
-            <Route path="porters" element={<Porters />} />
+            <Route path="booking" element={<PorterBooking />} />
             <Route path="settings" element={<Settings />} />
+
+            {/* Porter routes */}
+            <Route path="porters">
+              <Route
+                path="register"
+                element={
+                  <PorterRegisterGuard>
+                    <PorterRegister />
+                  </PorterRegisterGuard>
+                }
+              />
+              <Route
+                path="pending"
+                element={
+                  <PorterPendingGuard>
+                    <PorterPending />
+                  </PorterPendingGuard>
+                }
+              />
+
+              <Route element={<PorterGuards />}>
+                <Route index element={<PorterDashboard />} />
+              </Route>
+            </Route>
           </Route>
         </Route>
 

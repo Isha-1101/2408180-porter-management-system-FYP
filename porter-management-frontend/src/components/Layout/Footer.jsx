@@ -79,7 +79,7 @@ export default function Footer() {
                 </p>
               </div>
 
-              <button className="w-full lg:w-fit bg-gray-800 text-white px-5 py-2 rounded-md hover:bg-gray-900 transition">
+              <button className="w-full lg:w-fit bg-primary hover:bg-primary/80 text-white py-2 px-4 rounded-md">
                 Subscribe
               </button>
             </div>

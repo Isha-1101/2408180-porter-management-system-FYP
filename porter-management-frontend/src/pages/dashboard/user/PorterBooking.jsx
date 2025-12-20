@@ -1,23 +1,12 @@
 import { useMemo, useState } from "react";
-import {
-  MapPin,
-  Filter,
-  Star,
-  Clock,
-  Truck,
-  Users,
-  Maximize2,
-} from "lucide-react";
-import UserMap from "../../components/Map/UserMap";
-import PorterDashboard from "./PorterDashboard";
-import AvailablePorter from "./components/AvailablePorter";
+import { MapPin, Users, Maximize2 } from "lucide-react";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "../../components/ui/card";
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../components/ui/dialog";
-import { Button } from "../../components/ui/button";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import AvailablePorter from "@/pages/dashboard/components/AvailablePorter";
+import UserMap from "@/components/Map/UserMap";
+import PageHeader from "../../../components/common/PageHeader";
+import PageLayout from "../../../components/common/PageLayout";
 
 const PorterBooking = () => {
   const [pickup, setPickup] = useState("");
@@ -89,25 +82,21 @@ const PorterBooking = () => {
   }, [porters, vehicle, maxPrice]);
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primary">
-            Porter Booking
-          </h1>
-          <p className="text-sm md:text-base text-secondary mt-1">
-            Book a porter, choose service options, and assign instantly.
-          </p>
-        </div>
+    <PageLayout
+      className="space-y-4"
+      title={"Porter Booking"}
+      description={
+        "Book a porter, choose service options, and assign instantly."
+      }
+      headerExtraChildren={
         <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100">
           <Users className="w-4 h-4" />
           <span className="text-sm font-medium">
             {filteredPorters.length} available
           </span>
         </div>
-      </div>
-
+      }
+    >
       {/* Main Content Grid */}
       <div className="grid sm:grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
         {/* Map Section */}
@@ -176,8 +165,7 @@ const PorterBooking = () => {
           </Card>
         </div>
       </div>
-
-    </div>
+    </PageLayout>
   );
 };
 

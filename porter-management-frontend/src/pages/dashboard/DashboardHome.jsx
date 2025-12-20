@@ -1,7 +1,5 @@
-import PorterBooking from "./PorterBooking";
-
 const DashboardHome = () => {
-  return <PorterBooking />;
+  return <div className="p-4">dashboard</div>;
 };
 
 export default DashboardHome;

@@ -171,7 +171,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 import { getDistanceKm } from "../../utils/haversine";
 import { fetchRouteCoords } from "../../utils/osrm";
 import RouteLayer from "./RouteLayer";
@@ -189,13 +189,13 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 // Use environment variable or ensure correct URL
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-const socket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"],
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-});
+// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+// const socket = io(SOCKET_URL, {
+//   transports: ["websocket", "polling"],
+//   reconnection: true,
+//   reconnectionAttempts: 5,
+//   reconnectionDelay: 1000,
+// });
 
 // Fix for Leaflet icons in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -226,80 +226,80 @@ function Recenter({ pos }) {
   return null;
 }
 
-export default function UserMap({ className = "", showSidebar = true }) {
+const UserMap = ({ className = "", showSidebar = true }) => {
   const [userPos, setUserPos] = useState([27.7172, 85.324]); // Default to Kathmandu
   const [porters, setPorters] = useState({}); // object from socket
   const [radiusKm, setRadiusKm] = useState(10); // Increased default radius
   const [selectedPorter, setSelectedPorter] = useState(null);
   const [routeCoords, setRouteCoords] = useState([]);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   // Location inputs
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
 
-  useEffect(() => {
-    // Ask browser for user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (p) => {
-          const newPos = [p.coords.latitude, p.coords.longitude];
-          setUserPos(newPos);
-          setLoadingLocation(false);
-        },
-        (err) => {
-          console.error("Geolocation error:", err);
-          setLoadingLocation(false);
-          // Keep default Kathmandu position
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      setLoadingLocation(false);
-    }
+  // useEffect(() => {
+  //   // Ask browser for user location
+  //   if (navigator.geolocation) {
+  //     navigator.geolocation.getCurrentPosition(
+  //       (p) => {
+  //         const newPos = [p.coords.latitude, p.coords.longitude];
+  //         setUserPos(newPos);
+  //         setLoadingLocation(false);
+  //       },
+  //       (err) => {
+  //         console.error("Geolocation error:", err);
+  //         setLoadingLocation(false);
+  //         // Keep default Kathmandu position
+  //       },
+  //       {
+  //         enableHighAccuracy: true,
+  //         timeout: 10000,
+  //         maximumAge: 0,
+  //       }
+  //     );
+  //   } else {
+  //     setLoadingLocation(false);
+  //   }
 
-    // Socket connection events
-    socket.on("connect", () => {
-      setSocketConnected(true);
-      // Request initial porter locations
-      socket.emit("get-porter-locations");
-    });
+  //   // Socket connection events
+  //   socket.on("connect", () => {
+  //     setSocketConnected(true);
+  //     // Request initial porter locations
+  //     socket.emit("get-porter-locations");
+  //   });
 
-    socket.on("disconnect", () => {
-      setSocketConnected(false);
-    });
+  //   socket.on("disconnect", () => {
+  //     setSocketConnected(false);
+  //   });
 
-    socket.on("all-porter-locations", (data) => {
-      setPorters(data);
-      console.log(data);
-    });
+  //   socket.on("all-porter-locations", (data) => {
+  //     setPorters(data);
+  //     console.log(data);
+  //   });
 
-    socket.on("porter-location-update", (data) => {
-      setPorters((prev) => ({
-        ...prev,
-        [data.porterId]: {
-          lat: data.lat,
-          lng: data.lng,
-          teamId: data.teamId,
-          timestamp: Date.now(),
-        },
-      }));
-    });
+  //   socket.on("porter-location-update", (data) => {
+  //     setPorters((prev) => ({
+  //       ...prev,
+  //       [data.porterId]: {
+  //         lat: data.lat,
+  //         lng: data.lng,
+  //         teamId: data.teamId,
+  //         timestamp: Date.now(),
+  //       },
+  //     }));
+  //   });
 
-    // Cleanup
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("all-porter-locations");
-      socket.off("porter-location-update");
-    };
-  }, []);
+  //   // Cleanup
+  //   return () => {
+  //     socket.off("connect");
+  //     socket.off("disconnect");
+  //     socket.off("all-porter-locations");
+  //     socket.off("porter-location-update");
+  //   };
+  // }, []);
 
   const nearby = useMemo(() => {
     if (!userPos) return [];
@@ -616,4 +616,6 @@ export default function UserMap({ className = "", showSidebar = true }) {
       </div>
     </div>
   );
-}
+};
+
+export default UserMap;

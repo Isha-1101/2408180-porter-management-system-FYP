@@ -1,14 +1,8 @@
 import express from "express";
-import {
-  register,
-  login,
-  deleteUserAccounts,
-  banneduser,
-  getAllUsersDetails,
-  getUserById,
-} from "../controllers/authController.js";
+import { banneduser, deleteUserAccounts, getAllUsersDetails, getUserById, login, register } from "../controllers/authController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
+
 const authRouter = express.Router();
 
 /**
@@ -226,4 +220,5 @@ authRouter.get(
  *         description: User not found
  */
 authRouter.get("/get-users/:id", authenticate, getUserById);
+
 export default authRouter;

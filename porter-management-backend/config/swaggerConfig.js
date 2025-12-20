@@ -1,5 +1,15 @@
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config({
+  path: new URL("./.env", import.meta.url),
+});
 
 const swaggerOptions = {
   definition: {
@@ -33,7 +43,10 @@ const swaggerOptions = {
   },
 
   // Paths to files where APIs are documented
-  apis: ["./routes/*.js", "./models/*.js"],
+  apis: [
+    join(__dirname, "../src/routes/*.js"),
+    join(__dirname, "../src/models/*.js"),
+  ],
 };
 
 export const swaggerSpec = swaggerJSDoc(swaggerOptions);
