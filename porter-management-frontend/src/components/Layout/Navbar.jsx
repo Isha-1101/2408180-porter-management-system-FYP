@@ -539,7 +539,7 @@ const NavBar = () => {
               className={`rounded-full px-6 sm:px-8 py-2 hover:scale-105 transition-all duration-300 font-medium cursor-pointer ${
                 isScrolled
                   ? "bg-white hover:bg-white/90 text-[hsl(220,50%,20%)]"
-                  : "bg-primary hover:bg-primary/90 text-white"
+                  : "bg-secondary hover:bg-primary/90 text-white"
               }`}
             >
               Join Now

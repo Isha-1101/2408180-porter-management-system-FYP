@@ -1,6 +1,7 @@
 // components/Footer.jsx
 
 import Logo from "../common/Logo";
+import { Button } from "../ui/button";
 
 const LINKS = [
   {
@@ -79,9 +80,7 @@ export default function Footer() {
                 </p>
               </div>
 
-              <button className="w-full lg:w-fit bg-primary hover:bg-primary/80 text-white py-2 px-4 rounded-md">
-                Subscribe
-              </button>
+              <Button variant={"default"}>Subscribe</Button>
             </div>
           </div>
         </div>
