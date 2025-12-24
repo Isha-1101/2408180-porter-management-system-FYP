@@ -1,4 +1,6 @@
+import DocumentInformation from "../models/DocumentInformation.js";
 import Porters from "../models/Porters.js";
+import VehicleTypes from "../models/vehicleTypes.js";
 /**
  *
  * @param {*} req
@@ -233,6 +235,133 @@ export const getPorterAccountsById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "An error occurred while fetching the porter.",
+    });
+  }
+};
+
+// save vehicle details
+
+export const SaveVehicleDetails = async (req, res) => {
+  try {
+    const { vehicleNumber, vehicleCategory, capacity } = req.body;
+    const porterId = req.params.id;
+    const userId = req.user.id;
+    const porter = Porters.findById(porterId);
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "porter not found" });
+    }
+
+    const vehicle = new VehicleTypes({
+      vehicleNumber,
+      vehicleCategory,
+      capacity,
+      porterId,
+      userId,
+    });
+    const savedVehicle = await vehicle.save();
+    res.status(200).json({
+      success: true,
+      message: "Vehicle details saved successfully",
+      vehicle: {
+        vehicleNumber: savedVehicle.vehicleNumber,
+        vehicleCategory: savedVehicle.vehicleCategory,
+        capacity: savedVehicle.capacity,
+      },
+    });
+  } catch (error) {
+    console.error("Error saving vehicle details:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while saving the vehicle details.",
+    });
+  }
+};
+
+export const getVehicleDetailsByPorterId = async (req, res) => {
+  try {
+    const porterId = req.params.id;
+    const porter = await Porters.findById(porterId);
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "porter not found" });
+    }
+    const vehicleDetails = await VehicleTypes.find({ porterId }).select(
+      "-__v -createdAt -updatedAt -_id -userId -porterId"
+    );
+    res.status(200).json({
+      success: true,
+      message: "Vehicle details fetched successfully",
+      vehicleDetails,
+    });
+  } catch (error) {
+    console.error("Error fetching vehicle details:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the vehicle details.",
+    });
+  }
+};
+export const SavePorterDocuments = async (req, res) => {
+  try {
+    const { porterLincenseNumber, porterLicenseDocument } = req.body;
+    console.log({ porterLincenseNumber, porterLicenseDocument });
+    const porterId = req.params.id;
+    const porter = Porters.findById(porterId);
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "porter not found" });
+    }
+
+    const porterDocument = new DocumentInformation({
+      porterLincenseNumber,
+      porterLicenseDocument,
+      porterId,
+      userId: req.user.id,
+    });
+    const savedPorterDocument = await porterDocument.save();
+    res.status(200).json({
+      success: true,
+      message: "porter document saved successfully",
+      document: {
+        porterLincenseNumber: savedPorterDocument.porterLincenseNumber,
+        porterLicenseDocument: savedPorterDocument.porterLicenseDocument,
+      },
+    });
+  } catch (error) {
+    console.error("Error saving porter document:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while saving the porter document.",
+    });
+  }
+};
+
+export const getPorterdocumetsByPorterId = async (req, res) => {
+  try {
+    const porterId = req.params.id;
+    const porter = await Porters.findById(porterId);
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "porter not found" });
+    }
+    const porterDocuments = await DocumentInformation.find({ porterId }).select(
+      "-__v -createdAt -updatedAt -_id -userId -porterId"
+    );
+    res.status(200).json({
+      success: true,
+      message: "porter documents fetched successfully",
+      porterDocuments,
+    });
+  } catch (error) {
+    console.error("Error fetching porter documents:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the porter documents.",
     });
   }
 };

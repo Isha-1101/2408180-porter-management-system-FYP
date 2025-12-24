@@ -7,9 +7,7 @@ import {
   Package,
   BarChart3,
   Shield,
-  TrendingUp,
   ChevronRight,
-  MessageSquareText,
   Clock,
   MapPin,
   DollarSign,
@@ -22,7 +20,6 @@ import Chatbot from "../components/common/ChatBox";
 
 const LandingPage = () => {
   const [currentFeature, setCurrentFeature] = useState(0);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const features = [
     {
@@ -215,27 +212,6 @@ const LandingPage = () => {
               operations with intelligent porter allocation, real-time tracking,
               and comprehensive analytics.
             </motion.p>
-
-            {/* Benefits */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="flex flex-wrap justify-center gap-4 mb-12"
-            >
-              {benefits.map((benefit, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg shadow-sm border border-white/20"
-                >
-                  <div className="text-white">{benefit.icon}</div>
-                  <span className="text-sm font-medium text-white">
-                    {benefit.text}
-                  </span>
-                </motion.div>
-              ))}
-            </motion.div>
 
             {/* CTA Buttons */}
             <motion.div

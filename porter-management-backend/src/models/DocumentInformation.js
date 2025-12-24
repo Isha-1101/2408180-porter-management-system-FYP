@@ -6,6 +6,11 @@ export const DocumentInformationSchema = new mongoose.Schema(
       ref: "Porters",
       required: true,
     },
+    userId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
     porterLincenseNumber: {
       type: String,
       required: true,

@@ -44,8 +44,8 @@ const swaggerOptions = {
 
   // Paths to files where APIs are documented
   apis: [
-    join(__dirname, "../src/routes/*.js"),
-    join(__dirname, "../src/models/*.js"),
+    join(__dirname, "../routes/*.js"),
+    join(__dirname, "../models/*.js"),
   ],
 };
 

@@ -52,7 +52,6 @@
 //   );
 // }
 
-
 //Added Code:
 
 import React, { useEffect, useRef, useState } from "react";
@@ -122,13 +121,21 @@ export default function PorterDashboard() {
 
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <div>
-            <p><strong>Pickup:</strong> New Road, Kathmandu</p>
-            <p><strong>Drop:</strong> Kalimati</p>
-            <p><strong>Load Type:</strong> Household Items</p>
+            <p>
+              <strong>Pickup:</strong> New Road, Kathmandu
+            </p>
+            <p>
+              <strong>Drop:</strong> Kalimati
+            </p>
+            <p>
+              <strong>Load Type:</strong> Household Items
+            </p>
           </div>
 
           <div style={{ textAlign: "right" }}>
-            <p><strong>Estimated Pay</strong></p>
+            <p>
+              <strong>Estimated Pay</strong>
+            </p>
             <p style={{ fontSize: "20px", color: "#7c5cc4" }}>Rs. 520</p>
           </div>
         </div>
@@ -140,12 +147,11 @@ export default function PorterDashboard() {
       <div style={{ ...cardStyle, marginTop: "24px" }}>
         <h3>Live Location</h3>
         <p style={{ color: "#666" }}>
-          Your GPS location is being updated every few seconds and shared with the customer.
+          Your GPS location is being updated every few seconds and shared with
+          the customer.
         </p>
 
-        <div style={mapPlaceholder}>
-          Live map will appear here
-        </div>
+        <div style={mapPlaceholder}>Live map will appear here</div>
       </div>
     </div>
   );

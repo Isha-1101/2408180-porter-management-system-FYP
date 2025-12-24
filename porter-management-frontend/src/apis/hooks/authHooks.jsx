@@ -2,6 +2,7 @@ import toast from "react-hot-toast";
 import { login, register } from "../services/authService.js";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/auth.store.js";
+
 export const useLogin = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
   return useMutation({

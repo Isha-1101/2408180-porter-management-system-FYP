@@ -1,20 +1,21 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDB from "./config/db.js";
-import { swaggerSpec, swaggerUiMiddleware } from "./config/swaggerConfig.js";
+import {
+  swaggerSpec,
+  swaggerUiMiddleware,
+} from "./src/config/swaggerConfig.js";
 // Routers
 import authRouter from "./src/routes/authRoutes.js";
 import porterRouter from "./src/routes/porterRoutes.js";
 import locationRouter from "./src/routes/locationRoutes.js";
+import connectDB from "./src/config/db.js";
 
 dotenv.config({
   path: new URL("./.env", import.meta.url),
 });
 
-console.log("Environment:", process.env.NODE_ENV || "development");
 connectDB();
-
 const app = express();
 
 // Middleware

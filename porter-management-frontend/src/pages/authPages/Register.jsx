@@ -294,11 +294,6 @@ const Register = () => {
               className="mb-8"
             >
               <div className="">
-                {/* <img
-                  src="/images/doko_namlo.png"
-                  className="h-12 w-12 bg-white rounded-full"
-                /> */}
-                <Logo text={true} />
               </div>
               <p className="text-lg text-gray-600 mb-8">
                 Create your account and start managing your delivery operations
@@ -390,7 +385,7 @@ const Register = () => {
                       name="name"
                       value={form.name}
                       onChange={changeHandler}
-                      placeholder="John Doe"
+                      placeholder="Ram Sharma"
                       className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
@@ -412,7 +407,7 @@ const Register = () => {
                       name="email"
                       value={form.email}
                       onChange={changeHandler}
-                      placeholder="john@example.com"
+                      placeholder="ram@herald.com"
                       className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>

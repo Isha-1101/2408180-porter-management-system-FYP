@@ -7,6 +7,11 @@ export const VehicleTypesSchema = new mongoose.Schema(
       ref: "Porters",
       required: true,
     },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
     vehicleNumber: {
       type: String,
       required: true,
@@ -17,7 +22,8 @@ export const VehicleTypesSchema = new mongoose.Schema(
       required: true,
     },
     capacity: {
-      type: Number,
+      type: String,
+      required:false
     },
   },
   {

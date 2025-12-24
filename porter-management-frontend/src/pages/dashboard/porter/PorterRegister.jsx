@@ -207,7 +207,7 @@ const PorterRegister = () => {
             <h3 className="text-lg font-semibold mb-4">
               Preview All Inserted Data
             </h3>
-            <div className="bg-slate-50 p-4 rounded-lg space-y-3">
+            <div className="p-4 rounded-lg space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <span className="font-medium">Full Name:</span>
                 <span>{formData.fullName || "N/A"}</span>
