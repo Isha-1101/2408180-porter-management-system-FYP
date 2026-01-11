@@ -8,8 +8,10 @@ import {
 // Routers
 import authRouter from "./src/routes/authRoutes.js";
 import porterRouter from "./src/routes/porterRoutes.js";
+import porterRegistrationRouter from "./src/routes/porterRegistration.routes.js";
 import locationRouter from "./src/routes/locationRoutes.js";
 import connectDB from "./src/config/db.js";
+import { multerErrorHandler } from "./src/middlewares/multerErrorHandler.js";
 
 dotenv.config({
   path: new URL("./.env", import.meta.url),
@@ -32,10 +34,12 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(multerErrorHandler);
 
 // API Routes
 app.use("/core-api/auth", authRouter);
 app.use("/core-api/porters", porterRouter);
+app.use("/core-api/porter-registration", porterRegistrationRouter);
 app.use("/core-api/location", locationRouter);
 
 app.get("/", (req, res) => {

@@ -1,5 +1,5 @@
 import LocationLog from "../models/LocationLogs.js";
-import Porter from "../models/Porters.js";
+import Porter from "../models/porter/Porters.js";
 
 export const logLocation = async (req, res) => {
   try {

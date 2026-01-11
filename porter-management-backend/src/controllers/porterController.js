@@ -1,6 +1,7 @@
 import DocumentInformation from "../models/DocumentInformation.js";
-import Porters from "../models/Porters.js";
-import VehicleTypes from "../models/vehicleTypes.js";
+import Porters from "../models/porter/Porters.js";
+import VehicleTypes, { VehicleTypesSchema } from "../models/vehicleTypes.js";
+import { uploadToCloudinary } from "./uploadToCloudinary.js";
 /**
  *
  * @param {*} req
@@ -13,32 +14,41 @@ import VehicleTypes from "../models/vehicleTypes.js";
  */
 export const createPorter = async (req, res) => {
   try {
-    const { fullName, phone, address, porterType, porterPhoto } = req.body;
+    const file = req.file;
+    console.log(file);
+    if (!file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Porter photo is required." });
+    }
 
-    // Validate required fields
+    const { fullName, phone, address, porterType } = req.body;
+
+    // Validate fields
     if (!fullName || !phone || !address || !porterType) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    // Check if porterType is valid
     if (!["individual", "team_member"].includes(porterType)) {
       return res.status(400).json({
         message: "porterType must be either 'individual' or 'team_member'.",
       });
     }
 
-    //check existing porter with same phone number
-    const existingPorter = await Porters.findOne({
-      phone,
-    });
-    if (existingPorter) {
-      return res.status(400).json({
-        success: false,
-        message: "Porter with this phone number already exists.",
-      });
-    }
+    // Check for existing porter
+    // const existingPorter = await Porters.findOne({ phone });
+    // if (existingPorter) {
+    //   return res.status(409).json({
+    //     success: false,
+    //     message: "Porter with this phone number already exists.",
+    //   });
+    // }
 
-    // Create a new porter instance
+    // Upload file to cloudinary
+    const uploaded = await uploadToCloudinary(file);
+    const url = uploaded.url;
+    const trimmedUrl = url.split("image")[1];
+    // Create new porter
     const newPorter = new Porters({
       userId: req.user.id,
       teamId: null,
@@ -46,10 +56,9 @@ export const createPorter = async (req, res) => {
       phone,
       address,
       porterType,
-      porterPhoto: porterPhoto || null,
+      porterPhoto: trimmedUrl,
     });
 
-    // Save the porter to the database
     await newPorter.save();
 
     res.status(201).json({
@@ -58,12 +67,21 @@ export const createPorter = async (req, res) => {
       porter: newPorter,
     });
   } catch (error) {
-    console.error("Error creating porter:", error);
+    console.error("Error creating porter:", error.response?.data || error);
     res.status(500).json({
       success: false,
       message: "An error occurred while creating the porter.",
     });
   }
+};
+
+export const createPorterDraft = async (req, res) => {
+  const porter = await Porters.create({
+    userId: req.user.id,
+    formStatus: "draft",
+    formStep: 1,
+  });
+  res.json({ porterId: porter._id });
 };
 
 export const getAllPortersDetails = async (req, res) => {
@@ -99,6 +117,56 @@ export const getAllPortersDetails = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "An error occurred while fetching porters.",
+    });
+  }
+};
+
+export const getPorterDetailsById = async (req, res) => {
+  const porterId = req.params.id;
+  try {
+    const porter = await Porters.findById(porterId).select(
+      "-createdAt -updatedAt -userId -teamId -__v"
+    );
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Porter not found" });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Porter fetched successfully",
+      porter,
+    });
+  } catch (error) {
+    console.error("Error fetching porter:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the porter.",
+    });
+  }
+};
+
+export const getPorterByUserId = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const porter = await Porters.findOne({ userId }).select(
+      "-createdAt -updatedAt -userId -teamId -__v"
+    );
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Porter not found" });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Porter fetched successfully",
+      porter,
+    });
+  } catch (error) {
+    console.error("Error fetching porter:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the porter.",
     });
   }
 };
@@ -246,6 +314,8 @@ export const SaveVehicleDetails = async (req, res) => {
     const { vehicleNumber, vehicleCategory, capacity } = req.body;
     const porterId = req.params.id;
     const userId = req.user.id;
+
+    //check if porter exists
     const porter = Porters.findById(porterId);
     if (!porter) {
       return res
@@ -253,6 +323,15 @@ export const SaveVehicleDetails = async (req, res) => {
         .json({ success: false, message: "porter not found" });
     }
 
+    //check if vehicle already exists
+    // const existingVehicle = await VehicleTypes.findOne({ vehicleNumber });
+    // if (existingVehicle) {
+    //   return res
+    //     .status(400)
+    //     .json({ success: false, message: "Vehicle already exists" });
+    // }
+
+    //save vehicle to db
     const vehicle = new VehicleTypes({
       vehicleNumber,
       vehicleCategory,
@@ -305,9 +384,21 @@ export const getVehicleDetailsByPorterId = async (req, res) => {
   }
 };
 export const SavePorterDocuments = async (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "porter document is required" });
+  }
   try {
-    const { porterLincenseNumber, porterLicenseDocument } = req.body;
-    console.log({ porterLincenseNumber, porterLicenseDocument });
+    const { porterLicenseNumber } = req.body;
+    if (!porterLicenseNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "porter lincense number is required",
+      });
+    }
+
     const porterId = req.params.id;
     const porter = Porters.findById(porterId);
     if (!porter) {
@@ -316,9 +407,22 @@ export const SavePorterDocuments = async (req, res) => {
         .json({ success: false, message: "porter not found" });
     }
 
+    // const existingDocument = await DocumentInformation.findOne({ porterId });
+    // if (existingDocument) {
+    //   return res
+    //     .status(400)
+    //     .json({ success: false, message: "porter document already exists" });
+    // }
+
+    // Upload file to cloudinary
+    const uploaded = await uploadToCloudinary(file);
+    const url = uploaded.url;
+    const trimmedUrl = url.split("image")[1];
+
+    //save porter document
     const porterDocument = new DocumentInformation({
-      porterLincenseNumber,
-      porterLicenseDocument,
+      porterLicenseNumber,
+      porterLicenseDocument: trimmedUrl,
       porterId,
       userId: req.user.id,
     });
@@ -327,7 +431,7 @@ export const SavePorterDocuments = async (req, res) => {
       success: true,
       message: "porter document saved successfully",
       document: {
-        porterLincenseNumber: savedPorterDocument.porterLincenseNumber,
+        porterLincenseNumber: savedPorterDocument.porterLicenseNumber,
         porterLicenseDocument: savedPorterDocument.porterLicenseDocument,
       },
     });

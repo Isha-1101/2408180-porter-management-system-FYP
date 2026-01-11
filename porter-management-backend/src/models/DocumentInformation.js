@@ -11,7 +11,7 @@ export const DocumentInformationSchema = new mongoose.Schema(
       ref: "users",
       required: true,
     },
-    porterLincenseNumber: {
+    porterLicenseNumber: {
       type: String,
       required: true,
     },

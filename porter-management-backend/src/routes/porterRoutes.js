@@ -2,6 +2,8 @@ import express from "express";
 import {
   createPorter,
   getAllPortersDetails,
+  getPorterByUserId,
+  getPorterDetailsById,
   getPorterdocumetsByPorterId,
   getVehicleDetailsByPorterId,
   SavePorterDocuments,
@@ -9,6 +11,7 @@ import {
 } from "../controllers/porterController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
+import upload from "../middlewares/uploadFile.js";
 
 const PorterRouter = express.Router();
 /**
@@ -22,13 +25,31 @@ const PorterRouter = express.Router();
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
- *           example:
- *             fullName: Ram Bahadur
- *             phone: "9800000000"
- *             address: Kathmandu, Nepal
- *             porterType: individual
- *             porterPhoto: "photo.jpg"
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fullName
+ *               - phone
+ *               - address
+ *               - porterType
+ *               - porterPhoto
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *                 example: Ram Bahadur
+ *               phone:
+ *                 type: string
+ *                 example: "9800000000"
+ *               address:
+ *                 type: string
+ *                 example: Kathmandu, Nepal
+ *               porterType:
+ *                 type: string
+ *                 example: individual
+ *               porterPhoto:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Porter created successfully
@@ -39,7 +60,13 @@ const PorterRouter = express.Router();
  *       409:
  *         description: Porter with this phone already exists
  */
-PorterRouter.post("/", authenticate, authorizeRole("porter"), createPorter);
+PorterRouter.post(
+  "/",
+  authenticate,
+  authorizeRole("porter"),
+  upload.single("porterPhoto"),
+  createPorter
+);
 
 /**
  * @swagger
@@ -82,6 +109,22 @@ PorterRouter.post("/", authenticate, authorizeRole("porter"), createPorter);
  *         description: Unauthorized
  */
 PorterRouter.get("/", authenticate, getAllPortersDetails);
+
+//get porter by userId
+PorterRouter.get(
+  "/by-user",
+  authenticate,
+  authorizeRole("porter"),
+  getPorterByUserId
+);
+//get porter by id
+PorterRouter.get(
+  "by-id/:id",
+  authenticate,
+  authorizeRole("porter"),
+  getPorterDetailsById
+);
+
 /**
  * @swagger
  * /core-api/porters/vehicle/save/{id}:
@@ -91,8 +134,9 @@ PorterRouter.get("/", authenticate, getAllPortersDetails);
  *     security:
  *       - BearerAuth: []
  *     parameters:
- *       - in: query
- *         name: porterId
+ *       - in: path
+ *         name: id
+ *         required: true
  *         schema:
  *           type: string
  *     requestBody:
@@ -177,6 +221,7 @@ PorterRouter.post(
   "/document/save/:id",
   authenticate,
   authorizeRole("porter"),
+  upload.single("porterLicenseDocument"),
   SavePorterDocuments
 );
 /**
@@ -192,7 +237,7 @@ PorterRouter.post(
  *         name: porterId
  *         schema:
  *           type: string
-  *     responses:
+ *     responses:
  *       200:
  *         description: porter document fetched successfully
  *       401:
