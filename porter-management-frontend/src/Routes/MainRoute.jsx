@@ -24,7 +24,13 @@
 
 // Routes/MainRoute.jsx
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
 import PublicRoute from "./PublicRoute";
 import Layout from "../components/Layout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -42,6 +48,7 @@ import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
 import PorterBooking from "../pages/dashboard/user/PorterBooking";
 import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
+import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
 
 // Import pages that should NOT use Layout
 
@@ -71,25 +78,33 @@ const MainRoute = () => {
             {/* Porter routes */}
             <Route path="porters">
               <Route
-                path="register"
                 element={
-                  <PorterRegisterGuard>
-                    <PorterRegister />
-                  </PorterRegisterGuard>
+                  <PorterRegistrationProvider>
+                    <Outlet />
+                  </PorterRegistrationProvider>
                 }
-              />
-              <Route
-                path="pending"
-                element={
-                  <PorterPendingGuard>
-                    <PorterPending />
-                  </PorterPendingGuard>
-                }
-              />
+              >
+                <Route
+                  path="register"
+                  element={
+                    <PorterRegisterGuard>
+                      <PorterRegister />
+                    </PorterRegisterGuard>
+                  }
+                />
+                <Route
+                  path="pending"
+                  element={
+                    <PorterPendingGuard>
+                      <PorterPending />
+                    </PorterPendingGuard>
+                  }
+                />
 
-              {/* <Route element={<PorterGuards />}> */}
-                <Route index element={<PorterDashboard />} />
-              {/* </Route> */}
+                <Route element={<PorterGuards />}>
+                  <Route index element={<PorterDashboard />} />
+                </Route>
+              </Route>
             </Route>
           </Route>
         </Route>

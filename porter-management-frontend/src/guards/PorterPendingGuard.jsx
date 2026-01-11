@@ -1,12 +1,11 @@
-// guards/PorterPendingGuard.jsx
 import { Navigate } from "react-router";
 
 const PorterPendingGuard = ({ chidren }) => {
   const useAuth = () => {
-    // Mock implementation of authentication and porter profile
+    // TODO: Replace with actual authentication hook
     return {
-      activeRole: "porter", // Change this value to test different scenarios
-      porterVerified: false, // Change status to true or false to test other scenarios
+      activeRole: "porter",
+      porterVerified: false,
     };
   };
   const { activeRole, porterVerified } = useAuth();
