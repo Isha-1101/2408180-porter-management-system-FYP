@@ -20,6 +20,7 @@ import Chatbot from "../components/common/ChatBox";
 
 const LandingPage = () => {
   const [currentFeature, setCurrentFeature] = useState(0);
+  
 
   const features = [
     {
