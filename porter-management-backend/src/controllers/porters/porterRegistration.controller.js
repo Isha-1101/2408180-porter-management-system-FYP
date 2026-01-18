@@ -61,11 +61,10 @@ export const saveBasicInfo = async (req, res) => {
       updatePayload.porterPhoto = existingBasicInfo.porterPhoto;
     }
 
-    await PorterBasicInfo.findOneAndUpdate(
-      { registrationId },
-      updatePayload,
-      { upsert: true, new: true }
-    );
+    await PorterBasicInfo.findOneAndUpdate({ registrationId }, updatePayload, {
+      upsert: true,
+      new: true,
+    });
 
     await PorterRegistration.findByIdAndUpdate(registrationId, {
       currentStep: 2,
@@ -106,11 +105,10 @@ export const saveDocuments = async (req, res) => {
       updatePayload.licenseDocument = existingDocuments.licenseDocument;
     }
 
-    await PorterDocument.findOneAndUpdate(
-      { registrationId },
-      updatePayload,
-      { upsert: true, new: true }
-    );
+    await PorterDocument.findOneAndUpdate({ registrationId }, updatePayload, {
+      upsert: true,
+      new: true,
+    });
 
     await PorterRegistration.findByIdAndUpdate(registrationId, {
       currentStep: 4,
@@ -174,8 +172,27 @@ export const getRegistrationProgress = async (req, res) => {
   }
 };
 
+export const getProterRegistrationByUserId = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const registration = await PorterRegistration.find({
+      userId: userId,
+    }).populate("userId");
+    if (!registration) {
+      return res.status(404).json({ message: "Registration not found" });
+    }
+    res.status(200).json({ success: true, registration });
+  } catch (error) {
+    console.error("Error getting registration progress:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get registration progress" });
+  }
+};
+
 export const submitRegistration = async (req, res) => {
   const { registrationId } = req.params;
+  console.log(registrationId);
   try {
     const registration = await PorterRegistration.findById(registrationId);
     if (!registration) {
@@ -193,6 +210,13 @@ export const submitRegistration = async (req, res) => {
 
     registration.status = "submitted";
     await registration.save();
+    const porter = await Porters({
+      userId: registration.userId,
+      teamId: null,
+      // registrationId: registrationId,
+      status: "pending",
+    });
+    await porter.save();
 
     res.status(200).json({ message: "Registration submitted", success: true });
   } catch (error) {
@@ -215,7 +239,17 @@ export const approveRegistration = async (req, res) => {
       return res.status(404).json({ message: "Registration not found" });
     }
 
-    await Porters.create([{ userId: registration.userId }], { session });
+    await Porters.create(
+      [
+        {
+          userId: registration.userId,
+          teamId: null,
+          status: "active",
+          registrationId: registration._id,
+        },
+      ],
+      { session }
+    );
 
     registration.status = "approved";
     await registration.save({ session });

@@ -11,13 +11,13 @@ const porterReviewSchema = new mongoose.Schema(
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
     },
 
     porterId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "porters",
+      ref: "Porters",
       required: true,
     },
 

@@ -4,26 +4,32 @@ const PorterSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
+      unique: true,
+    },
+    registrationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PorterRegistration",
+      // required: true,
       unique: true,
     },
 
     status: {
       type: String,
-      enum: ["active", "inactive", "banned"],
-      default: "active",
+      enum: ["active", "pending", "inactive", "banned"],
+      default: "pending",
     },
 
     isVerified: {
       type: Boolean,
-      default: true,
+      default: false,
     },
 
     latitude: Number,
     longitude: Number,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Porters", PorterSchema);

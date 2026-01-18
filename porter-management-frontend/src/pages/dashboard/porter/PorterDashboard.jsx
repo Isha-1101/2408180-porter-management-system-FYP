@@ -158,7 +158,6 @@ export default function PorterDashboard() {
 }
 
 /* ---------- Small UI Components ---------- */
-
 function StatusCard({ title, value }) {
   return (
     <div style={statusCard}>
@@ -169,7 +168,6 @@ function StatusCard({ title, value }) {
 }
 
 /* ---------- Styles ---------- */
-
 const cardStyle = {
   background: "#fff",
   padding: "20px",

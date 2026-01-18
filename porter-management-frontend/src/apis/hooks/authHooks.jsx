@@ -33,3 +33,10 @@ export const useRegister = () => {
     },
   });
 };
+
+// export const UseGetUserDetails = () =>{
+//   return useQuery({
+//     queryKey: ["userDetails"],
+//     queryFn: () => getUserDetails(),
+//   });
+// }

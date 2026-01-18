@@ -1,32 +1,42 @@
 import { Navigate, Outlet } from "react-router";
+import { useAuthStore } from "../store/auth.store";
+import { usePorter } from "../hooks/porter/use-porter";
+import { memo } from "react";
+import UiLoader from "../components/common/UiLoader";
 
-const PorterGuards = () => {
-  const useAuth = () => {
-    // Mock implementation of authentication and porter profile
-    return {
-      activeRole: "porter", // Change this value to test different scenarios
-      // porterProfile: { status: "approved" }, // Change status to "pending" or null to test other scenarios
-    };
-  };
-  const { activeRole, porterProfile } = useAuth();
+const PorterGuards = memo(() => {
+  const { porter, isLoading, isFetching } = usePorter();
+  const { user } = useAuthStore();
 
-  // 1Not switched to porter
-  if (activeRole !== "porter") {
+  // Show nothing while loading, but don't redirect
+  if (isLoading || isFetching) {
+    return <UiLoader />;
+  }
+
+  // No user logged in
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Not switched to porter
+  if (user.role !== "porter") {
     return <Navigate to="/dashboard" replace />;
   }
 
   // Not registered
-  if (!porterProfile || porterProfile.status === "rejected") {
+  if (!porter) {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 
   // Registered but not approved
-  if (porterProfile.status === "pending") {
+  if (porter?.status === "pending") {
     return <Navigate to="/dashboard/porters/pending" replace />;
   }
 
   // Approved porter
   return <Outlet />;
-};
+});
+
+PorterGuards.displayName = "PorterGuards";
 
 export default PorterGuards;

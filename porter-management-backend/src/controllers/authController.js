@@ -292,7 +292,7 @@ export const getAllUsersDetails = async (req, res) => {
 
 // get access by both admin,porter,users by all
 export const getUserById = async (req, res) => {
-  const userId = req.params.id;
+  const userId = req.user.id;
   try {
     const user = await User.findById(userId).select("-password  -__v");
     if (!user) {

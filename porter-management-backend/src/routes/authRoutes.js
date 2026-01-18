@@ -219,6 +219,6 @@ authRouter.get(
  *       400:
  *         description: User not found
  */
-authRouter.get("/get-users/:id", authenticate, getUserById);
+authRouter.get("/get-users", authenticate, getUserById);
 
 export default authRouter;

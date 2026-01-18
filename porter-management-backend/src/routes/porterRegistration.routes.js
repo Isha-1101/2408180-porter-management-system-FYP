@@ -8,6 +8,7 @@ import {
   getRegistrationProgress,
   submitRegistration,
   approveRegistration,
+  getProterRegistrationByUserId,
 } from "../controllers/porters/porterRegistration.controller.js";
 
 import upload from "../middlewares/uploadFile.js";
@@ -18,7 +19,12 @@ const porterRegistrationRouter = Router();
  * Start / Resume registration
  * Creates draft if not exists
  */
-porterRegistrationRouter.post("/start", authenticate, authorizeRole("porter"), startRegistration);
+porterRegistrationRouter.post(
+  "/start",
+  authenticate,
+  authorizeRole("porter"),
+  startRegistration
+);
 
 /**
  * STEP 1: Basic Info + Photo
@@ -62,6 +68,12 @@ porterRegistrationRouter.get(
   getRegistrationProgress
 );
 
+porterRegistrationRouter.get(
+  "/user",
+  authenticate,
+  authorizeRole("porter"),
+  getProterRegistrationByUserId
+);
 /**
  * Submit registration
  */

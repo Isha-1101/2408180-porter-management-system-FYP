@@ -22,10 +22,7 @@ const savePorterVehicleInfo = (
   });
 };
 
-const savePorterDocumentsInfo = (
-  registrationId,
-  data
-) => {
+const savePorterDocumentsInfo = (registrationId, data) => {
   return axiosInstance.put(
     `/porter-registration/${registrationId}/documents`,
     data
@@ -38,6 +35,10 @@ const getPorterRegistredInformation = (registrationId) => {
 const submitPorterRegistration = (registrationId) => {
   return axiosInstance.post(`/porter-registration/${registrationId}/submit`);
 };
+
+const getPorterRegistrationByUser = () => {
+  return axiosInstance.get(`/porter-registration/user`);
+};
 export const porterRestrationService = {
   porterRegistrationStart,
   savePorterBasicInfo,
@@ -45,4 +46,5 @@ export const porterRestrationService = {
   savePorterDocumentsInfo,
   getPorterRegistredInformation,
   submitPorterRegistration,
+  getPorterRegistrationByUser,
 };

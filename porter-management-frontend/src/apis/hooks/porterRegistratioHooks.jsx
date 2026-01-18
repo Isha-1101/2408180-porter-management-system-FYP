@@ -1,4 +1,4 @@
-import {  useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { porterRestrationService } from "../services/porterRegistration";
 const useRegstrationStartMutation = () => {
   return useMutation({
@@ -8,7 +8,7 @@ const useRegstrationStartMutation = () => {
 
 const useSavePorterBasicInfoMutation = () => {
   return useMutation({
-    mutationFn: ({registrationId, data}) => {
+    mutationFn: ({ registrationId, data }) => {
       console.log(data);
       return porterRestrationService.savePorterBasicInfo(registrationId, data);
     },
@@ -17,18 +17,24 @@ const useSavePorterBasicInfoMutation = () => {
 
 const useSavePorterVehicleInfoMutation = () => {
   return useMutation({
-    mutationFn: ({registrationId, data}) => {
+    mutationFn: ({ registrationId, data }) => {
       console.log(data);
-      return porterRestrationService.savePorterVehicleInfo(registrationId, data);
+      return porterRestrationService.savePorterVehicleInfo(
+        registrationId,
+        data
+      );
     },
   });
 };
 
 const useSavePorterDocumentsInfoMutation = () => {
   return useMutation({
-    mutationFn: ({registrationId, data}) => {
+    mutationFn: ({ registrationId, data }) => {
       console.log(data);
-      return porterRestrationService.savePorterDocumentsInfo(registrationId, data);
+      return porterRestrationService.savePorterDocumentsInfo(
+        registrationId,
+        data
+      );
     },
   });
 };
@@ -47,6 +53,12 @@ const useSubmitPorterRegistrationMutation = () => {
   });
 };
 
+const usegetPorterRegistrationByUser = () => {
+  return useQuery({
+    queryKey: ["porter-registration-by-user"],
+    queryFn: () => porterRestrationService.getPorterRegistrationByUser(),
+  });
+};
 export const porterRetgistrationHooks = {
   useRegstrationStartMutation,
   useSavePorterBasicInfoMutation,
@@ -54,4 +66,5 @@ export const porterRetgistrationHooks = {
   useSavePorterDocumentsInfoMutation,
   useGetPorterRegistredInformationMutation,
   useSubmitPorterRegistrationMutation,
+  usegetPorterRegistrationByUser
 };

@@ -163,6 +163,7 @@
 // };
 
 // export default Register;
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -277,7 +278,7 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="w-full max-w-7xl grid lg:grid-cols-2 gap-8 z-10">
         {/* Left Side - Benefits */}
         <motion.div
@@ -314,7 +315,7 @@ const Register = () => {
                   transition={{ delay: 0.1 * index }}
                   className="flex items-center space-x-3"
                 >
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center shrink-0">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <span className="text-gray-700">{benefit}</span>

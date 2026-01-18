@@ -3,14 +3,9 @@ import Porters from "../models/porter/Porters.js";
 import VehicleTypes, { VehicleTypesSchema } from "../models/vehicleTypes.js";
 import { uploadToCloudinary } from "./uploadToCloudinary.js";
 /**
- *
  * @param {*} req
  * @param {*} res
  * Post: /core-api/porters
- * Description: Create a new porter
- * this endpoint creates a new porter with the provided details.
- * It expects a JSON body with the following fields:
- * - fullName: String (required)
  */
 export const createPorter = async (req, res) => {
   try {
@@ -86,7 +81,6 @@ export const createPorterDraft = async (req, res) => {
 
 export const getAllPortersDetails = async (req, res) => {
   const { page, limit, teamId, porterType, searchText } = req.query;
-  console.log("Query Params:", req.query);
   try {
     const porters = await Porters.find({
       teamId: teamId || { $exists: true },
@@ -96,7 +90,12 @@ export const getAllPortersDetails = async (req, res) => {
         : { $exists: true },
     })
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .populate({
+        path: "userId",
+        select: "role",
+      });
+    console.log(porters);
     if (!porters) {
       return res
         .status(404)
@@ -121,6 +120,31 @@ export const getAllPortersDetails = async (req, res) => {
   }
 };
 
+export const getPorterDetailsByUserId = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const porter = await Porters.findOne({ userId: userId })
+      .populate({
+        path: "userId",
+        select: "-password -createdAt -updatedAt",
+      })
+      .select("-createdAt -updatedAt");
+    if (!porter) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Porter not found" });
+    }
+    res
+      .status(200)
+      .json({ success: true, message: "Porter fetched successfully", porter });
+  } catch (error) {
+    console.error("Error fetching porter:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching the porter.",
+    });
+  }
+};
 export const getPorterDetailsById = async (req, res) => {
   const porterId = req.params.id;
   try {
@@ -199,6 +223,7 @@ export const updatePorterDetails = async (req, res) => {
     });
   }
 };
+
 export const deletePorterAccounts = async (req, res) => {
   // porter itself or admin can delete
   const porterId = req.params.id;

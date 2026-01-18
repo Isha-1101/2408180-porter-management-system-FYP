@@ -5,7 +5,7 @@ const porterTeamSchema = new mongoose.Schema(
   {
     teamLeaderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
     },
 

@@ -8,6 +8,7 @@ import {
   getVehicleDetailsByPorterId,
   SavePorterDocuments,
   SaveVehicleDetails,
+  getPorterDetailsByUserId,
 } from "../controllers/porterController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
@@ -110,6 +111,7 @@ PorterRouter.post(
  */
 PorterRouter.get("/", authenticate, getAllPortersDetails);
 
+PorterRouter.get("/by-user", authenticate, authorizeRole("porter"), getPorterDetailsByUserId);
 //get porter by userId
 PorterRouter.get(
   "/by-user",

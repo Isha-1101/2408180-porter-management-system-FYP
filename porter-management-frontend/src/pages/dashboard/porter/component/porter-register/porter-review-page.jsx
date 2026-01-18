@@ -32,7 +32,6 @@ const ReviewPage = ({
   isLoading,
   registrationId,
 }) => {
-  console.log(data, "data");
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not specified";

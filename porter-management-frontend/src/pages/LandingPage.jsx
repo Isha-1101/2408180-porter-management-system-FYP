@@ -20,7 +20,6 @@ import Chatbot from "../components/common/ChatBox";
 
 const LandingPage = () => {
   const [currentFeature, setCurrentFeature] = useState(0);
-  
 
   const features = [
     {
@@ -164,7 +163,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-blue-50 overflow-hidden">
       {/* Hero Section */}
       <section className="relative z-10 px-4 sm:px-6 lg:px-8 pt-24 pb-32 bg-[url('/images/background_image_porter.png')] bg-center bg-cover bg-no-repeat">
         <div className="absolute inset-0 bg-black/50"></div>
@@ -196,7 +195,7 @@ const LandingPage = () => {
               transition={{ delay: 0.3 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             >
-              <span className="bg-gradient-to-br from-primary to-red-200 bg-clip-text text-8xl text-transparent">
+              <span className="bg-linear-to-br from-primary to-red-200 bg-clip-text text-8xl text-transparent">
                 DOKO Namlo
               </span>
               <br />
@@ -234,10 +233,10 @@ const LandingPage = () => {
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform" />
                   </span>
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700"
+                    className="absolute inset-0 bg-linear-to-r from-blue-700 to-indigo-700"
                     initial={{ x: "-100%" }}
                     whileHover={{ x: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.3 }}  
                   ></motion.div>
                 </Link>
               </motion.div>
@@ -330,7 +329,7 @@ const LandingPage = () => {
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Powerful Features for{" "}
-              <span className="bg-gradient-to-r from-primary to-yellow-600 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary to-yellow-600 bg-clip-text text-transparent">
                 Seamless Operations
               </span>
             </h2>
@@ -391,10 +390,10 @@ const LandingPage = () => {
 
                   {/* Preview Content */}
                   <div className="space-y-4 mb-6">
-                    <div className="h-3 rounded-full bg-gradient-to-r from-gray-200 to-gray-600 w-full"></div>
-                    <div className="h-3 rounded-full bg-gradient-to-r from-gray-200 to-gray-600 w-3/4"></div>
-                    <div className="h-3 rounded-full bg-gradient-to-r from-gray-200 to-gray-600 w-5/6"></div>
-                    <div className="h-3 rounded-full bg-gradient-to-r from-gray-200 to-gray-600 w-2/3"></div>
+                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-full"></div>
+                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-3/4"></div>
+                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-5/6"></div>
+                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-2/3"></div>
                   </div>
 
                   {/* Live Stats */}
@@ -429,7 +428,7 @@ const LandingPage = () => {
       {/* How It Works */}
       <section
         id="how-it-works"
-        className="relative z-10 px-4 sm:px-6 lg:px-8 py-24 bg-gradient-to-br from-blue-50/50 to-indigo-50/50"
+        className="relative z-10 px-4 sm:px-6 lg:px-8 py-24 bg-linear-to-r from-blue-50/50 to-indigo-50/50"
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -464,7 +463,7 @@ const LandingPage = () => {
                 whileHover={{ scale: 1.05, y: -5 }}
                 className="relative group"
               >
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition duration-500"></div>
+                <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition duration-500"></div>
                 <div className="relative bg-white rounded-2xl p-8 shadow-xl h-full">
                   <div className="flex items-center justify-between mb-6">
                     <div className="text-5xl font-bold text-blue-100">
@@ -520,10 +519,10 @@ const LandingPage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
+                className="bg-linear-to-r from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
               >
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-950 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 bg-linear-to-r from-blue-500 to-blue-950 rounded-full flex items-center justify-center text-white font-bold">
                     {testimonial.avatar}
                   </div>
                   <div className="ml-4">

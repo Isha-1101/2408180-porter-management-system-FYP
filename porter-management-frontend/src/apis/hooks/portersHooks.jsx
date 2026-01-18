@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { porterService } from "../services/porterService";
+import { useAuthStore } from "../../store/auth.store";
 
 export const useCreateNewPorter = () => {
   return useMutation({
@@ -24,12 +25,20 @@ export const useGetPorterById = (id) => {
   });
 };
 
-export const useGetPorterByUserId = () => {
+export const useGetPorterByUser = () =>{
+  const { user } = useAuthStore();
   return useQuery({
     queryKey: ["porterByUser"],
-    queryFn: () => porterService.getPorterByUserId(),
+    queryFn: () => porterService.getPorterByUser(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
   });
-};
+}
+
 //vehicle details
 export const useCreateVechicleDetais = () => {
   return useMutation({

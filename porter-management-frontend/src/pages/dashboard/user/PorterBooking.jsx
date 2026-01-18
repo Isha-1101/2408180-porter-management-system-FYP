@@ -72,7 +72,7 @@ const PorterBooking = () => {
         tags: ["Heavy Load"],
       },
     ],
-    []
+    [],
   );
 
   const filteredPorters = useMemo(() => {
@@ -100,8 +100,8 @@ const PorterBooking = () => {
       {/* Main Content Grid */}
       <div className="grid sm:grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
         {/* Map Section */}
-        <div className="sm:col-span-4 md:col-span-4 lg:col-span-3">
-          <Card className="overflow-hidden">
+        <div className="sm:col-span-4 md:col-span-4 lg:col-span-3 bg-background rounded-2xl p-2">
+          <div className="overflow-hidden">
             <CardHeader className="border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ const PorterBooking = () => {
             <CardContent className="p-3">
               <UserMap showSidebar={true} />
             </CardContent>
-          </Card>
+          </div>
         </div>
 
         {/* Available Porters Section */}

@@ -10,9 +10,15 @@ export const porterService = {
     return response;
   },
 
-  getPorters: async (parameters) => {
+  getPorters: async (parameters = {}) => {
+    const {
+      searchText = "",
+      page = 1,
+      limit = 10,
+      porterType = "",
+    } = parameters;
     const response = axiosInstance.get(
-      `/porters?searchText=${parameters.searchText}&page=${parameters.page}&limit=${parameters.limit}&porterType=${parameters.porterType}`
+      `/porters?searchText=${searchText}&page=${page}&limit=${limit}&porterType=${porterType}`
     );
     return response;
   },
@@ -22,16 +28,19 @@ export const porterService = {
     return response;
   },
 
-  getPorterByUserId: async () => {
+  getPorterByUser: async () => {
     const response = axiosInstance.get(`/porters/by-user`);
     return response;
   },
   saveVehicleDetailsPorter: async (payload) => {
-    const response = axiosInstance.post(`/porters/vehicle/save/${payload.porterId}`, {
-      vehicleNumber: payload.vehicleNumber,
-      vehicleCategory: payload.vehicleCategory,
-      capacity: payload.capacity,
-    }); 
+    const response = axiosInstance.post(
+      `/porters/vehicle/save/${payload.porterId}`,
+      {
+        vehicleNumber: payload.vehicleNumber,
+        vehicleCategory: payload.vehicleCategory,
+        capacity: payload.capacity,
+      }
+    );
     return response;
   },
 
