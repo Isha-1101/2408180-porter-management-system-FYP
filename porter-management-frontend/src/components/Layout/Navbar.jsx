@@ -378,7 +378,7 @@ const NavBar = () => {
       const scrollThreshold = 100;
       if (window.scrollY > scrollThreshold) {
         setIsScrolled(true);
-      } else {
+      } else if (window.scrollY < 50) {
         setIsScrolled(false);
       }
     };
@@ -417,16 +417,14 @@ const NavBar = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex flex-col items-center justify-center flex-1 p-2 rounded-lg transition-all duration-200 ${
-                  location.pathname === item.path
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-                }`}
+                className={`flex flex-col items-center justify-center flex-1 p-2 rounded-lg transition-all duration-200 ${location.pathname === item.path
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                  }`}
               >
                 <div
-                  className={`mb-1 ${
-                    location.pathname === item.path ? "scale-110" : ""
-                  }`}
+                  className={`mb-1 ${location.pathname === item.path ? "scale-110" : ""
+                    }`}
                 >
                   {item.icon}
                 </div>
@@ -467,27 +465,26 @@ const NavBar = () => {
   const isLandingPage = location.pathname === "/";
   return (
     <header
-      className={`${navbarStyles} ${
-        isLandingPage && !isScrolled
-          ? "bg-[url('/images/sky.png')] bg-center bg-cover bg-no-repeat"
-          : ""
-      }`}
+      className={`${navbarStyles}`}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div
-          className={`flex items-center justify-between h-14 sm:h-16 rounded-full px-4 sm:px-6 transition-all duration-300 ${
-            isScrolled
-              ? "bg-primary"
-              : isLandingPage
+          className={`flex items-center justify-between h-14 sm:h-16 rounded-full px-4 sm:px-6 transition-all duration-300 ${isScrolled
+            ? "bg-primary"
+            : isLandingPage
               ? "bg-white backdrop-blur-sm"
               : " dark:bg-gray-800"
-          }`}
+            }`}
         >
           {/* Logo */}
           <div className="flex items-center min-w-0">
             <Link to="/" className="flex items-center gap-2">
               <div className="">
-                <Logo text={false} className="h-15 w-15" />
+                <Logo
+                  text={false}
+                  className="h-10 w-20"
+                  isColored={isLandingPage && !isScrolled}
+                />
               </div>
               <span
                 className={`text-lg sm:text-xl font-bold font-serif tracking-wide transition-colors duration-300  dark:text-white ${isScrolled ? "text-white" : "text-primary dark:text-white"}`}
@@ -505,11 +502,10 @@ const NavBar = () => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`text-sm font-medium rounded-full px-4 py-2 transition-all duration-300 ${
-                    isScrolled
-                      ? "text-white/90 hover:bg-white/10"
-                      : "text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-200"
-                  }`}
+                  className={`text-sm font-medium rounded-full px-4 py-2 transition-all duration-300 ${isScrolled
+                    ? "text-white/90 hover:bg-white/10"
+                    : "text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-200"
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -520,11 +516,10 @@ const NavBar = () => {
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <button
-              className={`p-1.5 sm:p-2 rounded-full transition-all duration-300 ${
-                isScrolled
-                  ? "text-white hover:bg-white/10"
-                  : "text-white dark:text-gray-300 hover:bg-gray-500 dark:hover:bg-gray-700"
-              }`}
+              className={`p-1.5 sm:p-2 rounded-full transition-all duration-300 ${isScrolled
+                ? "text-white hover:bg-white/10"
+                : "text-white dark:text-gray-300 hover:bg-gray-500 dark:hover:bg-gray-700"
+                }`}
               aria-label="Toggle theme"
             >
               {isDark ? (
@@ -536,11 +531,10 @@ const NavBar = () => {
 
             <Button
               onClick={() => navigate("/register")}
-              className={`rounded-full px-6 sm:px-8 py-2 hover:scale-105 transition-all duration-300 font-medium cursor-pointer ${
-                isScrolled
-                  ? "bg-white hover:bg-white/90 text-[hsl(220,50%,20%)]"
-                  : "bg-secondary hover:bg-primary/90 text-white"
-              }`}
+              className={`rounded-full px-6 sm:px-8 py-2 hover:scale-105 transition-all duration-300 font-medium cursor-pointer ${isScrolled
+                ? "bg-white hover:bg-white/90 text-[hsl(220,50%,20%)]"
+                : "bg-primary hover:bg-primary/90 text-white"
+                }`}
             >
               Join Now
             </Button>

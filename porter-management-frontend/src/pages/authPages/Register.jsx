@@ -279,72 +279,9 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="w-full max-w-7xl grid lg:grid-cols-2 gap-8 z-10">
+      <div className="w-full flex justify-center z-10">
         {/* Left Side - Benefits */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="hidden lg:flex justify-center p-4"
-        >
-          <div className="max-w-md">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="mb-8"
-            >
-              <div className="">
-              </div>
-              <p className="text-lg text-gray-600 mb-8">
-                Create your account and start managing your delivery operations
-                efficiently. Join thousands of businesses already using DOKO
-                Namlo.
-              </p>
-            </motion.div>
 
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Why Join DOKO Namlo?
-              </h3>
-              {benefits.map((benefit, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 * index }}
-                  className="flex items-center space-x-3"
-                >
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                  </div>
-                  <span className="text-gray-700">{benefit}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="mt-12 grid grid-cols-3 gap-4"
-            >
-              <div className="text-center">
-                <div className="text-2xl font-bold text-secondary">10K+</div>
-                <div className="text-sm text-gray-600">Active Users</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-secondary">500+</div>
-                <div className="text-sm text-gray-600">Businesses</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-secondary">99%</div>
-                <div className="text-sm text-gray-600">Satisfaction</div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
 
         {/* Right Side - Registration Form */}
         <motion.div
@@ -353,7 +290,7 @@ const Register = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="flex justify-center items-center"
         >
-          <Card className="w-full max-w-md border-0 rounded-2xl shadow-2xl overflow-hidden bg-white/80 backdrop-blur-sm">
+          <Card className="w-full max-w-2xl border-0 rounded-2xl shadow-2xl overflow-hidden bg-white/80 backdrop-blur-sm">
             <CardHeader className="text-center pt-8 pb-4">
               <motion.div
                 initial={{ y: -20 }}
@@ -363,9 +300,6 @@ const Register = () => {
                 <CardTitle className="text-3xl font-bold text-primary">
                   Create Account
                 </CardTitle>
-                <p className="text-secondary mt-2">
-                  Join DOKO Namlo and streamline your operations
-                </p>
               </motion.div>
             </CardHeader>
 
@@ -386,7 +320,7 @@ const Register = () => {
                       name="name"
                       value={form.name}
                       onChange={changeHandler}
-                      placeholder="Ram Sharma"
+                      placeholder="Name Lastname"
                       className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
@@ -408,7 +342,7 @@ const Register = () => {
                       name="email"
                       value={form.email}
                       onChange={changeHandler}
-                      placeholder="ram@herald.com"
+                      placeholder="name@herald.com"
                       className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
@@ -484,11 +418,10 @@ const Register = () => {
                       onClick={() => setForm({ ...form, role: "user" })}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
-                        form.role === "user"
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
-                      }`}
+                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "user"
+                        ? "border-blue-500 bg-blue-50 text-blue-600"
+                        : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                        }`}
                     >
                       <User className="w-6 h-6 mx-auto mb-2" />
                       <div className="font-medium">User</div>
@@ -500,11 +433,10 @@ const Register = () => {
                       onClick={() => setForm({ ...form, role: "porter" })}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
-                        form.role === "porter"
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
-                      }`}
+                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "porter"
+                        ? "border-blue-500 bg-blue-50 text-blue-600"
+                        : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                        }`}
                     >
                       <Building className="w-6 h-6 mx-auto mb-2" />
                       <div className="font-medium">Porter</div>

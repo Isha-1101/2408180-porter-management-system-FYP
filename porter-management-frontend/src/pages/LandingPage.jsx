@@ -61,26 +61,26 @@ const LandingPage = () => {
       number: "01",
       title: "Book a Porter",
       description: "Select your requirements and schedule instantly",
-      icon: <Smartphone className="w-6 h-6 text-primary" />,
+      icon: <Smartphone className="w-6 h-6 text-white" />,
     },
     {
       number: "02",
       title: "Match & Assign",
       description:
         "Our system automatically assigns the nearest available porter",
-      icon: <Users className="w-6 h-6 text-primary" />,
+      icon: <Users className="w-6 h-6 text-white" />,
     },
     {
       number: "03",
       title: "Track Live",
       description: "Monitor the delivery progress in real-time",
-      icon: <MapPin className="w-6 h-6 text-primary" />,
+      icon: <MapPin className="w-6 h-6 text-white" />,
     },
     {
       number: "04",
       title: "Receive & Rate",
       description: "Confirm delivery and provide feedback",
-      icon: <Star className="w-6 h-6 text-primary" />,
+      icon: <Star className="w-6 h-6 text-white" />,
     },
   ];
 
@@ -136,28 +136,14 @@ const LandingPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 20,
-        y: (e.clientY / window.innerHeight - 0.5) * 20,
-      });
-    };
 
-    window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${
-          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-        }`}
+        className={`w-4 h-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+          }`}
       />
     ));
   };
@@ -165,14 +151,14 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-blue-50 overflow-hidden">
       {/* Hero Section */}
-      <section className="relative z-10 px-4 sm:px-6 lg:px-8 pt-24 pb-32 bg-[url('/images/background_image_porter.png')] bg-center bg-cover bg-no-repeat">
-        <div className="absolute inset-0 bg-black/50"></div>
+      <section className="relative z-10 px-4 sm:px-6 lg:px-8 pt-24 pb-32 bg-[#e0f470]">
+
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center relative"
+            className="text-left relative"
           >
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
@@ -195,30 +181,21 @@ const LandingPage = () => {
               transition={{ delay: 0.3 }}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             >
-              <span className="bg-linear-to-br from-primary to-red-200 bg-clip-text text-8xl text-transparent">
+              <span className="text-8xl text-primary">
                 DOKO Namlo
               </span>
               <br />
-              <span className="text-white">Revolutionizing Delivery</span>
+              <span className="text-primary">Reinventing Porter Hailing</span>
             </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-lg sm:text-xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed"
-            >
-              Nepal's premier porter management system. Streamline your delivery
-              operations with intelligent porter allocation, real-time tracking,
-              and comprehensive analytics.
-            </motion.p>
+
 
             {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
+              className="flex flex-col sm:flex-row gap-4 justify-start items-center mb-16"
             >
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -229,14 +206,13 @@ const LandingPage = () => {
                   className="group relative bg-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all duration-300 shadow-lg inline-flex items-center overflow-hidden"
                 >
                   <span className="relative z-10 flex items-center">
-                    Get Started Free
-                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                    Book Porters
                   </span>
                   <motion.div
                     className="absolute inset-0 bg-linear-to-r from-blue-700 to-indigo-700"
                     initial={{ x: "-100%" }}
                     whileHover={{ x: 0 }}
-                    transition={{ duration: 0.3 }}  
+                    transition={{ duration: 0.3 }}
                   ></motion.div>
                 </Link>
               </motion.div>
@@ -249,65 +225,13 @@ const LandingPage = () => {
                   to="/login"
                   className="group bg-white text-gray-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl border border-gray-200 inline-flex items-center"
                 >
-                  <svg
-                    className="w-6 h-6 mr-2 text-blue-600"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                  </svg>
-                  Existing User? Sign In
+
+                  Sign In
                 </Link>
               </motion.div>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
-            >
-              {[
-                {
-                  value: "10K+",
-                  label: "Active Porters",
-                  icon: <Users className="w-5 h-5 text-primary" />,
-                },
-                {
-                  value: "250K+",
-                  label: "Deliveries",
-                  icon: <Package className="w-5 h-5 text-primary" />,
-                },
-                {
-                  value: "99.8%",
-                  label: "Success Rate",
-                  icon: <CheckCircle className="w-5 h-5 text-primary" />,
-                },
-                {
-                  value: "24/7",
-                  label: "Support",
-                  icon: <Clock className="w-5 h-5 text-primary" />,
-                },
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 + index * 0.1 }}
-                  whileHover={{ y: -5 }}
-                  className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {stat.value}
-                    </div>
-                    <div className="text-blue-600">{stat.icon}</div>
-                  </div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
-                </motion.div>
-              ))}
-            </motion.div>
+
           </motion.div>
         </div>
       </section>
@@ -324,103 +248,46 @@ const LandingPage = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-primary text-sm font-semibold mb-4">
-              Features
-            </div>
+
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Powerful Features for{" "}
-              <span className="bg-linear-to-r from-primary to-yellow-600 bg-clip-text text-transparent">
+              <span className="text-primary">
                 Seamless Operations
               </span>
             </h2>
-            <p className="text-lg text-secondary max-w-3xl mx-auto">
-              Everything you need to manage your porter operations efficiently
-            </p>
+
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Feature Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="flex justify-center w-full">
+            <div className="flex flex-col md:flex-row flex-nowrap justify-center gap-4 lg:gap-8 w-full max-w-7xl px-4">
               {features.map((feature, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className={`relative cursor-pointer transform transition-all duration-300`}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 1.0, delay: index * 0.3, ease: "easeOut" }}
+                  whileHover={{ y: -10, scale: 1.02 }}
+                  className="w-full md:flex-1"
                 >
-                  <div
-                    className={`${feature.gradient} p-6 rounded-2xl shadow-xl h-full`}
-                  >
-                    <div className="text-white mb-4">{feature.icon}</div>
-                    <h3 className="text-xl font-bold text-white mb-2">
+                  <div className="bg-primary p-8 rounded-3xl shadow-xl h-full flex flex-col min-h-[350px] relative overflow-hidden group border border-white/10">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700"></div>
+
+                    <div className="mb-6 bg-white/10 w-16 h-16 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-inner relative z-10">
+                      {feature.icon}
+                    </div>
+
+                    <h3 className="text-2xl font-bold text-white mb-4 relative z-10">
                       {feature.title}
                     </h3>
-                    <p className="text-white/90 text-sm">
+
+                    <p className="text-white/80 leading-relaxed text-sm relative z-10">
                       {feature.description}
                     </p>
                   </div>
                 </motion.div>
               ))}
             </div>
-
-            {/* Feature Preview */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentFeature}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="relative"
-              >
-                <div className="bg-primary rounded-3xl p-8 shadow-2xl">
-                  {/* Preview Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    </div>
-                    <span className="text-gray-400 text-sm font-medium">
-                      {features[currentFeature].title}
-                    </span>
-                  </div>
-
-                  {/* Preview Content */}
-                  <div className="space-y-4 mb-6">
-                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-full"></div>
-                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-3/4"></div>
-                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-5/6"></div>
-                    <div className="h-3 rounded-full bg-linear-to-r from-gray-200 to-gray-600 w-2/3"></div>
-                  </div>
-
-                  {/* Live Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-gray-800 rounded-lg p-3 text-center">
-                      <div className="text-white font-bold">95%</div>
-                      <div className="text-gray-400 text-xs">Success Rate</div>
-                    </div>
-                    <div className="bg-gray-800 rounded-lg p-3 text-center">
-                      <div className="text-white font-bold">15min</div>
-                      <div className="text-gray-400 text-xs">Avg. Response</div>
-                    </div>
-                    <div className="bg-gray-800 rounded-lg p-3 text-center">
-                      <div className="text-white font-bold">4.8★</div>
-                      <div className="text-gray-400 text-xs">Rating</div>
-                    </div>
-                  </div>
-
-                  <div className="text-center">
-                    <p className="text-gray-300 text-sm">
-                      Experience the power of{" "}
-                      {features[currentFeature].title.toLowerCase()}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
           </div>
         </div>
       </section>
@@ -437,9 +304,6 @@ const LandingPage = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-primary text-sm font-semibold mb-4">
-              Process
-            </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Simple{" "}
               <span className="bg-primary bg-clip-text text-transparent">
@@ -447,9 +311,6 @@ const LandingPage = () => {
               </span>{" "}
               Process
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Book a porter in minutes and track everything in real-time
-            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -463,22 +324,23 @@ const LandingPage = () => {
                 whileHover={{ scale: 1.05, y: -5 }}
                 className="relative group"
               >
-                <div className="absolute -inset-0.5 bg-linear-to-r from-blue-500 to-purple-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition duration-500"></div>
-                <div className="relative bg-white rounded-2xl p-8 shadow-xl h-full">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="text-5xl font-bold text-blue-100">
+                <div className="relative bg-primary rounded-3xl p-8 shadow-xl h-full overflow-hidden group border border-white/10">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700"></div>
+
+                  <div className="flex items-center justify-between mb-6 relative z-10">
+                    <div className="text-5xl font-bold text-white">
                       {step.number}
                     </div>
-                    <div className="p-3 bg-blue-50 rounded-xl">{step.icon}</div>
+                    <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm text-white">{step.icon}</div>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-xl font-bold text-white mb-3 relative z-10">
                     {step.title}
                   </h3>
-                  <p className="text-gray-600">{step.description}</p>
+                  <p className="text-white/80 relative z-10">{step.description}</p>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2">
-                    <ChevronRight className="w-8 h-8 text-blue-300" />
+                  <div className="hidden lg:block absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 z-20">
+                    <ChevronRight className="w-8 h-8 text-primary/30" />
                   </div>
                 )}
               </motion.div>
@@ -496,18 +358,12 @@ const LandingPage = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-primary text-sm font-semibold mb-4">
-              Testimonials
-            </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               What Our{" "}
               <span className="bg-primary bg-clip-text text-transparent">
                 Customers Say
               </span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Join thousands of satisfied businesses already using Doko Namlo
-            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -522,7 +378,7 @@ const LandingPage = () => {
                 className="bg-linear-to-r from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
               >
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-linear-to-r from-blue-500 to-blue-950 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                     {testimonial.avatar}
                   </div>
                   <div className="ml-4">
@@ -574,7 +430,7 @@ const LandingPage = () => {
                 >
                   <Link
                     to="/register"
-                    className="bg-white text-secondary px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 inline-flex items-center shadow-lg"
+                    className="bg-[#e0f470] text-primary px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#d9ec6d] transition-all duration-300 inline-flex items-center shadow-lg"
                   >
                     Start Free 14-Day Trial
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -586,7 +442,7 @@ const LandingPage = () => {
                 >
                   <Link
                     to="/contact"
-                    className="bg-secondary text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/60 transition-all duration-300"
+                    className="bg-transparent border-2 border-[#e0f470] text-[#e0f470] px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#e0f470] hover:text-primary transition-all duration-300 inline-flex items-center"
                   >
                     Schedule a Demo
                   </Link>

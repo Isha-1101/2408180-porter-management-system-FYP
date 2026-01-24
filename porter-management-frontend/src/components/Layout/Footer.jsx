@@ -22,11 +22,8 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 export default function Footer() {
   return (
-    <footer className="px-8 pt-24 pb-8">
+    <footer className="px-8 pt-10 pb-8">
       <div className="container max-w-6xl mx-auto flex flex-col">
-        <div className="">
-          <Logo text={true} />
-        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 w-full">
           <div className="flex flex-col md:flex-row col-span-2 gap-10 mb-10 lg:mb-0 md:gap-36">
             {LINKS.map(({ title, items }) => (
@@ -50,6 +47,9 @@ export default function Footer() {
           </div>
 
           <div>
+            <div className="mb-6">
+              <Logo text={true} isColored={true} />
+            </div>
             <h6 className="text-lg font-semibold mb-3 text-left">Subscribe</h6>
 
             <p className="text-gray-500 mb-4 text-base">
@@ -80,11 +80,11 @@ export default function Footer() {
                 </p>
               </div>
 
-              <Button variant={"default"}>Subscribe</Button>
+              <Button className="bg-primary hover:bg-primary/90 text-white">Subscribe</Button>
             </div>
           </div>
         </div>
-        <p className="text-center mt-16 text-gray-700">
+        <p className="text-center mt-8 text-gray-700">
           &copy; {CURRENT_YEAR} Doko-Namlo.{" "}
           <a
             href="https://www.creative-tim.com"
