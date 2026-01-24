@@ -1,7 +1,15 @@
 import express from "express";
-import { banneduser, deleteUserAccounts, getAllUsersDetails, getUserById, login, register } from "../controllers/authController.js";
+import {
+  banneduser,
+  deleteUserAccounts,
+  getAllUsersDetails,
+  getUserById,
+  login,
+  register,
+} from "../controllers/authController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
+import { switchToPorter } from "../controllers/userSwitch/switchToPorter.js";
 
 const authRouter = express.Router();
 
@@ -99,11 +107,7 @@ authRouter.post("/login", login);
  *      200:
  *        description: User account deleted successfully
  */
-authRouter.put(
-  "/delete-user/:id",
-  authenticate,
-  deleteUserAccounts
-);
+authRouter.put("/delete-user/:id", authenticate, deleteUserAccounts);
 
 /**
  * @swagger
@@ -144,7 +148,7 @@ authRouter.put(
   "/banned-user/:id",
   authenticate,
   authorizeRole("admin"),
-  banneduser
+  banneduser,
 );
 
 /**
@@ -196,7 +200,7 @@ authRouter.get(
   "/get-users",
   authenticate,
   authorizeRole("admin"),
-  getAllUsersDetails
+  getAllUsersDetails,
 );
 /**
  * @swagger
@@ -220,5 +224,7 @@ authRouter.get(
  *         description: User not found
  */
 authRouter.get("/get-users", authenticate, getUserById);
+
+authRouter.get("/switch-to-porter", authenticate, switchToPorter);
 
 export default authRouter;

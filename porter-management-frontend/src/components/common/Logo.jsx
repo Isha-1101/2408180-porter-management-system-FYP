@@ -1,20 +1,20 @@
-export default function Logo({ className = "", text = false, isColored = false }) {
+export default function Logo({ containerClassName = "", text = false, isColored = false ,imgClassName="" ,logoClassName=""}) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center gap-3 ${containerClassName}`}>
       {/* Logo Icon */}
-      <div className="w-full h-full">
+      <div className={`w-full h-full ${logoClassName}`}>
         {isColored ? (
           <img
             src="/images/doko_namlo.svg"
             alt="Doko Namlo Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full"
           />
         ) : (
           <svg
             viewBox="0 0 1240 640"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
+            className={`w-full h-full${imgClassName}`}
           >
             <path
               fill-rule="evenodd"

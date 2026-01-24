@@ -12,6 +12,8 @@ import porterRegistrationRouter from "./src/routes/porterRegistration.routes.js"
 import locationRouter from "./src/routes/locationRoutes.js";
 import connectDB from "./src/config/db.js";
 import { multerErrorHandler } from "./src/middlewares/multerErrorHandler.js";
+import aiRouter from "./src/routes/aiRoutes.js";
+import teamRouter from "./src/routes/team/teamRoutes.js";
 
 dotenv.config({
   path: new URL("./.env", import.meta.url),
@@ -41,6 +43,8 @@ app.use("/core-api/auth", authRouter);
 app.use("/core-api/porters", porterRouter);
 app.use("/core-api/porter-registration", porterRegistrationRouter);
 app.use("/core-api/location", locationRouter);
+app.use("/core-api/ask-questions", aiRouter);
+app.use("/core-api/team-porters", teamRouter);
 
 app.get("/", (req, res) => {
   res.send(`

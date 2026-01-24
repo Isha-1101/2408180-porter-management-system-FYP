@@ -5,13 +5,39 @@ const PorterSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: function () {
+        return this.role === "owner";
+      },
       unique: true,
+      sparse: true,
     },
+    porterType: {
+      type: String,
+      enum: ["individual", "team"],
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ["owner", "worker"],
+      required: true,
+    },
+    canAcceptBooking: {
+      type: Boolean,
+      default: false,
+    },
+
+    teamId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PorterTeam",
+      required: function () {
+        return this.role === "worker";
+      },
+      default: null,
+    },
+
     registrationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PorterRegistration",
-      // required: true,
       unique: true,
     },
 
@@ -31,5 +57,4 @@ const PorterSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
-
 export default mongoose.model("Porters", PorterSchema);

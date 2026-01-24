@@ -113,14 +113,14 @@ export const login = async (req, res) => {
     if (!user) {
       return res
         .status(400)
-        .json({ success: false, message: "No account found" });
+        .json({ success: false, message: "Invalid Credentials" });
     }
 
     //check user is deleted or not
     if (user.isDeleted) {
       return res.status(403).json({
         success: false,
-        message: "No account found",
+        message: "User is Deleted. Please Contact Admin For More Details",
       });
     }
 

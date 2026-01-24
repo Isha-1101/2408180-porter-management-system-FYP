@@ -33,32 +33,32 @@ const DashboardLayout = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const navItems = [
-    {
-      label: "Dashboard",
-      to: "/dashboard",
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      end: true,
-    },
+    // {
+    //   label: "Dashboard",
+    //   to: "/dashboard",
+    //   icon: <LayoutDashboard className="w-5 h-5" />,
+    //   end: true,
+    // },
     {
       label: "Porter Booking",
       to: "/dashboard/booking",
       icon: <MapPinned className="w-5 h-5" />,
     },
-    {
-      label: "Orders",
-      to: "/dashboard/orders",
-      icon: <ClipboardList className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Orders",
+    //   to: "/dashboard/orders",
+    //   icon: <ClipboardList className="w-5 h-5" />,
+    // },
     {
       label: "Porters",
       to: "/dashboard/porters",
       icon: <Users className="w-5 h-5" />,
     },
-    {
-      label: "Settings",
-      to: "/dashboard/settings",
-      icon: <Settings className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Settings",
+    //   to: "/dashboard/settings",
+    //   icon: <Settings className="w-5 h-5" />,
+    // },
   ];
 
   // Persist sidebar state to localStorage

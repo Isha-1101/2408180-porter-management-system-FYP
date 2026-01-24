@@ -6,17 +6,26 @@ const PorterVehicleSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "PorterRegistration",
       required: true,
+      index: true,
       unique: true,
     },
-
-    vehicleNumber: { type: String, required: true },
-    vehicleCategory: { type: String, required: true },
+    hasVehicle: { type: Boolean, required: true },
+    vehicleNumber: {
+      type: String,
+      required: function () {
+        return this.hasVehicle;
+      },
+    },
+    vehicleCategory: {
+      type: String,
+       enum: ["bike", "tempo", "pickup", "truck"],
+      required: function () {
+        return this.hasVehicle;
+      },
+    },
     capacity: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model(
-  "PorterVehicle",
-  PorterVehicleSchema
-);
+export default mongoose.model("PorterVehicle", PorterVehicleSchema);

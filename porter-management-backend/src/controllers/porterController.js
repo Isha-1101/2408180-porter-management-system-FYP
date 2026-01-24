@@ -90,12 +90,8 @@ export const getAllPortersDetails = async (req, res) => {
         : { $exists: true },
     })
       .skip((page - 1) * limit)
-      .limit(limit)
-      .populate({
-        path: "userId",
-        select: "role",
-      });
-    console.log(porters);
+      .limit(limit);
+
     if (!porters) {
       return res
         .status(404)
@@ -149,7 +145,7 @@ export const getPorterDetailsById = async (req, res) => {
   const porterId = req.params.id;
   try {
     const porter = await Porters.findById(porterId).select(
-      "-createdAt -updatedAt -userId -teamId -__v"
+      "-createdAt -updatedAt -userId -teamId -__v",
     );
     if (!porter) {
       return res
@@ -174,7 +170,7 @@ export const getPorterByUserId = async (req, res) => {
   const userId = req.user.id;
   try {
     const porter = await Porters.findOne({ userId }).select(
-      "-createdAt -updatedAt -userId -teamId -__v"
+      "-createdAt -updatedAt -userId -teamId -__v",
     );
     if (!porter) {
       return res
@@ -203,7 +199,7 @@ export const updatePorterDetails = async (req, res) => {
     const updatedPorter = await Porters.findByIdAndUpdate(
       porterId,
       updateData,
-      { new: true }
+      { new: true },
     );
     if (!updatedPorter) {
       return res
@@ -232,7 +228,7 @@ export const deletePorterAccounts = async (req, res) => {
     const deletedPorter = await Porters.findByIdAndUpdate(
       porterId,
       { isDeleted: isDeleted || true },
-      { new: true }
+      { new: true },
     );
     if (!deletedPorter) {
       return res
@@ -260,7 +256,7 @@ export const bannedPorter = async (req, res) => {
     const bannedPorter = await Porters.findByIdAndUpdate(
       porterId,
       { isBanned: porterStatus, remarks },
-      { new: true }
+      { new: true },
     );
     if (!bannedPorter) {
       return res
@@ -288,7 +284,7 @@ export const unBannedPorter = async (req, res) => {
     const unBannedPorter = await Porters.findByIdAndUpdate(
       porterId,
       { isBanned: false },
-      { new: true }
+      { new: true },
     );
     if (!unBannedPorter) {
       return res
@@ -393,7 +389,7 @@ export const getVehicleDetailsByPorterId = async (req, res) => {
         .json({ success: false, message: "porter not found" });
     }
     const vehicleDetails = await VehicleTypes.find({ porterId }).select(
-      "-__v -createdAt -updatedAt -_id -userId -porterId"
+      "-__v -createdAt -updatedAt -_id -userId -porterId",
     );
     res.status(200).json({
       success: true,
@@ -479,7 +475,7 @@ export const getPorterdocumetsByPorterId = async (req, res) => {
         .json({ success: false, message: "porter not found" });
     }
     const porterDocuments = await DocumentInformation.find({ porterId }).select(
-      "-__v -createdAt -updatedAt -_id -userId -porterId"
+      "-__v -createdAt -updatedAt -_id -userId -porterId",
     );
     res.status(200).json({
       success: true,

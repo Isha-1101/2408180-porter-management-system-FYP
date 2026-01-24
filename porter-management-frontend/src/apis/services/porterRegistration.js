@@ -7,15 +7,14 @@ const porterRegistrationStart = () => {
 const savePorterBasicInfo = (registrationId, data) => {
   return axiosInstance.put(
     `/porter-registration/${registrationId}/basic-info`,
-    data
+    data,
   );
 };
 const savePorterVehicleInfo = (
   registrationId,
-  { vehicleNumber, vehicleCategory, capacity }
+  { vehicleNumber, vehicleCategory, capacity },
 ) => {
   return axiosInstance.put(`/porter-registration/${registrationId}/vehicle`, {
-    registrationId,
     vehicleNumber,
     vehicleCategory,
     capacity,
@@ -25,7 +24,7 @@ const savePorterVehicleInfo = (
 const savePorterDocumentsInfo = (registrationId, data) => {
   return axiosInstance.put(
     `/porter-registration/${registrationId}/documents`,
-    data
+    data,
   );
 };
 

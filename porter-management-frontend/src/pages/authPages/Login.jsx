@@ -127,6 +127,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Lock, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
+import Logo from "../../components/common/Logo";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -176,11 +177,17 @@ export default function Login() {
           transition={{ duration: 0.5 }}
           className="hidden lg:flex flex-col justify-center p-8 relative"
         >
-          <div className="relative h-full w-full rounded-full overflow-hidden shadow-2xl">
-            <div className="relative h-full w-full">
-              <div className="absolute inset-0 bg-cover bg-center bg-white rounded-full h-20 w-20 bg-[url('/images/doko_namlo.png')]"></div>
-            </div>
+          <div className="flex flex-col items-center h-full w-full bg-background p-8 rounded-full shadow-2xl border border-white/20">
+            <Logo
+              containerClassName="flex-col gap-2 justify-center"
+              isColored
+            />
+
+            <h1 className="mt-6 text-4xl font-bold text-center text-primary">
+              DOKO Namlo
+            </h1>
           </div>
+
         </motion.div>
 
         {/* Right Side - Login Form */}
@@ -298,7 +305,7 @@ export default function Login() {
                 </motion.div>
 
                 {/* Divider */}
-                <div className="relative my-6">
+                {/* <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300"></div>
                   </div>
@@ -307,10 +314,10 @@ export default function Login() {
                       Or continue with
                     </span>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Social Login Options */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* <div className="grid grid-cols-2 gap-3">
                   <Button
                     type="button"
                     variant="outline"
@@ -349,7 +356,7 @@ export default function Login() {
                     </svg>
                     Facebook
                   </Button>
-                </div>
+                </div> */}
               </form>
 
               {/* Sign Up Link */}
