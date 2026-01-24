@@ -149,7 +149,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-gray-50 to-blue-50 overflow-hidden">
+    <div className="min-h-screen bg-[#FFFEE9] overflow-hidden">
       {/* Hero Section */}
       <section className="relative z-10 px-4 sm:px-6 lg:px-8 pt-24 pb-32 bg-[#e0f470]">
 
@@ -295,7 +295,7 @@ const LandingPage = () => {
       {/* How It Works */}
       <section
         id="how-it-works"
-        className="relative z-10 px-4 sm:px-6 lg:px-8 py-24 bg-linear-to-r from-blue-50/50 to-indigo-50/50"
+        className="relative z-10 px-4 sm:px-6 lg:px-8 py-24 bg-[#FFFEE9]"
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -350,7 +350,7 @@ const LandingPage = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="relative z-10 px-4 sm:px-6 lg:px-8 py-24 bg-white">
+      <section className="relative z-10 px-4 sm:px-6 lg:px-8 py-24 bg-[#FFFEE9]">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

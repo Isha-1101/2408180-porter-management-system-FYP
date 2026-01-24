@@ -278,7 +278,7 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#FFFEE9] flex items-center justify-center p-4 relative overflow-hidden">
       <div className="w-full flex justify-center z-10">
         {/* Left Side - Benefits */}
 
@@ -419,8 +419,8 @@ const Register = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "user"
-                        ? "border-blue-500 bg-blue-50 text-blue-600"
-                        : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-gray-200 hover:border-primary/30 hover:bg-primary/5"
                         }`}
                     >
                       <User className="w-6 h-6 mx-auto mb-2" />
@@ -434,8 +434,8 @@ const Register = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "porter"
-                        ? "border-blue-500 bg-blue-50 text-blue-600"
-                        : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-gray-200 hover:border-primary/30 hover:bg-primary/5"
                         }`}
                     >
                       <Building className="w-6 h-6 mx-auto mb-2" />
@@ -454,7 +454,7 @@ const Register = () => {
                 >
                   <Button
                     type="submit"
-                    className="w-full h-12 cursor-pointer"
+                    className="w-full h-12 cursor-pointer bg-primary hover:bg-primary/90 text-white"
                     disabled={registerPending || isLoading}
                   >
                     {registerPending || isLoading ? (
@@ -479,7 +479,7 @@ const Register = () => {
                 <Button
                   variant="link"
                   onClick={() => navigate("/login")}
-                  className="text-blue-600 hover:text-blue-700 font-semibold p-0"
+                  className="text-primary hover:text-primary/80 font-semibold p-0"
                 >
                   Sign In
                 </Button>
