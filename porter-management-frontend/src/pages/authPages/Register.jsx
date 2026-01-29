@@ -1,169 +1,3 @@
-// import { useState } from "react";
-// import { Button } from "@/components/ui/button.jsx";
-// import { Input } from "@/components/ui/input.jsx";
-// import { Label } from "@/components/ui/label";
-// import {
-//   Card,
-//   CardContent,
-//   CardHeader,
-//   CardTitle,
-//   CardFooter,
-// } from "@/components/ui/card.jsx";
-// import { useRegister } from "../../apis/hooks/authHooks";
-// import { toast } from "react-hot-toast";
-// import { Link, useNavigate } from "react-router";
-// import { Eye, EyeOff } from "lucide-react";
-// const Register = () => {
-//   const navigate = useNavigate();
-//   const [form, setForm] = useState({
-//     name: "",
-//     email: "",
-//     phone: "",
-//     password: "",
-//     role: "user",
-//   });
-//   const [togglePassword, setTogglePassword] = useState(false);
-//   const changeHandler = (e) => {
-//     setForm({ ...form, [e.target.name]: e.target.value });
-//   };
-
-//   const { mutateAsync: register, isPending: registerPending } = useRegister();
-
-//   const submitHandler = async (e) => {
-//     e.preventDefault();
-//     if (
-//       !form.name ||
-//       !form.email ||
-//       !form.phone ||
-//       !form.password ||
-//       !form.role
-//     ) {
-//       toast.error("All fields are required");
-//       return;
-//     }
-//     try {
-//       await register(form);
-//       navigate("/login");
-
-//       setForm({
-//         name: "",
-//         email: "",
-//         phone: "",
-//         password: "",
-//         role: "user",
-//       });
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   return (
-//     <div className="flex h-screen w-full ">
-//       {/* LEFT SIDE IMAGE */}
-//       <div className="hidden md:block w-1/2 h-full bg-[url('/images/Logo.png')] bg-cover bg-center border border-gray-300">
-//         this is left side
-//       </div>
-
-//       {/* RIGHT SIDE FORM */}
-//       <div className="flex justify-center items-center w-full md:w-1/2 px-4">
-//         <Card className="w-[400px] rounded-lg shadow-lg">
-//           <CardHeader>
-//             <CardTitle className="text-center text-2xl text-primary font-semibold">
-//               Register
-//             </CardTitle>
-//           </CardHeader>
-//           <CardContent>
-//             <form onSubmit={submitHandler} className="space-y-4">
-//               <div className="mb-6">
-//                 <Label>Name</Label>
-//                 <Input
-//                   name="name"
-//                   value={form.name}
-//                   onChange={changeHandler}
-//                   placeholder="Enter name"
-//                 />
-//               </div>
-
-//               <div className="mb-6">
-//                 <Label>Email</Label>
-//                 <Input
-//                   type="email"
-//                   name="email"
-//                   value={form.email}
-//                   onChange={changeHandler}
-//                   placeholder="Enter email"
-//                 />
-//               </div>
-
-//               <div className="mb-6">
-//                 <Label>Phone</Label>
-//                 <Input
-//                   name="phone"
-//                   value={form.phone}
-//                   onChange={changeHandler}
-//                   placeholder="98XXXXXXXX"
-//                 />
-//               </div>
-
-//               <div className="mb-6 relative">
-//                 <Label>Password</Label>
-//                 <Input
-//                   type={togglePassword ? "text" : "password"}
-//                   name="password"
-//                   value={form.password}
-//                   onChange={changeHandler}
-//                   placeholder="Enter password"
-//                 />
-//                 <button
-//                   type="button"
-//                   onClick={() => setTogglePassword((prev) => !prev)}
-//                   className="absolute right-3 top-6 text-gray-600 hover:text-gray-800 cursor-pointer"
-//                 >
-//                   {togglePassword ? <EyeOff size={16} /> : <Eye size={16} />}
-//                 </button>
-//               </div>
-
-//               <div className="mb-6">
-//                 <Label>Role</Label>
-//                 <select
-//                   name="role"
-//                   value={form.role}
-//                   onChange={changeHandler}
-//                   className="border rounded-md w-full p-2"
-//                 >
-//                   <option value="user">User</option>
-//                   <option value="porter">Porter</option>
-//                 </select>
-//               </div>
-
-//               <Button
-//                 type="submit"
-//                 className="w-full cursor-pointer"
-//                 variant={"default"}
-//               >
-//                 {registerPending ? "Registering..." : "Register"}
-//               </Button>
-//             </form>
-//           </CardContent>
-//           <CardFooter className="flex flex-col items-center">
-//             <p className="mt-2 text-center text-sm text-gray-600">
-//               Already have an account?{" "}
-//               <span
-//                 className="text-primary cursor-pointer hover:underline"
-//                 onClick={() => navigate("/login")}
-//               >
-//                 Login
-//               </span>
-//             </p>
-//           </CardFooter>
-//         </Card>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Register;
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -278,8 +112,8 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFFEE9] flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="w-full flex justify-center z-10">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full max-w-md z-10">
         {/* Left Side - Benefits */}
 
 
@@ -290,20 +124,21 @@ const Register = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="flex justify-center items-center"
         >
-          <Card className="w-full max-w-2xl border-0 rounded-2xl shadow-2xl overflow-hidden bg-white/80 backdrop-blur-sm">
-            <CardHeader className="text-center pt-8 pb-4">
+          <div className="w-full max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+            <div className="text-center pt-8 pb-4 px-8">
               <motion.div
                 initial={{ y: -20 }}
                 animate={{ y: 0 }}
-                className="mb-2"
+                className="mb-2 flex flex-col items-center"
               >
-                <CardTitle className="text-3xl font-bold text-primary">
+                <img src="/images/doko_namlo.svg" alt="App Logo" className="w-24 h-24 mb-1" />
+                <h2 className="text-3xl font-bold text-primary">
                   Create Account
-                </CardTitle>
+                </h2>
               </motion.div>
-            </CardHeader>
+            </div>
 
-            <CardContent className="pb-6">
+            <div className="px-8 pb-8">
               <form onSubmit={submitHandler} className="space-y-5">
                 {/* Name Field */}
                 <div className="space-y-2">
@@ -471,10 +306,12 @@ const Register = () => {
                   </Button>
                 </motion.div>
               </form>
-            </CardContent>
 
-            <CardFooter className="flex flex-col items-center">
-              <div className="flex items-center space-x-1">
+
+            </div>
+
+            <div className="pb-8 text-center bg-transparent">
+              <div className="flex justify-center items-center space-x-1">
                 <span className="text-gray-600">Already have an account?</span>
                 <Button
                   variant="link"
@@ -484,10 +321,10 @@ const Register = () => {
                   Sign In
                 </Button>
               </div>
-            </CardFooter>
-          </Card>
+            </div>
+          </div>
         </motion.div>
-      </div>
+      </div >
 
       <style jsx>{`
         @keyframes blob {
@@ -514,7 +351,7 @@ const Register = () => {
           animation-delay: 4s;
         }
       `}</style>
-    </div>
+    </div >
   );
 };
 

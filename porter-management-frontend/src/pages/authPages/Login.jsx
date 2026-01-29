@@ -49,19 +49,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen  flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 z-10">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="hidden lg:flex flex-col justify-center p-8 relative"
-        >
-          <div className="relative h-full w-full rounded-full overflow-hidden shadow-2xl">
-            <div className="relative h-full w-full">
-              <div className="absolute inset-0 bg-cover bg-center bg-white rounded-full h-20 w-20 bg-[url('/images/doko_namlo.png')]"></div>
-            </div>
-          </div>
-        </motion.div>
+      <div className="w-full max-w-md z-10">
+
 
         {/* Right Side - Login Form */}
         <motion.div
@@ -76,14 +65,12 @@ export default function Login() {
               <motion.div
                 initial={{ y: -20 }}
                 animate={{ y: 0 }}
-                className="mb-2"
+                className="mb-2 flex flex-col items-center"
               >
+                <img src="/images/doko_namlo.svg" alt="App Logo" className="w-24 h-24 mb-1" />
                 <h2 className="text-3xl font-bold text-primary">
                   Welcome Back
                 </h2>
-                <p className="text-secondary mt-2">
-                  Sign in to your PorterPro account
-                </p>
               </motion.div>
             </div>
 
@@ -239,7 +226,7 @@ export default function Login() {
                   <Button
                     variant="link"
                     onClick={() => navigate("/register")}
-                    className="text-blue-600 hover:text-blue-700 font-semibold p-0 ml-1"
+                    className="text-primary hover:text-primary/90 font-semibold p-0 ml-1"
                   >
                     Sign up now
                   </Button>
