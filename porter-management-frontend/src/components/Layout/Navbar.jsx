@@ -482,7 +482,7 @@ const NavBar = () => {
               <div className="">
                 <Logo
                   text={false}
-                  className="h-10 w-20"
+                  containerClassName="h-10 w-20"
                   isColored={isLandingPage && !isScrolled}
                 />
               </div>

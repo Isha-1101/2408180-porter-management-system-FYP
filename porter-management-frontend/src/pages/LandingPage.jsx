@@ -378,7 +378,7 @@ const LandingPage = () => {
                 className="bg-linear-to-r from-gray-50 to-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow"
               >
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
                     {testimonial.avatar}
                   </div>
                   <div className="ml-4">

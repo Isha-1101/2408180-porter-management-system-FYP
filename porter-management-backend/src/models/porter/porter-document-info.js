@@ -6,11 +6,12 @@ const PorterDocumentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "PorterRegistration",
       required: true,
-      unique: true,
+      index: true,
     },
 
-    licenseNumber: { type: String, required: true },
-    licenseDocument: { type: String, required: true },
+    documentType: { type: String, required: true },
+    documentNumber:{ type: String, required: true },
+    documentFile: { type: String, required: true },
   },
   { timestamps: true }
 );

@@ -13,19 +13,10 @@ const PorterBasicInfoSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     address: { type: String, required: true },
 
-    porterType: {
-      type: String,
-      enum: ["individual", "team_member"],
-      required: true,
-    },
-
     porterPhoto: { type: String, required: true },
     experienceYears: { type: Number, default: 1 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model(
-  "PorterBasicInfo",
-  PorterBasicInfoSchema
-);
+export default mongoose.model("PorterBasicInfo", PorterBasicInfoSchema);

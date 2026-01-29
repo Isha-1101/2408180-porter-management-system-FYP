@@ -6,6 +6,31 @@ const PorterRegistrationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    registrationType: {
+      type: String,
+      enum: ["individual", "team", "team_member"],
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ["owner", "worker"],
+      required: true,
+    },
+    teamId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PorterTeam",
+      default: null,
+    },
+    registrationId: {
+      type: String,
+      required: true,
       unique: true,
     },
 
@@ -40,10 +65,7 @@ const PorterRegistrationSchema = new mongoose.Schema(
       default: "",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model(
-  "PorterRegistration",
-  PorterRegistrationSchema
-);
+export default mongoose.model("PorterRegistration", PorterRegistrationSchema);

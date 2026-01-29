@@ -54,7 +54,7 @@ porterRegistrationRouter.put(
   "/:registrationId/documents",
   authenticate,
   authorizeRole("porter"),
-  upload.single("porterLicenseDocument"),
+  upload.single("documentFile"),
   saveDocuments
 );
 

@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Lock, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
+import Logo from "../../components/common/Logo";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -49,8 +50,25 @@ export default function Login() {
 
   return (
     <div className="min-h-screen  flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="w-full max-w-md z-10">
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 z-10">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="hidden lg:flex flex-col justify-center p-8 relative"
+        >
+          <div className="flex flex-col items-center h-full w-full bg-background p-8 rounded-full shadow-2xl border border-white/20">
+            <Logo
+              containerClassName="flex-col gap-2 justify-center"
+              isColored
+            />
 
+            <h1 className="mt-6 text-4xl font-bold text-center text-primary">
+              DOKO Namlo
+            </h1>
+          </div>
+
+        </motion.div>
 
         {/* Right Side - Login Form */}
         <motion.div
@@ -165,7 +183,7 @@ export default function Login() {
                 </motion.div>
 
                 {/* Divider */}
-                <div className="relative my-6">
+                {/* <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300"></div>
                   </div>
@@ -174,10 +192,10 @@ export default function Login() {
                       Or continue with
                     </span>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Social Login Options */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* <div className="grid grid-cols-2 gap-3">
                   <Button
                     type="button"
                     variant="outline"
@@ -216,7 +234,7 @@ export default function Login() {
                     </svg>
                     Facebook
                   </Button>
-                </div>
+                </div> */}
               </form>
 
               {/* Sign Up Link */}

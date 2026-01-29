@@ -112,20 +112,16 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="w-full max-w-md z-10">
-        {/* Left Side - Benefits */}
-
-
-        {/* Right Side - Registration Form */}
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="w-full flex justify-center z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="flex justify-center items-center"
         >
-          <div className="w-full max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-white/20">
-            <div className="text-center pt-8 pb-4 px-8">
+          <Card className="min-w-2xl w-full border-0 rounded-2xl shadow-2xl overflow-hidden bg-white/80 ">
+            <CardHeader className="text-center pt-8 pb-4">
               <motion.div
                 initial={{ y: -20 }}
                 animate={{ y: 0 }}
@@ -136,7 +132,7 @@ const Register = () => {
                   Create Account
                 </h2>
               </motion.div>
-            </div>
+            </CardHeader>
 
             <div className="px-8 pb-8">
               <form onSubmit={submitHandler} className="space-y-5">
@@ -254,8 +250,8 @@ const Register = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "user"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-gray-200 hover:border-primary/30 hover:bg-primary/5"
+                          ? "border-blue-500 bg-blue-50 text-blue-600"
+                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
                         }`}
                     >
                       <User className="w-6 h-6 mx-auto mb-2" />
@@ -269,8 +265,8 @@ const Register = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "porter"
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-gray-200 hover:border-primary/30 hover:bg-primary/5"
+                          ? "border-blue-500 bg-blue-50 text-blue-600"
+                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
                         }`}
                     >
                       <Building className="w-6 h-6 mx-auto mb-2" />
@@ -322,7 +318,7 @@ const Register = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </Card>
         </motion.div>
       </div >
 

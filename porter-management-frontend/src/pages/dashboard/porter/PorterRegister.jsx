@@ -13,10 +13,8 @@ import { porterRetgistrationHooks } from "@/apis/hooks/porterRegistratioHooks.js
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { usePorterRegistration } from "./providers/PorterRegistrationProvider.jsx";
-import { usePorter } from "../../../hooks/porter/use-porter.js";
 
 const PorterRegister = () => {
-  // usePorter()
   const navigate = useNavigate();
   const {
     registrationId,

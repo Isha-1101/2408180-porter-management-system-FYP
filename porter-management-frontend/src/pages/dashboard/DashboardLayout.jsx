@@ -33,32 +33,32 @@ const DashboardLayout = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const navItems = [
-    {
-      label: "Dashboard",
-      to: "/dashboard",
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      end: true,
-    },
+    // {
+    //   label: "Dashboard",
+    //   to: "/dashboard",
+    //   icon: <LayoutDashboard className="w-5 h-5" />,
+    //   end: true,
+    // },
     {
       label: "Porter Booking",
       to: "/dashboard/booking",
       icon: <MapPinned className="w-5 h-5" />,
     },
-    {
-      label: "Orders",
-      to: "/dashboard/orders",
-      icon: <ClipboardList className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Orders",
+    //   to: "/dashboard/orders",
+    //   icon: <ClipboardList className="w-5 h-5" />,
+    // },
     {
       label: "Porters",
       to: "/dashboard/porters",
       icon: <Users className="w-5 h-5" />,
     },
-    {
-      label: "Settings",
-      to: "/dashboard/settings",
-      icon: <Settings className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Settings",
+    //   to: "/dashboard/settings",
+    //   icon: <Settings className="w-5 h-5" />,
+    // },
   ];
 
   // Persist sidebar state to localStorage
@@ -109,7 +109,7 @@ const DashboardLayout = () => {
             {/* Desktop Sidebar Toggle */}
             <button
               onClick={toggleSidebar}
-              className="hidden lg:flex p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              className="hidden lg:flex p-2 rounded-lg text-primary hover:text-gray-600 hover:bg-gray-100 transition-colors"
               title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
               {isSidebarOpen ? (
@@ -124,7 +124,7 @@ const DashboardLayout = () => {
               onClick={() => navigate("/")}
               className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors"
             >
-              <Logo />
+              <Logo isColored containerClassName="h-20 w-20" />
               <span className="hidden sm:inline font-bold text-primary">
                 DOKO Namlo
               </span>
@@ -212,7 +212,7 @@ const DashboardLayout = () => {
         >
           <div className="p-6">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10   bg-primary rounded-xl flex items-center justify-center shrink-0">
                 <Logo />
               </div>
               <div>
@@ -239,7 +239,7 @@ const DashboardLayout = () => {
                     }`
                   }
                 >
-                  <div className="flex-shrink-0">{item.icon}</div>
+                  <div className="shrink-0">{item.icon}</div>
                   <span className="whitespace-nowrap">{item.label}</span>
                 </NavLink>
               ))}
@@ -257,7 +257,7 @@ const DashboardLayout = () => {
             <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 z-40 lg:hidden transform transition-transform duration-300 shadow-xl">
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                     <Logo />
                   </div>
                   <div>
@@ -275,7 +275,7 @@ const DashboardLayout = () => {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                           isActive
-                            ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-md shadow-primary/20"
+                            ? "bg-primary text-white shadow-md shadow-primary/20"
                             : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                         }`
                       }
@@ -288,9 +288,9 @@ const DashboardLayout = () => {
                 </nav>
 
                 <div className="mt-8 pt-6 border-t border-gray-200">
-                  <div className="px-4 py-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
+                  <div className="px-4 py-4 rounded-xl bg-linear-to-br from-gray-50 to-gray-100">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
+                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </div>
                       <div>

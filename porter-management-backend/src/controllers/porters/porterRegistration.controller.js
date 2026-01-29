@@ -5,52 +5,136 @@ import PorterDocument from "../../models/porter/porter-document-info.js";
 import PorterVehicle from "../../models/porter/porter-vehicle-info.js";
 import Porters from "../../models/porter/Porters.js";
 import { uploadToCloudinary } from "../uploadToCloudinary.js";
+import porterTeam from "../../models/porter/porterTeam.js";
+
+// export const startRegistration = async (req, res) => {
+//   try {
+//     const registrationId = `DKN-${Date.now()}`;
+
+//     const registration = await PorterRegistration.findOneAndUpdate(
+//       { userId: req.user.id },
+//       {
+//         $setOnInsert: {
+//           registrationId,
+//           userId: req.user.id,
+//           status: "draft",
+//         },
+//       },
+//       { upsert: true, new: true },
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       registrationId: registration.registrationId,
+//     });
+//   } catch (error) {
+//     console.error("Error starting registration:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to start registration",
+//     });
+//   }
+// };
 
 export const startRegistration = async (req, res) => {
   try {
-    const registration = await PorterRegistration.findOneAndUpdate(
-      { userId: req.user.id },
-      {},
-      { upsert: true, new: true }
-    );
+    const { registrationType, teamId } = req.body;
 
-    res.status(200).json({ success: true, registrationId: registration._id });
+    if (!registrationType) {
+      return res.status(400).json({ message: "registrationType is required" });
+    }
+
+    const targetUserId = req.user.id;
+
+    // Check existing registration
+    const existingRegistration = await PorterRegistration.findOne({
+      userId: targetUserId,
+      registrationType,
+      status: { $ne: "submitted" },
+    });
+
+    if (existingRegistration) {
+      return res.status(200).json({
+        success: true,
+        registrationId: existingRegistration.registrationId,
+        teamId: existingRegistration.teamId,
+        role: existingRegistration.role,
+        message: "Resuming existing registration",
+      });
+    }
+
+    let finalTeamId = null;
+    let role = "owner";
+
+    // Team Owner Registration
+    if (registrationType === "team") {
+      const team = await porterTeam.create({
+        ownerId: targetUserId,
+      });
+      finalTeamId = team._id;
+      role = "owner";
+    }
+
+    // Team Member Registration
+    if (registrationType === "team_member") {
+      if (!teamId) {
+        return res.status(400).json({ message: "teamId is required" });
+      }
+      finalTeamId = teamId;
+      role = "worker";
+    }
+
+    // Create new registration ONLY once
+    const registration = await PorterRegistration.create({
+      userId: targetUserId,
+      registrationId: `DKN-${Date.now()}`,
+      createdBy: targetUserId,
+      registrationType,
+      teamId: finalTeamId,
+      role,
+      status: "draft",
+    });
+
+    return res.status(200).json({
+      success: true,
+      registrationId: registration.registrationId,
+      teamId: finalTeamId,
+      role,
+      message: "Registration started",
+    });
   } catch (error) {
     console.error("Error starting registration:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to start registration" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to start registration",
+    });
   }
 };
 
 export const saveBasicInfo = async (req, res) => {
   try {
-    const { registrationId } = req.params;
+    const { registrationId } = req.params; // this registration ID is created RegistrationID using Date.now()
     const file = req.file;
-    const registration = await PorterRegistration.findById(registrationId);
-    if (
-      !file &&
-      req.user.role !== "admin" &&
-      !registration?.steps?.basicInfo?.completed
-    ) {
+    if (!file) {
       return res.status(400).json({
         success: false,
         message: "Porter photo is required.",
       });
     }
-    const { fullName, phone, address, porterType } = req.body;
-    // Validate fields
-    if (!fullName || !phone || !address || !porterType) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-    if (!["individual", "team_member"].includes(porterType)) {
-      return res.status(400).json({
-        message: "porterType must be either 'individual' or 'team_member'.",
-      });
+    const registration = await PorterRegistration.findOne({ registrationId });
+    if (!registration) {
+      return res.status(404).json({ message: "Registration not found" });
     }
 
-    const existingBasicInfo = await PorterBasicInfo.findOne({ registrationId });
-    const updatePayload = { fullName, phone, address, porterType };
+    const { fullName, phone, address } = req.body;
+    if (!fullName || !phone || !address) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const existingBasicInfo = await PorterBasicInfo.findOne({
+      registrationId: registration._id,
+    });
+    const updatePayload = { fullName, phone, address };
 
     if (file) {
       const uploaded = await uploadToCloudinary(file);
@@ -61,16 +145,21 @@ export const saveBasicInfo = async (req, res) => {
       updatePayload.porterPhoto = existingBasicInfo.porterPhoto;
     }
 
-    await PorterBasicInfo.findOneAndUpdate({ registrationId }, updatePayload, {
-      upsert: true,
-      new: true,
-    });
+    await PorterBasicInfo.findOneAndUpdate(
+      { registrationId: registration._id },
+      updatePayload,
+      {
+        upsert: true,
+        new: true,
+      },
+    );
 
-    await PorterRegistration.findByIdAndUpdate(registrationId, {
-      currentStep: 2,
-      "steps.basicInfo.completed": true,
-      "steps.basicInfo.updatedAt": new Date(),
-    });
+    registration.steps.basicInfo = {
+      completed: true,
+      updatedAt: new Date(),
+    };
+    registration.currentStep = 2;
+    await registration.save();
 
     res.status(200).json({ success: true, message: "Basic info saved" });
   } catch (error) {
@@ -83,38 +172,55 @@ export const saveBasicInfo = async (req, res) => {
 
 export const saveDocuments = async (req, res) => {
   const { registrationId } = req.params;
+
+  const { documentType, documentNumber } = req.body;
+  if (!documentType || !documentNumber) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
   const file = req.file;
-  const registration = await PorterRegistration.findById(registrationId);
-  if (!file && !registration?.steps?.documents?.completed) {
+  if (!file) {
     return res.status(400).json({
       success: false,
       message: "porter document is required",
     });
   }
-  const { licenseNumber } = req.body;
-  try {
-    const existingDocuments = await PorterDocument.findOne({ registrationId });
-    const updatePayload = { licenseNumber };
 
+  const registration = await PorterRegistration.findOne({ registrationId });
+  if (!registration) {
+    return res.status(404).json({ message: "Registration not found" });
+  }
+
+  try {
+    const existingDocuments = await PorterDocument.findOne({
+      registrationId: registration._id,
+    });
+
+    const updatePayload = { documentType, documentNumber };
     if (file) {
       const uploaded = await uploadToCloudinary(file);
       const url = uploaded.url;
       const trimmedUrl = url.split("image")[1];
-      updatePayload.licenseDocument = trimmedUrl;
-    } else if (existingDocuments?.licenseDocument) {
-      updatePayload.licenseDocument = existingDocuments.licenseDocument;
+      updatePayload.documentFile = trimmedUrl;
+    } else if (existingDocuments?.documentFile) {
+      updatePayload.documentFile = existingDocuments.documentFile;
     }
 
-    await PorterDocument.findOneAndUpdate({ registrationId }, updatePayload, {
-      upsert: true,
-      new: true,
-    });
+    await PorterDocument.findOneAndUpdate(
+      { registrationId: registration._id },
+      updatePayload,
+      {
+        upsert: true,
+        new: true,
+      },
+    );
 
-    await PorterRegistration.findByIdAndUpdate(registrationId, {
-      currentStep: 4,
-      "steps.documents.completed": true,
-      "steps.documents.updatedAt": new Date(),
-    });
+    registration.steps.documents = {
+      completed: true,
+      updatedAt: new Date(),
+    };
+    registration.currentStep = 3;
+    await registration.save();
 
     res.status(200).json({ success: true, message: "Documents saved" });
   } catch (error) {
@@ -127,18 +233,40 @@ export const saveDocuments = async (req, res) => {
 
 export const saveVehicleInfo = async (req, res) => {
   const { registrationId } = req.params;
+  const { vehicleCategory, vehicleNumber, hasVehicle, capacity } = req.body;
+
+  if (!hasVehicle) {
+    return res
+      .status(400)
+      .json({ message: "Please select if you have a vehicle" });
+  }
+
+  if (hasVehicle === "true") {
+    if (!vehicleCategory || !vehicleNumber) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+  }
+
   try {
+    const registration = await PorterRegistration.findOne({ registrationId });
+    if (!registration) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Registration not found" });
+    }
+
     await PorterVehicle.findOneAndUpdate(
-      { registrationId },
-      { ...req.body },
-      { upsert: true, new: true }
+      { registrationId: registration._id },
+      { vehicleCategory, vehicleNumber, hasVehicle, capacity },
+      { upsert: true, new: true },
     );
 
-    await PorterRegistration.findByIdAndUpdate(registrationId, {
-      currentStep: 3,
-      "steps.vehicle.completed": true,
-      "steps.vehicle.updatedAt": new Date(),
-    });
+    registration.steps.vehicle = {
+      completed: true,
+      updatedAt: new Date(),
+    };
+    registration.currentStep = 4;
+    await registration.save();
 
     res.status(200).json({ success: true, message: "Vehicle info saved" });
   } catch (error) {
@@ -151,11 +279,17 @@ export const saveVehicleInfo = async (req, res) => {
 
 export const getRegistrationProgress = async (req, res) => {
   const { registrationId } = req.params;
+
   try {
-    const registration = await PorterRegistration.findById(registrationId);
-    const basicInfo = await PorterBasicInfo.findOne({ registrationId });
-    const vehicle = await PorterVehicle.findOne({ registrationId });
-    const documents = await PorterDocument.findOne({ registrationId });
+    const registration = await PorterRegistration.findOne({ registrationId });
+    if (!registration) {
+      return res.status(404).json({ message: "Registration not found" });
+    }
+    const [basicInfo, vehicle, documents] = await Promise.all([
+      PorterBasicInfo.findOne({ registrationId: registration._id }),
+      PorterVehicle.findOne({ registrationId: registration._id }),
+      PorterDocument.findOne({ registrationId: registration._id }),
+    ]);
 
     res.status(200).json({
       success: true,
@@ -191,76 +325,125 @@ export const getProterRegistrationByUserId = async (req, res) => {
 };
 
 export const submitRegistration = async (req, res) => {
-  const { registrationId } = req.params;
-  console.log(registrationId);
   try {
-    const registration = await PorterRegistration.findById(registrationId);
+    const { registrationId } = req.params;
+
+    const registration = await PorterRegistration.findOne({ registrationId });
     if (!registration) {
       return res.status(404).json({ message: "Registration not found" });
     }
 
-    const steps = registration.steps;
-    if (
-      !steps.basicInfo.completed ||
-      !steps.vehicle.completed ||
-      !steps.documents.completed
-    ) {
-      return res.status(400).json({ message: "All steps must be completed" });
+    const { basicInfo, vehicle, documents } = registration.steps;
+
+    if (!basicInfo.completed || !vehicle.completed || !documents.completed) {
+      return res.status(400).json({
+        message: "Complete all steps before submission",
+      });
     }
 
     registration.status = "submitted";
     await registration.save();
-    const porter = await Porters({
-      userId: registration.userId,
-      teamId: null,
-      // registrationId: registrationId,
-      status: "pending",
-    });
-    await porter.save();
 
-    res.status(200).json({ message: "Registration submitted", success: true });
+    res.status(200).json({
+      success: true,
+      message: "Registration submitted for admin approval",
+    });
   } catch (error) {
-    console.error("Error submitting registration:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to submit registration" });
+    console.error(error);
+    res.status(500).json({ success: false, message: "Submission failed" });
   }
 };
 
 export const approveRegistration = async (req, res) => {
+  const { registrationId } = req.params;
   const session = await mongoose.startSession();
-  session.startTransaction();
 
   try {
-    const registration = await PorterRegistration.findById(
-      req.params.registrationId
-    );
-    if (!registration) {
-      return res.status(404).json({ message: "Registration not found" });
-    }
+    await session.withTransaction(async () => {
+      const registration = await PorterRegistration.findOne(
+        { registrationId },
+        null,
+        { session },
+      );
+      if (!registration || registration.status !== "submitted") {
+        throw new Error("Invalid registration");
+      }
 
-    await Porters.create(
-      [
-        {
-          userId: registration.userId,
-          teamId: null,
-          status: "active",
-          registrationId: registration._id,
-        },
-      ],
-      { session }
-    );
+      // Prevent duplicate porter
+      // const existingPorter = await Porters.findOne(
+      //   { userId: registration.userId },
+      //   null,
+      //   { session },
+      // );
 
-    registration.status = "approved";
-    await registration.save({ session });
+      // if (existingPorter ) {
+      //   throw new Error("Porter already exists for this user");
+      // }
 
-    await session.commitTransaction();
-    res
-      .status(200)
-      .json({ message: "Porter approved & created", success: true });
-  } catch (err) {
-    await session.abortTransaction();
-    throw err;
+      let porterType;
+      let role;
+      let teamId = null;
+      let canAcceptBooking = true;
+      let userId;
+
+      // Derive behavior from registrationType
+      if (registration.registrationType === "individual") {
+        porterType = "individual";
+        role = "worker";
+        canAcceptBooking = true;
+        userId = registration.userId;
+      }
+
+      if (registration.registrationType === "team") {
+        porterType = "team";
+        role = "owner";
+        canAcceptBooking = false;
+        userId = registration.userId;
+      }
+
+      if (registration.registrationType === "team_member") {
+        porterType = "team";
+        role = "worker";
+        canAcceptBooking = true;
+        userId = null;
+
+        if (!registration.teamId) {
+          throw new Error("Team member must have a teamId");
+        }
+
+        teamId = registration.teamId;
+      }
+
+      await Porters.create(
+        [
+          {
+            userId: userId,
+            porterType,
+            role,
+            teamId,
+            canAcceptBooking,
+            status: "active",
+            isVerified: true,
+            registrationId: registration._id,
+          },
+        ],
+        { session },
+      );
+
+      registration.status = "approved";
+      await registration.save({ session });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Registration approved and porter created",
+    });
+  } catch (error) {
+    console.error("Approve registration error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to approve registration",
+    });
   } finally {
     session.endSession();
   }
