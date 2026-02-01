@@ -14,6 +14,7 @@ import connectDB from "./src/config/db.js";
 import { multerErrorHandler } from "./src/middlewares/multerErrorHandler.js";
 import aiRouter from "./src/routes/aiRoutes.js";
 import teamRouter from "./src/routes/team/teamRoutes.js";
+import adminRouter from "./src/routes/admin/adminApproved.js";
 
 dotenv.config({
   path: new URL("./.env", import.meta.url),
@@ -31,7 +32,7 @@ app.use(
       process.env.CLIENT_URL_PROD,
     ],
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -45,6 +46,7 @@ app.use("/core-api/porter-registration", porterRegistrationRouter);
 app.use("/core-api/location", locationRouter);
 app.use("/core-api/ask-questions", aiRouter);
 app.use("/core-api/team-porters", teamRouter);
+app.use("/core-api/admin", adminRouter);
 
 app.get("/", (req, res) => {
   res.send(`
@@ -79,7 +81,7 @@ app.get("/", (req, res) => {
 app.use(
   "/core-api/docs",
   swaggerUiMiddleware.serve,
-  swaggerUiMiddleware.setup(swaggerSpec)
+  swaggerUiMiddleware.setup(swaggerSpec),
 );
 
 export default app;

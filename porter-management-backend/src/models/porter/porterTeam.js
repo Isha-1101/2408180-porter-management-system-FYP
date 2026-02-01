@@ -6,7 +6,6 @@ const PorterTeamSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  // teamName: { type: String, required: true },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

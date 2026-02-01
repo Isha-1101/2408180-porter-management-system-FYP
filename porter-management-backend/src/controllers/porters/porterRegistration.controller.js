@@ -6,7 +6,8 @@ import PorterVehicle from "../../models/porter/porter-vehicle-info.js";
 import Porters from "../../models/porter/Porters.js";
 import { uploadToCloudinary } from "../uploadToCloudinary.js";
 import porterTeam from "../../models/porter/porterTeam.js";
-
+import User from "../../models/User.js";
+import registeredAsPorterMailController from "../../utils/nodeMailer/controller/registerdAsPorterController.js";
 // export const startRegistration = async (req, res) => {
 //   try {
 //     const registrationId = `DKN-${Date.now()}`;
@@ -38,7 +39,7 @@ import porterTeam from "../../models/porter/porterTeam.js";
 
 export const startRegistration = async (req, res) => {
   try {
-    const { registrationType, teamId } = req.body;
+    const { registrationType } = req.body;
 
     if (!registrationType) {
       return res.status(400).json({ message: "registrationType is required" });
@@ -49,7 +50,7 @@ export const startRegistration = async (req, res) => {
     // Check existing registration
     const existingRegistration = await PorterRegistration.findOne({
       userId: targetUserId,
-      registrationType,
+      // registrationType,
       status: { $ne: "submitted" },
     });
 
@@ -75,14 +76,19 @@ export const startRegistration = async (req, res) => {
       role = "owner";
     }
 
-    // Team Member Registration
-    if (registrationType === "team_member") {
-      if (!teamId) {
-        return res.status(400).json({ message: "teamId is required" });
-      }
-      finalTeamId = teamId;
-      role = "worker";
+    const user = await User.findById(targetUserId);
+    if (user.teamId) {
+      finalTeamId = user.teamId;
     }
+
+    // // Team Member Registration
+    // if (registrationType === "team_member") {
+    //   if (!teamId) {
+    //     return res.status(400).json({ message: "teamId is required" });
+    //   }
+    //   finalTeamId = teamId;
+    //   role = "worker";
+    // }
 
     // Create new registration ONLY once
     const registration = await PorterRegistration.create({
@@ -401,20 +407,7 @@ export const approveRegistration = async (req, res) => {
         userId = registration.userId;
       }
 
-      if (registration.registrationType === "team_member") {
-        porterType = "team";
-        role = "worker";
-        canAcceptBooking = true;
-        userId = null;
-
-        if (!registration.teamId) {
-          throw new Error("Team member must have a teamId");
-        }
-
-        teamId = registration.teamId;
-      }
-
-      await Porters.create(
+      const porter = await Porters.create(
         [
           {
             userId: userId,
@@ -429,8 +422,12 @@ export const approveRegistration = async (req, res) => {
         ],
         { session },
       );
-
+      const user = await User.findById(userId);
       registration.status = "approved";
+      await registeredAsPorterMailController(
+        user.email,
+        user.name,
+      );
       await registration.save({ session });
     });
 

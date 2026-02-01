@@ -24,9 +24,9 @@ export const createPorter = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    if (!["individual", "team_member"].includes(porterType)) {
+    if (!["individual", "team"].includes(porterType)) {
       return res.status(400).json({
-        message: "porterType must be either 'individual' or 'team_member'.",
+        message: "porterType must be either 'individual' or 'team'.",
       });
     }
 

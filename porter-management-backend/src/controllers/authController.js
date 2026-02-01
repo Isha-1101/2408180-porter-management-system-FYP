@@ -116,6 +116,8 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid Credentials" });
     }
 
+   
+
     //check user is deleted or not
     if (user.isDeleted) {
       return res.status(403).json({
@@ -137,6 +139,16 @@ export const login = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid Credentials" });
     }
+
+     if(user.isTempPassword){
+      return res.status(200).json({
+        success: true,
+        message: "Login successful, please change your temporary password",
+        redirectUrl: "/change-temporary-password",
+        access_token: generateToken(user),
+      });
+    }
+    
     res.status(200).json({
       success: true,
       message: "Login successful",

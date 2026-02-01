@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Approved</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .head-text{
+        color: #0f392b;
+      }
+      .container {
+        max-width: 600px;
+        margin: 30px auto;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .header img {
+        max-width: 120px;
+      }
+      .header h1 {
+        margin: 10px 0 0 0;
+        font-size: 24px;
+        color: #333333;
+      }
+      .content {
+        font-size: 16px;
+        color: #555555;
+        line-height: 1.6;
+      }
+      .password {
+        display: inline-block;
+        background-color: #f0f0f0;
+        padding: 10px 15px;
+        margin: 10px 0;
+        font-weight: bold;
+        font-family: monospace;
+        border-radius: 4px;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 14px;
+        color: #777777;
+        text-align: left;
+      }
+      .signature {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="https://yourcompany.com/logo.png" alt="Company Logo" />
+        <h1 class="head-text">DOKO Namlo</h1>
+      </div>
+      <div class="content">
+        <p>Dear {{name}},</p> 
+        <p>
+          We are pleased to inform you that your account has been
+          <strong>approved</strong> successfully.
+        </p>
+        <p>Your login password is:</p>
+        <p class="password">{{password}}</p>
+        <p>
+          Please keep this information secure and change your password after
+          your first login.
+        </p>
+        <p>
+          If you have any questions or need assistance, feel free to contact us.
+        </p>
+      </div>
+      <div class="footer">
+        <p>Regards,</p>
+        <p class="signature">
+          DOKO Namlo <br />
+          Email: support@dokoNamlo.com <br />
+          Phone: +977 9800000001
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

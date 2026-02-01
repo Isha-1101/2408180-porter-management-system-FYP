@@ -2,6 +2,14 @@ import Porters from "../../../models/porter/Porters.js";
 import porterBasicInfo from "../../../models/porter/porter-basic-info.js";
 import PorterDocument from "../../../models/porter/porter-document-info.js";
 import PorterVehicle from "../../../models/porter/porter-vehicle-info.js";
+/**
+ * Get Porter by Team ID
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Object} - The response object with the fetched porter details
+ * @throws {Error} - If an error occurred while fetching the porter
+ * this will list the porter for Sepecific Team ID
+ */
 export const getPorterByTeamId = async (req, res) => {
   try {
     const { teamId } = req.params;

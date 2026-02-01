@@ -15,7 +15,7 @@ const PorterRegistrationSchema = new mongoose.Schema(
     },
     registrationType: {
       type: String,
-      enum: ["individual", "team", "team_member"],
+      enum: ["individual", "team"],
       required: true,
     },
     role: {
