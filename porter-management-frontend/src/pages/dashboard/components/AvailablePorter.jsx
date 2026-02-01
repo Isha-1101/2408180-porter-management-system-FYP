@@ -59,7 +59,7 @@ const AvailablePorter = ({ availablePorters }) => {
 
           {/* Book Button */}
           <Button className="w-full rounded-xl font-semibold shadow-sm hover:shadow-md transition-all">
-            Book {porter.name.split(" ")[0]}
+            Book
           </Button>
         </div>
       ))}

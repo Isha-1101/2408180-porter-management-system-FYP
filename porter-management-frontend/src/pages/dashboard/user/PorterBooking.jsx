@@ -1,33 +1,22 @@
 import { useMemo, useState } from "react";
-import { MapPin, Users, Maximize2 } from "lucide-react";
+import { MapPin, Navigation, User, UserPlus, Crosshair } from "lucide-react";
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import AvailablePorter from "@/pages/dashboard/components/AvailablePorter";
 import UserMap from "@/components/Map/UserMap";
-import PageHeader from "../../../components/common/PageHeader";
 import PageLayout from "../../../components/common/PageLayout";
 
 const PorterBooking = () => {
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
-  const [vehicle, setVehicle] = useState("bike");
-  const [service, setService] = useState("standard");
-  const [maxPrice, setMaxPrice] = useState(500);
-  const [isPorterDialogOpen, setIsPorterDialogOpen] = useState(false);
+  const [porterType, setPorterType] = useState("individual"); // "individual" or "team"
 
   const porters = useMemo(
     () => [
@@ -38,7 +27,7 @@ const PorterBooking = () => {
         completed: 312,
         etaMin: 12,
         price: 220,
-        vehicle: "bike",
+        type: "individual",
         tags: ["Fast", "Nearby"],
       },
       {
@@ -48,18 +37,18 @@ const PorterBooking = () => {
         completed: 540,
         etaMin: 18,
         price: 260,
-        vehicle: "bike",
+        type: "individual",
         tags: ["Top Rated"],
       },
       {
         id: "p-103",
-        name: "Amit Shrestha",
+        name: "Team Alpha",
         rating: 4.6,
         completed: 190,
         etaMin: 9,
-        price: 200,
-        vehicle: "bike",
-        tags: ["Cheapest"],
+        price: 450,
+        type: "team",
+        tags: ["Team", "Heavy Load"],
       },
       {
         id: "p-104",
@@ -68,99 +57,161 @@ const PorterBooking = () => {
         completed: 260,
         etaMin: 22,
         price: 340,
-        vehicle: "bike",
-        tags: ["Heavy Load"],
+        type: "individual",
+        tags: ["Experienced"],
+      },
+      {
+        id: "p-105",
+        name: "Team Bravo",
+        rating: 4.8,
+        completed: 310,
+        etaMin: 15,
+        price: 500,
+        type: "team",
+        tags: ["Team", "Fast Service"],
       },
     ],
     [],
   );
 
   const filteredPorters = useMemo(() => {
-    return porters
-      .filter((p) => (vehicle ? p.vehicle === vehicle : true))
-      .filter((p) => p.price <= maxPrice);
-  }, [porters, vehicle, maxPrice]);
+    return porters.filter((p) => p.type === porterType);
+  }, [porters, porterType]);
 
   return (
-    <PageLayout
-      className="space-y-4"
-      title={"Porter Booking"}
-      description={
-        "Book a porter, choose service options, and assign instantly."
-      }
-      headerExtraChildren={
-        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100">
-          <Users className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            {filteredPorters.length} available
-          </span>
-        </div>
-      }
-    >
+    <PageLayout className="space-y-4">
       {/* Main Content Grid */}
-      <div className="grid sm:grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
-        {/* Map Section */}
-        <div className="sm:col-span-4 md:col-span-4 lg:col-span-3 bg-background rounded-2xl p-2">
-          <div className="overflow-hidden">
-            <CardHeader className="border-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  <CardTitle>Live Map</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left Side - Route Planning */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Route Planning Card */}
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              {/* From Location */}
+              <div className="space-y-2">
+                <Label htmlFor="from-location" className="text-sm font-medium flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  From Location
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="from-location"
+                    type="text"
+                    placeholder="Enter pickup location"
+                    value={pickup}
+                    onChange={(e) => setPickup(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
+                    title="Use current location"
+                  >
+                    <Crosshair className="w-4 h-4 text-gray-500" />
+                  </button>
                 </div>
-                <CardDescription className="text-xs">
-                  Real-time porter locations
-                </CardDescription>
               </div>
-            </CardHeader>
-            <CardContent className="p-3">
-              <UserMap showSidebar={true} />
+
+              {/* To Location */}
+              <div className="space-y-2">
+                <Label htmlFor="to-location" className="text-sm font-medium flex items-center gap-2">
+                  <Navigation className="w-4 h-4 text-gray-500" />
+                  To Location
+                </Label>
+                <Input
+                  id="to-location"
+                  type="text"
+                  placeholder="Enter destination"
+                  value={dropoff}
+                  onChange={(e) => setDropoff(e.target.value)}
+                />
+              </div>
+
+              {/* Porter Type Selection */}
+              <div className="space-y-2 pt-2">
+                <Label className="text-sm font-medium">Porter Type</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={porterType === "individual" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setPorterType("individual")}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Individual
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={porterType === "team" ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setPorterType("team")}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Team
+                  </Button>
+                </div>
+              </div>
+
+              {/* Empty State for No Porters */}
+              {filteredPorters.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <MapPin className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">No porters nearby</p>
+                  <p className="text-xs text-gray-500 mt-1">Try entering a location</p>
+                </div>
+              )}
             </CardContent>
-          </div>
+          </Card>
+
+          {/* Available Porters Card - Mobile/Small screens */}
+          {filteredPorters.length > 0 && (
+            <Card className="lg:hidden">
+              <CardHeader className="border-b">
+                <CardTitle className="text-lg">
+                  Available Porters ({filteredPorters.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 max-h-[400px] overflow-y-auto">
+                <AvailablePorter availablePorters={filteredPorters} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Available Porters Section */}
-        <div className="sm:col-span-4 md:col-span-4 lg:col-span-1">
+        {/* Middle - Map Section */}
+        <div className="lg:col-span-6">
+          <Card className="h-full">
+            <CardContent className="p-0 h-[600px] lg:h-full">
+              <UserMap showSidebar={false} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Side - Available Porters (Desktop) */}
+        <div className="hidden lg:block lg:col-span-3">
           <Card className="h-full flex flex-col">
-            <CardHeader className="border-b sticky top-0 bg-white z-10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Available Porters</CardTitle>
-                  <CardDescription>
-                    Your nearest porters are ready
-                  </CardDescription>
-                </div>
-                <Dialog
-                  open={isPorterDialogOpen}
-                  onOpenChange={setIsPorterDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      title="Expand porter list"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>All Available Porters</DialogTitle>
-                      <DialogDescription>
-                        {filteredPorters.length} porter
-                        {filteredPorters.length !== 1 ? "s" : ""} available in
-                        your area
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="mt-4">
-                      <AvailablePorter availablePorters={filteredPorters} />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+            <CardHeader className="border-b">
+              <CardTitle className="text-lg">
+                Available Porters
+              </CardTitle>
+              <p className="text-xs text-gray-500 mt-1">
+                {filteredPorters.length} {porterType} porter{filteredPorters.length !== 1 ? "s" : ""} nearby
+              </p>
             </CardHeader>
-            <CardContent className="flex-1 p-1 border max-h-[calc(100vh-200px)] overflow-y-auto">
-              <AvailablePorter availablePorters={filteredPorters} />
+            <CardContent className="flex-1 p-2 overflow-y-auto">
+              {filteredPorters.length > 0 ? (
+                <AvailablePorter availablePorters={filteredPorters} />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <MapPin className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">No porters nearby</p>
+                  <p className="text-xs text-gray-500 mt-1">Try entering a location above</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
