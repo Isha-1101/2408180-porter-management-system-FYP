@@ -48,6 +48,7 @@ import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
 import PorterBooking from "../pages/dashboard/user/PorterBooking";
 import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
+import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
 
 // Import pages that should NOT use Layout
@@ -73,6 +74,7 @@ const MainRoute = () => {
             <Route index element={<DashboardHome />} />
             <Route path="orders" element={<Orders />} />
             <Route path="booking" element={<PorterBooking />} />
+            <Route path="booking/confirmation" element={<BookingConfirmation />} />
             <Route path="settings" element={<Settings />} />
 
             {/* Porter routes */}

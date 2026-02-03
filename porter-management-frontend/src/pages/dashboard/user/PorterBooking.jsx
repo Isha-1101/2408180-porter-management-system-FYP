@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin, Navigation, User, UserPlus, Crosshair, Weight, X } from "lucide-react";
 import {
   Card,
@@ -90,20 +91,23 @@ const PorterBooking = () => {
     return porters.filter((p) => p.type === porterType);
   }, [porters, porterType]);
 
+  const navigate = useNavigate();
+
   const handleBookPorter = (porter) => {
     setSelectedPorter(porter);
     setIsBookingDialogOpen(true);
   };
 
   const handleConfirmBooking = () => {
-    // Handle booking logic here
-    console.log("Booking confirmed", {
-      porter: selectedPorter,
-      pickup,
-      dropoff,
-      weight
-    });
     setIsBookingDialogOpen(false);
+    navigate("/dashboard/booking/confirmation", {
+      state: {
+        porter: selectedPorter,
+        pickup,
+        dropoff,
+        weight
+      }
+    });
   };
 
   return (
@@ -260,7 +264,7 @@ const PorterBooking = () => {
               Cancel
             </Button>
             <Button onClick={handleConfirmBooking}>
-              Confirm Booking
+              Book
             </Button>
           </div>
         </DialogContent>
