@@ -1,7 +1,7 @@
 import { Clock, Star, User } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
 
-const AvailablePorter = ({ availablePorters }) => {
+const AvailablePorter = ({ availablePorters, onBook }) => {
   return availablePorters && availablePorters.length > 0 ? (
     <div className="p-4 space-y-4">
       {availablePorters?.map((porter) => (
@@ -58,7 +58,10 @@ const AvailablePorter = ({ availablePorters }) => {
           </div>
 
           {/* Book Button */}
-          <Button className="w-full rounded-xl font-semibold shadow-sm hover:shadow-md transition-all">
+          <Button
+            className="w-full rounded-xl font-semibold shadow-sm hover:shadow-md transition-all"
+            onClick={() => onBook && onBook(porter)}
+          >
             Book
           </Button>
         </div>
