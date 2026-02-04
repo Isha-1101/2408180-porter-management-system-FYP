@@ -8,6 +8,9 @@ import {
   Crosshair,
   Weight,
   Search,
+  Footprints,
+  Bike,
+  Car,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +94,8 @@ const PorterBooking = () => {
       }));
   }, [porters, porterType, calculatedPriceMultiplier]);
 
+  const [vehicleType, setVehicleType] = useState("none"); // "none", "two-wheeler", "four-wheeler"
+
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -114,6 +119,7 @@ const PorterBooking = () => {
         pickup,
         dropoff,
         weight,
+        vehicleType,
       },
     });
   };
@@ -121,7 +127,6 @@ const PorterBooking = () => {
   return (
     <PageLayout className="">
       <div className="flex flex-col gap-1">
-        {/* Map Section - Full Width */}
         {/* Map Section - Full Width */}
         <div className="w-full h-[400px] md:h-[500px] not-only:overflow-hidden shadow-sm">
           <UserMap showSidebar={false} />
@@ -139,6 +144,27 @@ const PorterBooking = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Vehicle Category Selection */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {[
+                    { id: "none", label: "No vehicles", icon: Footprints },
+                    { id: "two-wheeler", label: "Two wheelers", icon: Bike },
+                    { id: "four-wheeler", label: "Four Wheelers", icon: Car },
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => setVehicleType(type.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                        }`}
+                    >
+                      <type.icon className="w-4 h-4" />
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* From Location */}
                   <div className="space-y-2">
@@ -246,60 +272,56 @@ const PorterBooking = () => {
 
           {/* Right: Available Porters / Info */}
           <div className="lg:col-span-4">
-            {!hasSearched ? (
-              <Card className="h-full bg-blue-50 border-blue-100">
-                <CardContent className="h-full flex flex-col items-center justify-center text-center p-6 text-blue-800 space-y-2">
-                  <UserPlus className="w-10 h-10 mb-2 opacity-50" />
-                  <h3 className="font-semibold text-lg">Need a Team?</h3>
-                  <p className="text-sm opacity-80">
-                    Switch to Team Porter below for heavy lifting jobs.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="h-full shadow-sm">
-                <CardHeader className="pb-2 border-b">
-                  <div className="flex items-center justify-between mb-2">
-                    <CardTitle className="text-lg">
-                      Available Porters{" "}
-                      <span className="text-sm font-normal text-gray-500 ml-1">
-                        ({filteredPorters.length})
-                      </span>
-                    </CardTitle>
-                  </div>
+            <Card className="h-full shadow-sm">
+              <CardHeader className="pb-2 border-b">
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-lg">
+                    Available Porters{" "}
+                    <span className="text-sm font-normal text-gray-500 ml-1">
+                      ({hasSearched ? filteredPorters.length : 0})
+                    </span>
+                  </CardTitle>
+                </div>
 
-                  {/* Porter Type Toggle */}
-                  <div className="flex bg-gray-100 p-1 rounded-lg w-full">
-                    <button
-                      onClick={() => setPorterType("individual")}
-                      className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${
-                        porterType === "individual"
-                          ? "bg-white text-primary shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
+                {/* Porter Type Toggle */}
+                <div className="flex bg-gray-100 p-1 rounded-lg w-full">
+                  <button
+                    onClick={() => setPorterType("individual")}
+                    className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${porterType === "individual"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
                       }`}
-                    >
-                      Individual
-                    </button>
-                    <button
-                      onClick={() => setPorterType("team")}
-                      className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${
-                        porterType === "team"
-                          ? "bg-white text-primary shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
+                  >
+                    Individual
+                  </button>
+                  <button
+                    onClick={() => setPorterType("team")}
+                    className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${porterType === "team"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
                       }`}
-                    >
-                      Team
-                    </button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3 h-[400px] overflow-y-auto custom-scrollbar">
+                  >
+                    Team
+                  </button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 h-[400px] overflow-y-auto custom-scrollbar">
+                {hasSearched ? (
                   <AvailablePorter
                     availablePorters={filteredPorters}
                     onBook={handleBookPorter}
                   />
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                    <Search className="w-12 h-12 mb-3 opacity-20" />
+                    <p className="font-medium">Enter details to find porters</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      Fill in pickup and dropoff locations
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

@@ -57,7 +57,6 @@ const AvailablePorter = ({ availablePorters, onBook }) => {
             </span>
           </div>
 
-          {/* Book Button */}
           <Button
             className="w-full rounded-xl font-semibold shadow-sm hover:shadow-md transition-all"
             onClick={() => onBook && onBook(porter)}
