@@ -128,7 +128,7 @@ const PorterBooking = () => {
     <PageLayout className="">
       <div className="flex flex-col gap-1">
         {/* Map Section - Full Width */}
-        <div className="w-full h-[400px] md:h-[500px] not-only:overflow-hidden shadow-sm">
+        <div className="w-full h-[400px] md:h-[350px] not-only:overflow-hidden shadow-sm">
           <UserMap showSidebar={false} />
         </div>
 

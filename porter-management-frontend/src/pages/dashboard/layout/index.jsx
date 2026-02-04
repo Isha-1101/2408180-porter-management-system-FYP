@@ -5,11 +5,11 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "../../../components/ui/sidebar";
+} from "@/components/ui/sidebar";
 import AppSidebar from "./app-sidebar";
 import "./sidebar.css";
-import Logo from "../../../components/common/Logo";
-import { useAuthStore } from "../../../store/auth.store";
+import Logo from "@components/common/Logo";
+import { useAuthStore } from "@/store/auth.store";
 
 const DashboardLayout = () => {
   const navigate = useNavigate();

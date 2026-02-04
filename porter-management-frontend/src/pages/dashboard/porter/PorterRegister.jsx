@@ -57,31 +57,19 @@ const PorterRegister = () => {
   const { mutateAsync: savePersonalInfo, isPending: isSavingPersonalInfo } =
     porterRetgistrationHooks.useSavePorterBasicInfoMutation();
 
+  // const handleSaveStep1 = async () => {
   const handleSaveStep1 = async () => {
-    const payload = new FormData();
-    payload.append("fullName", formData.basicInfo.fullName);
-    payload.append("phone", formData.basicInfo.phone);
-    payload.append("address", formData.basicInfo.address);
-    payload.append("porterType", formData.basicInfo.porterType);
-    if (formData.basicInfo.porterPhoto instanceof File) {
-      payload.append("porterPhoto", formData.basicInfo.porterPhoto);
-    } else {
-      payload.append("porterPhoto", "");
-    }
-    await savePersonalInfo({ registrationId, data: payload });
     setRegistrationSteps((prev) => ({
       ...prev,
       basicInfo: { ...prev.basicInfo, isCompleted: true },
     }));
   };
+
   const { mutateAsync: saveVehicleInfo, isPending: isSavingVehicleInfo } =
     porterRetgistrationHooks.useSavePorterVehicleInfoMutation();
 
+  //   const handleSaveStep2 = async () => {
     const handleSaveStep2 = async () => {
-    await saveVehicleInfo({
-      registrationId,
-      data: formData.vehicle,
-    });
     setRegistrationSteps((prev) => ({
       ...prev,
       vehicle: { ...prev.vehicle, isCompleted: true },
@@ -92,22 +80,28 @@ const PorterRegister = () => {
     porterRetgistrationHooks.useSavePorterDocumentsInfoMutation();
 
   const handleSaveStep3 = async () => {
-    const payload = new FormData();
-    payload.append("licenseNumber", formData.documents.licenseNumber);
-
-    if (formData.documents.porterLicenseDocument instanceof File) {
-      payload.append(
-        "porterLicenseDocument",
-        formData.documents.porterLicenseDocument
-      );
-    }
-
-    await saveDocumentInfo({ registrationId, data: payload });
     setRegistrationSteps((prev) => ({
       ...prev,
       documents: { ...prev.documents, isCompleted: true },
     }));
   };
+  // const handleSaveStep3 = async () => {
+  //   const payload = new FormData();
+  //   payload.append("licenseNumber", formData.documents.licenseNumber);
+
+  //   if (formData.documents.porterLicenseDocument instanceof File) {
+  //     payload.append(
+  //       "porterLicenseDocument",
+  //       formData.documents.porterLicenseDocument
+  //     );
+  //   }
+
+  //   await saveDocumentInfo({ registrationId, data: payload });
+  //   setRegistrationSteps((prev) => ({
+  //     ...prev,
+  //     documents: { ...prev.documents, isCompleted: true },
+  //   }));
+  // };
 
 
   const { mutateAsync: submitPorterRegistration,isPending: isSubmitting } = porterRetgistrationHooks.useSubmitPorterRegistrationMutation();
@@ -145,6 +139,7 @@ const PorterRegister = () => {
     <PageLayout
       title="Porter Registration"
       description="Register a new porter with all required information"
+      className="p-4 lg:p-8"
     >
       <div className="max-w-7xl mx-auto flex gap-3">
         {/* Sidebar */}
