@@ -1,0 +1,22 @@
+/* Custom styles for dashboard layout sidebar */
+
+/* Active NavLink styling for sidebar menu items */
+[data-sidebar="menu-button"] a.active {
+  background-color: hsl(var(--primary));
+  color: white;
+  font-weight: 500;
+}
+
+[data-sidebar="menu-button"] a.active svg {
+  color: white;
+}
+
+/* Ensure smooth transitions */
+[data-sidebar="menu-button"] a {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Fix for collapsed sidebar icon-only view */
+.group-data-\[collapsible\=icon\] [data-sidebar="menu-button"] a.active {
+  background-color: hsl(var(--primary));
+}

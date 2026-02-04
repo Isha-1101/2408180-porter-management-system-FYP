@@ -1,18 +1,22 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Navigation, User, UserPlus, Crosshair, Weight, Search } from "lucide-react";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+  MapPin,
+  Navigation,
+  User,
+  UserPlus,
+  Crosshair,
+  Weight,
+  Search,
+} from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AvailablePorter from "@/pages/dashboard/components/AvailablePorter";
 import UserMap from "@/components/Map/UserMap";
-import PageLayout from "../../../components/common/PageLayout";
+import PageLayout from "@/components/common/PageLayout";
+// import PageLayout from "../../../components/common/PageLayout";
 
 const PorterBooking = () => {
   const [pickup, setPickup] = useState("");
@@ -81,9 +85,9 @@ const PorterBooking = () => {
   const filteredPorters = useMemo(() => {
     return porters
       .filter((p) => p.type === porterType)
-      .map(p => ({
+      .map((p) => ({
         ...p,
-        price: Math.round(p.basePrice * calculatedPriceMultiplier)
+        price: Math.round(p.basePrice * calculatedPriceMultiplier),
       }));
   }, [porters, porterType, calculatedPriceMultiplier]);
 
@@ -109,26 +113,25 @@ const PorterBooking = () => {
         porter,
         pickup,
         dropoff,
-        weight
-      }
+        weight,
+      },
     });
   };
 
   return (
-    <PageLayout className="space-y-6">
-      <div className="flex flex-col gap-6">
-
+    <PageLayout className="">
+      <div className="flex flex-col gap-1">
         {/* Map Section - Full Width */}
         {/* Map Section - Full Width */}
-        <div className="w-full h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-sm">
+        <div className="w-full h-[400px] md:h-[500px] not-only:overflow-hidden shadow-sm">
           <UserMap showSidebar={false} />
         </div>
 
         {/* Search & Filter Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 p-3">
           {/* Left: Inputs */}
           <div className="lg:col-span-8">
-            <Card>
+            <Card className="rounded-4">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Search className="w-5 h-5 text-primary" />
@@ -139,7 +142,10 @@ const PorterBooking = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* From Location */}
                   <div className="space-y-2">
-                    <Label htmlFor="from-location" className="text-sm font-medium flex items-center gap-2 text-gray-700">
+                    <Label
+                      htmlFor="from-location"
+                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                    >
                       <MapPin className="w-4 h-4 text-primary" />
                       From
                     </Label>
@@ -167,7 +173,10 @@ const PorterBooking = () => {
 
                   {/* To Location */}
                   <div className="space-y-2">
-                    <Label htmlFor="to-location" className="text-sm font-medium flex items-center gap-2 text-gray-700">
+                    <Label
+                      htmlFor="to-location"
+                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                    >
                       <Navigation className="w-4 h-4 text-primary" />
                       To
                     </Label>
@@ -190,7 +199,10 @@ const PorterBooking = () => {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                   {/* Weight Input */}
                   <div className="md:col-span-12 space-y-2">
-                    <Label htmlFor="weight" className="text-sm font-medium flex items-center gap-2 text-gray-700">
+                    <Label
+                      htmlFor="weight"
+                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                    >
                       <Weight className="w-4 h-4 text-primary" />
                       Weight (kg)
                     </Label>
@@ -239,7 +251,9 @@ const PorterBooking = () => {
                 <CardContent className="h-full flex flex-col items-center justify-center text-center p-6 text-blue-800 space-y-2">
                   <UserPlus className="w-10 h-10 mb-2 opacity-50" />
                   <h3 className="font-semibold text-lg">Need a Team?</h3>
-                  <p className="text-sm opacity-80">Switch to Team Porter below for heavy lifting jobs.</p>
+                  <p className="text-sm opacity-80">
+                    Switch to Team Porter below for heavy lifting jobs.
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -247,7 +261,10 @@ const PorterBooking = () => {
                 <CardHeader className="pb-2 border-b">
                   <div className="flex items-center justify-between mb-2">
                     <CardTitle className="text-lg">
-                      Available Porters <span className="text-sm font-normal text-gray-500 ml-1">({filteredPorters.length})</span>
+                      Available Porters{" "}
+                      <span className="text-sm font-normal text-gray-500 ml-1">
+                        ({filteredPorters.length})
+                      </span>
                     </CardTitle>
                   </div>
 
@@ -255,26 +272,31 @@ const PorterBooking = () => {
                   <div className="flex bg-gray-100 p-1 rounded-lg w-full">
                     <button
                       onClick={() => setPorterType("individual")}
-                      className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${porterType === "individual"
-                        ? "bg-white text-primary shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
+                      className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        porterType === "individual"
+                          ? "bg-white text-primary shadow-sm"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
                     >
                       Individual
                     </button>
                     <button
                       onClick={() => setPorterType("team")}
-                      className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${porterType === "team"
-                        ? "bg-white text-primary shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
-                        }`}
+                      className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        porterType === "team"
+                          ? "bg-white text-primary shadow-sm"
+                          : "text-gray-500 hover:text-gray-700"
+                      }`}
                     >
                       Team
                     </button>
                   </div>
                 </CardHeader>
                 <CardContent className="p-3 h-[400px] overflow-y-auto custom-scrollbar">
-                  <AvailablePorter availablePorters={filteredPorters} onBook={handleBookPorter} />
+                  <AvailablePorter
+                    availablePorters={filteredPorters}
+                    onBook={handleBookPorter}
+                  />
                 </CardContent>
               </Card>
             )}

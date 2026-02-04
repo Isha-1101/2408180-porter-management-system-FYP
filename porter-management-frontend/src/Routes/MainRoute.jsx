@@ -35,7 +35,6 @@ import PublicRoute from "./PublicRoute";
 import Layout from "../components/Layout";
 import ProtectedRoute from "./ProtectedRoute";
 
-import DashboardLayout from "../pages/dashboard/DashboardLayout";
 import DashboardHome from "../pages/dashboard/DashboardHome";
 
 // this wlll for porter specific routes
@@ -50,6 +49,7 @@ import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
 import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
+import DashboardLayout from "../pages/dashboard/layout";
 
 // Import pages that should NOT use Layout
 
@@ -74,7 +74,10 @@ const MainRoute = () => {
             <Route index element={<DashboardHome />} />
             <Route path="orders" element={<Orders />} />
             <Route path="booking" element={<PorterBooking />} />
-            <Route path="booking/confirmation" element={<BookingConfirmation />} />
+            <Route
+              path="booking/confirmation"
+              element={<BookingConfirmation />}
+            />
             <Route path="settings" element={<Settings />} />
 
             {/* Porter routes */}

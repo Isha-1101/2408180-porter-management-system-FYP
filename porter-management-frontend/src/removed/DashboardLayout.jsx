@@ -13,10 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import Logo from "../../components/common/Logo";
-import { useAuthStore } from "../../store/auth.store";
+import Logo from "../components/common/Logo";
+import { useAuthStore } from "../store/auth.store";
 import { useState, useEffect } from "react";
-import { Button } from "../../components/ui/button";
+import { Button } from "../components/ui/button";
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -324,7 +324,7 @@ const DashboardLayout = () => {
             isSidebarOpen ? "lg:ml-0" : "lg:ml-0"
           }`}
         >
-          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="">
             <Outlet />
           </div>
         </main>

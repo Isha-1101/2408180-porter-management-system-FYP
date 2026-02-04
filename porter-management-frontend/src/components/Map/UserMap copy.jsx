@@ -334,7 +334,7 @@ const UserMap = ({ className = "", showSidebar = true }) => {
           userPos[0],
           userPos[1],
           porter.lat,
-          porter.lng,
+          porter.lng
         );
         setRouteCoords(coords);
       } catch (error) {
@@ -361,7 +361,7 @@ const UserMap = ({ className = "", showSidebar = true }) => {
           enableHighAccuracy: true,
           timeout: 10000,
           maximumAge: 0,
-        },
+        }
       );
     }
   };
@@ -529,7 +529,7 @@ const UserMap = ({ className = "", showSidebar = true }) => {
       )}
 
       {/* Map Container */}
-      <div className="relative overflow-hidden border border-gray-200 shadow-sm h-full min-h-[400px]">
+      <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow-sm h-full min-h-[400px]">
         {/* Map Expansion Toggle */}
         <div className="absolute top-4 right-4 z-10">
           <Button
@@ -593,7 +593,7 @@ const UserMap = ({ className = "", showSidebar = true }) => {
                   </div>
                   <button
                     onClick={() => handleClickPorter(p)}
-                    className="w-full rounded-md lg bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition cursor-pointer"
+                    className="w-full rounded-lg bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition cursor-pointer"
                   >
                     Show Route
                   </button>

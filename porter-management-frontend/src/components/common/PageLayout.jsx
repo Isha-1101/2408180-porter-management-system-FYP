@@ -8,7 +8,7 @@ const PageLayout = ({ children, ...props }) => {
         {props.headerExtraChildren}
       </PageHeader>
 
-      <div className="mt-2">{children}</div>
+      <div className="">{children}</div>
     </div>
   );
 };
