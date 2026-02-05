@@ -19,8 +19,8 @@ const PersonalInfo = ({ data, onChange }) => {
     data?.porterPhoto instanceof Blob
       ? URL.createObjectURL(data.porterPhoto)
       : typeof data?.porterPhoto === "string"
-      ? data.porterPhoto
-      : null;
+        ? data.porterPhoto
+        : null;
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -143,48 +143,110 @@ const PersonalInfo = ({ data, onChange }) => {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Porter Type *</Label>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="identityType" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Registration ID Type *
+            </Label>
             <Select
-              value={data?.porterType}
-              onValueChange={(value) =>
-                onChange("basicInfo", "porterType", value)
-              }
+              value={data?.identityType || ""}
+              onValueChange={(value) => onChange("basicInfo", "identityType", value)}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select porter type" />
+              <SelectTrigger>
+                <SelectValue placeholder="Select ID Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Porter Type</SelectLabel>
-                  <SelectItem value="individual">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>Individual</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="team_member">
-                    <div className="flex items-center gap-2">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                        />
-                      </svg>
-                      <span>Team Member</span>
-                    </div>
-                  </SelectItem>
-                </SelectGroup>
+                <SelectItem value="citizenship">Citizenship</SelectItem>
+                <SelectItem value="passport">Passport</SelectItem>
+                <SelectItem value="national_id">National ID</SelectItem>
+                <SelectItem value="driving_license">Driving License</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="identityNumber" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Registration ID Number *
+            </Label>
+            <Input
+              id="identityNumber"
+              value={data?.identityNumber || ""}
+              onChange={(e) => onChange("basicInfo", "identityNumber", e.target.value)}
+              placeholder="Enter ID number"
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Camera className="h-4 w-4" />
+              ID Card Front *
+            </Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onChange("basicInfo", "identityCardImageFront", file);
+                }}
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              />
+              {data?.identityCardImageFront ? (
+                <img
+                  src={
+                    data.identityCardImageFront instanceof File
+                      ? URL.createObjectURL(data.identityCardImageFront)
+                      : getCloudinaryUrl(data.identityCardImageFront)
+                  }
+                  alt="Front ID"
+                  className="absolute inset-0 w-full h-full object-contain bg-gray-50 p-2"
+                />
+              ) : (
+                <div className="flex flex-col items-center text-gray-400">
+                  <Camera className="h-8 w-8 mb-2" />
+                  <span className="text-xs">Upload Front</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Camera className="h-4 w-4" />
+              ID Card Back *
+            </Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onChange("basicInfo", "identityCardImageBack", file);
+                }}
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+              />
+              {data?.identityCardImageBack ? (
+                <img
+                  src={
+                    data.identityCardImageBack instanceof File
+                      ? URL.createObjectURL(data.identityCardImageBack)
+                      : getCloudinaryUrl(data.identityCardImageBack)
+                  }
+                  alt="Back ID"
+                  className="absolute inset-0 w-full h-full object-contain bg-gray-50 p-2"
+                />
+              ) : (
+                <div className="flex flex-col items-center text-gray-400">
+                  <Camera className="h-8 w-8 mb-2" />
+                  <span className="text-xs">Upload Back</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+
         </div>
       </CardContent>
     </Card>

@@ -18,11 +18,16 @@ export const PorterRegistrationProvider = ({ children }) => {
       address: "",
       porterType: "",
       porterPhoto: null,
+      identityType: "",
+      identityNumber: "",
+      identityCardImageFront: null,
+      identityCardImageBack: null,
     },
     vehicle: {
       vehicleNumber: "",
       vehicleCategory: "",
       capacity: "",
+      hasVehicle: true,
     },
     documents: {
       licenseNumber: "",
@@ -46,7 +51,7 @@ export const PorterRegistrationProvider = ({ children }) => {
   const { mutateAsync: fetchRegistration } =
     porterRetgistrationHooks.useGetPorterRegistredInformationMutation();
 
-  
+
   /* ========================
      Actions
   ======================= */
@@ -94,11 +99,16 @@ export const PorterRegistrationProvider = ({ children }) => {
           address: payload?.basicInfo?.address ?? "",
           porterType: payload?.basicInfo?.porterType ?? "",
           porterPhoto: payload?.basicInfo?.porterPhoto ?? null,
+          identityType: payload?.basicInfo?.identityType ?? "",
+          identityNumber: payload?.basicInfo?.identityNumber ?? "",
+          identityCardImageFront: payload?.basicInfo?.identityCardImageFront ?? null,
+          identityCardImageBack: payload?.basicInfo?.identityCardImageBack ?? null,
         },
         vehicle: {
           vehicleNumber: payload?.vehicle?.vehicleNumber ?? "",
           vehicleCategory: payload?.vehicle?.vehicleCategory ?? "",
           capacity: payload?.vehicle?.capacity ?? "",
+          hasVehicle: payload?.vehicle?.hasVehicle ?? true,
         },
         documents: {
           licenseNumber: payload?.documents?.licenseNumber ?? "",

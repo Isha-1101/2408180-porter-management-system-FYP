@@ -1,8 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, CheckCircle, Circle, ChevronRight, List } from "lucide-react";
+import { X, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
 
 const steps = [
+  "Registration Type",
   "Personal Information",
   "Vehicle Details",
   "Document Details",
@@ -14,16 +15,18 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
 
   const isStepUnlocked = (targetStep) => {
     if (targetStep <= 1) return true;
-    if (targetStep === 2) return !!registrationSteps?.basicInfo?.completed;
-    if (targetStep === 3) return !!registrationSteps?.vehicle?.completed;
-    if (targetStep === 4) return !!registrationSteps?.documents?.completed;
+    if (targetStep === 2) return !!registrationSteps?.basicInfo?.completed || true; // Step 2 (Basic Info) is unlocked if Type is selected (which is implicit if on step 2)
+    if (targetStep === 3) return !!registrationSteps?.basicInfo?.completed;
+    if (targetStep === 4) return !!registrationSteps?.vehicle?.completed;
+    if (targetStep === 5) return !!registrationSteps?.documents?.completed;
     return false;
   };
 
   const isStepCompleted = (stepNumber) => {
-    if (stepNumber === 1) return !!registrationSteps?.basicInfo?.completed;
-    if (stepNumber === 2) return !!registrationSteps?.vehicle?.completed;
-    if (stepNumber === 3) return !!registrationSteps?.documents?.completed;
+    if (stepNumber === 1) return true; // Always considered complete if past it
+    if (stepNumber === 2) return !!registrationSteps?.basicInfo?.completed;
+    if (stepNumber === 3) return !!registrationSteps?.vehicle?.completed;
+    if (stepNumber === 4) return !!registrationSteps?.documents?.completed;
     return false;
   };
 
@@ -37,23 +40,16 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
 
       <Card className="w-full md:w-80 h-full md:h-auto fixed md:sticky top-0 md:top-6 left-0 md:left-auto z-50 md:z-auto transform md:transform-none transition-transform duration-300 ease-in-out md:shadow-sm border-r-0 md:border-r">
         <CardHeader className="border-b pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <List className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Registration Steps</CardTitle>
-            </div>
+          <div className="flex items-center justify-end">
             <Button
               size="icon"
               variant="ghost"
               onClick={toggle}
               className="h-8 w-8"
             >
-              <X className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Complete all steps to register
-          </p>
         </CardHeader>
 
         <CardContent className="p-6 space-y-2">
@@ -67,13 +63,12 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
               <div key={label} className="relative">
                 <Button
                   variant={isCurrent ? "default" : "ghost"}
-                  className={`w-full justify-start h-auto p-3 mb-2 relative z-10 ${
-                    isCurrent
-                      ? "bg-primary hover:bg-primary/90 shadow-sm"
-                      : isUnlocked
+                  className={`w-full justify-start h-auto p-3 mb-2 relative z-10 ${isCurrent
+                    ? "bg-primary hover:bg-primary/90 shadow-sm"
+                    : isUnlocked
                       ? "hover:bg-gray-50"
                       : "opacity-50 cursor-not-allowed"
-                  }`}
+                    }`}
                   disabled={!isUnlocked && !isCompleted}
                   onClick={() => {
                     if (!isUnlocked && !isCompleted) return;
@@ -83,21 +78,19 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
                   <div className="flex items-center gap-3 w-full">
                     {/* Step indicator */}
                     <div
-                      className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                        isCurrent
-                          ? "bg-white text-primary"
-                          : isCompleted
+                      className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isCurrent
+                        ? "bg-white text-primary"
+                        : isCompleted
                           ? "bg-primary/10 text-primary border border-primary/20"
                           : "bg-gray-100 text-gray-400 border border-gray-200"
-                      }`}
+                        }`}
                     >
                       {isCompleted ? (
                         <CheckCircle className="h-5 w-5" />
                       ) : (
                         <span
-                          className={`font-semibold text-sm ${
-                            isCurrent ? "text-primary" : "text-gray-500"
-                          }`}
+                          className={`font-semibold text-sm ${isCurrent ? "text-primary" : "text-gray-500"
+                            }`}
                         >
                           {stepNumber}
                         </span>
@@ -107,26 +100,24 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
                     {/* Step content */}
                     <div className="flex-1 text-left">
                       <span
-                        className={`block font-medium ${
-                          isCurrent ? "text-white" : "text-gray-900"
-                        }`}
+                        className={`block font-medium ${isCurrent ? "text-white" : "text-gray-900"
+                          }`}
                       >
                         {label}
                       </span>
                       <span
-                        className={`block text-xs ${
-                          isCurrent
-                            ? "text-primary-foreground/80"
-                            : "text-gray-500"
-                        }`}
+                        className={`block text-xs ${isCurrent
+                          ? "text-primary-foreground/80"
+                          : "text-gray-500"
+                          }`}
                       >
                         {isCompleted
                           ? "Completed"
                           : isCurrent
-                          ? "In Progress"
-                          : isUnlocked
-                          ? "Pending"
-                          : "Locked"}
+                            ? "In Progress"
+                            : isUnlocked
+                              ? "Pending"
+                              : "Locked"}
                       </span>
                     </div>
 

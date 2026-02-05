@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, IdCard, Upload } from "lucide-react";
 
 const DocumentInfo = ({ data, onChange }) => {
- const handleFileChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     onChange("documents", "porterLicenseDocument", file);
@@ -32,9 +32,6 @@ const DocumentInfo = ({ data, onChange }) => {
             placeholder="Enter your license number"
             className="w-full"
           />
-          <p className="text-xs text-muted-foreground">
-            Enter the official license number issued by authorities
-          </p>
         </div>
 
         {/* License Document Upload */}
@@ -51,7 +48,7 @@ const DocumentInfo = ({ data, onChange }) => {
                 onChange={handleFileChange}
                 accept=".pdf,.jpg,.jpeg,.png"
               />
-             
+
               {data?.porterLicenseDocument && (
                 <span className="text-sm text-green-600 flex items-center gap-1">
                   <FileText className="h-4 w-4" />
@@ -59,9 +56,6 @@ const DocumentInfo = ({ data, onChange }) => {
                 </span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Upload a scanned copy of your license (PDF, JPG, PNG, max 5MB)
-            </p>
           </div>
         </div>
 

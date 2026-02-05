@@ -7,12 +7,12 @@ import PersonalInfo from "./component/porter-register/porter-basic-info.jsx";
 import VehicleInfo from "./component/porter-register/porter-vehicle-info.jsx";
 import DocumentInfo from "./component/porter-register/porter-document-info.jsx";
 import SidebarSteps from "./component/porter-register/side-bar-steps";
-import PageLayout from "@/components/common/PageLayout.jsx";
 import ReviewPage from "./component/porter-register/porter-review-page.jsx";
 import { porterRetgistrationHooks } from "@/apis/hooks/porterRegistratioHooks.jsx";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { usePorterRegistration } from "./providers/PorterRegistrationProvider.jsx";
+import RegistrationTypeSelection from "./component/porter-register/registration-type-selection.jsx";
 
 const PorterRegister = () => {
   const navigate = useNavigate();
@@ -69,7 +69,7 @@ const PorterRegister = () => {
     porterRetgistrationHooks.useSavePorterVehicleInfoMutation();
 
   //   const handleSaveStep2 = async () => {
-    const handleSaveStep2 = async () => {
+  const handleSaveStep2 = async () => {
     setRegistrationSteps((prev) => ({
       ...prev,
       vehicle: { ...prev.vehicle, isCompleted: true },
@@ -104,7 +104,7 @@ const PorterRegister = () => {
   // };
 
 
-  const { mutateAsync: submitPorterRegistration,isPending: isSubmitting } = porterRetgistrationHooks.useSubmitPorterRegistrationMutation();
+  const { mutateAsync: submitPorterRegistration, isPending: isSubmitting } = porterRetgistrationHooks.useSubmitPorterRegistrationMutation();
   const handleFinalSavePorterInformation = async () => {
     try {
       await submitPorterRegistration(registrationId);
@@ -116,15 +116,15 @@ const PorterRegister = () => {
 
   const handleNextStep = async () => {
     try {
-      if (step === 1) {
+      if (step === 2) {
         await handleSaveStep1();
       }
 
-      if (step === 2) {
+      if (step === 3) {
         await handleSaveStep2();
       }
 
-      if (step === 3) {
+      if (step === 4) {
         await handleSaveStep3();
       }
 
@@ -136,12 +136,10 @@ const PorterRegister = () => {
   };
 
   return (
-    <PageLayout
-      title="Porter Registration"
-      description="Register a new porter with all required information"
-      className="p-4 lg:p-8"
+    <div
+      className="p-4 lg:p-8 min-h-screen bg-gray-50/50"
     >
-      <div className="max-w-7xl mx-auto flex gap-3">
+      <div className="max-w-7xl mx-auto flex gap-3 relative">
         {/* Sidebar */}
         <SidebarSteps
           step={step}
@@ -150,6 +148,19 @@ const PorterRegister = () => {
           isOpen={isSidebarOpen}
           toggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
+
+        {/* Sidebar Toggle Button (When Closed) */}
+        {!isSidebarOpen && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute -left-10 top-0 z-10 bg-white shadow-sm border-gray-200 hover:bg-gray-50 h-8 w-8"
+            onClick={() => setIsSidebarOpen(true)}
+            title="Expand Sidebar"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
 
         {/* Main Form */}
         {isSavingDocumentInfo || isSavingVehicleInfo || isSavingPersonalInfo ? (
@@ -171,21 +182,29 @@ const PorterRegister = () => {
           <Card className="flex-1">
             <CardContent>
               {step === 1 && (
+                <RegistrationTypeSelection
+                  selectedType={formData?.basicInfo?.porterType}
+                  onSelect={(type) => {
+                    handleChange("basicInfo", "porterType", type);
+                  }}
+                />
+              )}
+              {step === 2 && (
                 <PersonalInfo
                   data={formData?.basicInfo}
                   onChange={handleChange}
                 />
               )}
-              {step === 2 && (
+              {step === 3 && (
                 <VehicleInfo data={formData?.vehicle} onChange={handleChange} />
               )}
-              {step === 3 && (
+              {step === 4 && (
                 <DocumentInfo
                   data={formData?.documents}
                   onChange={handleChange}
                 />
               )}
-              {step === 4 && (
+              {step === 5 && (
                 <ReviewPage
                   data={formData}
                   onEdit={setStep}
@@ -205,9 +224,9 @@ const PorterRegister = () => {
                   <ChevronLeft size={16} /> Previous
                 </Button>
 
-                <Badge>{Math.round((step / 4) * 100)}%</Badge>
 
-                <Button disabled={step === 4} onClick={handleNextStep}>
+
+                <Button disabled={step === 5 || (step === 1 && !formData?.basicInfo?.porterType)} onClick={handleNextStep}>
                   Next <ChevronRight size={16} />
                 </Button>
               </div>
@@ -216,15 +235,7 @@ const PorterRegister = () => {
         )}
       </div>
 
-      {!isSidebarOpen && (
-        <Button
-          className="fixed bottom-4 right-4 lg:hidden"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <Menu />
-        </Button>
-      )}
-    </PageLayout>
+    </div>
   );
 };
 
