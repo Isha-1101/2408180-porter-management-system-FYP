@@ -143,7 +143,7 @@ const PersonalInfo = ({ data, onChange }) => {
             />
           </div>
 
-          <div className="space-y-2 md:col-span-2">
+          <div className="space-y-2">
             <Label htmlFor="identityType" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Registration ID Type *
@@ -164,7 +164,7 @@ const PersonalInfo = ({ data, onChange }) => {
             </Select>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
+          <div className="space-y-2">
             <Label htmlFor="identityNumber" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Registration ID Number *
@@ -183,33 +183,36 @@ const PersonalInfo = ({ data, onChange }) => {
               <Camera className="h-4 w-4" />
               ID Card Front *
             </Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden group hover:border-primary transition-colors cursor-pointer">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) onChange("basicInfo", "identityCardImageFront", file);
-                }}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-              />
-              {data?.identityCardImageFront ? (
-                <img
-                  src={
-                    data.identityCardImageFront instanceof File
-                      ? URL.createObjectURL(data.identityCardImageFront)
-                      : getCloudinaryUrl(data.identityCardImageFront)
-                  }
-                  alt="Front ID"
-                  className="absolute inset-0 w-full h-full object-contain bg-gray-50 p-2"
-                />
-              ) : (
-                <div className="flex flex-col items-center text-gray-400">
-                  <Camera className="h-8 w-8 mb-2" />
-                  <span className="text-xs">Upload Front</span>
-                </div>
-              )}
-            </div>
+            <Label htmlFor="id-card-front" className="cursor-pointer block">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden group hover:border-primary transition-colors">
+                {data?.identityCardImageFront ? (
+                  <img
+                    src={
+                      data.identityCardImageFront instanceof File
+                        ? URL.createObjectURL(data.identityCardImageFront)
+                        : getCloudinaryUrl(data.identityCardImageFront)
+                    }
+                    alt="Front ID"
+                    className="absolute inset-0 w-full h-full object-contain bg-gray-50 p-2"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center text-gray-400">
+                    <Camera className="h-8 w-8 mb-2" />
+                    <span className="text-xs">Upload Front</span>
+                  </div>
+                )}
+              </div>
+            </Label>
+            <Input
+              id="id-card-front"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onChange("basicInfo", "identityCardImageFront", file);
+              }}
+              className="hidden"
+            />
           </div>
 
           <div className="space-y-2">
@@ -217,33 +220,36 @@ const PersonalInfo = ({ data, onChange }) => {
               <Camera className="h-4 w-4" />
               ID Card Back *
             </Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden group hover:border-primary transition-colors cursor-pointer">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) onChange("basicInfo", "identityCardImageBack", file);
-                }}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-              />
-              {data?.identityCardImageBack ? (
-                <img
-                  src={
-                    data.identityCardImageBack instanceof File
-                      ? URL.createObjectURL(data.identityCardImageBack)
-                      : getCloudinaryUrl(data.identityCardImageBack)
-                  }
-                  alt="Back ID"
-                  className="absolute inset-0 w-full h-full object-contain bg-gray-50 p-2"
-                />
-              ) : (
-                <div className="flex flex-col items-center text-gray-400">
-                  <Camera className="h-8 w-8 mb-2" />
-                  <span className="text-xs">Upload Back</span>
-                </div>
-              )}
-            </div>
+            <Label htmlFor="id-card-back" className="cursor-pointer block">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[150px] relative overflow-hidden group hover:border-primary transition-colors">
+                {data?.identityCardImageBack ? (
+                  <img
+                    src={
+                      data.identityCardImageBack instanceof File
+                        ? URL.createObjectURL(data.identityCardImageBack)
+                        : getCloudinaryUrl(data.identityCardImageBack)
+                    }
+                    alt="Back ID"
+                    className="absolute inset-0 w-full h-full object-contain bg-gray-50 p-2"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center text-gray-400">
+                    <Camera className="h-8 w-8 mb-2" />
+                    <span className="text-xs">Upload Back</span>
+                  </div>
+                )}
+              </div>
+            </Label>
+            <Input
+              id="id-card-back"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onChange("basicInfo", "identityCardImageBack", file);
+              }}
+              className="hidden"
+            />
           </div>
 
 
