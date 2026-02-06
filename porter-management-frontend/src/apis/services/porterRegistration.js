@@ -1,7 +1,9 @@
 import axiosInstance from "../axiosInstance";
 
-const porterRegistrationStart = () => {
-  return axiosInstance.post("/porter-registration/start");
+const porterRegistrationStart = (registrationType) => {
+  return axiosInstance.post("/porter-registration/start", {
+    registrationType,
+  });
 };
 
 const savePorterBasicInfo = (registrationId, data) => {

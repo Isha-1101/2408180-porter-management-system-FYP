@@ -12,11 +12,11 @@ export const PorterRegistrationProvider = ({ children }) => {
   const [registrationId, setRegistrationId] = useState(null);
 
   const [formData, setFormData] = useState({
+    registrationType: "",
     basicInfo: {
       fullName: "",
       phone: "",
       address: "",
-      porterType: "",
       porterPhoto: null,
       identityType: "",
       identityNumber: "",
@@ -89,10 +89,11 @@ export const PorterRegistrationProvider = ({ children }) => {
       const res = await fetchRegistration(registrationId);
       const payload = res?.data;
       if (!payload) return;
-
+      console.log("Fetched registration data:", payload);
       setSteps(payload?.registration?.steps ?? steps);
 
       setFormData({
+        registrationType: payload?.registration?.registrationType ?? "",
         basicInfo: {
           fullName: payload?.basicInfo?.fullName ?? "",
           phone: payload?.basicInfo?.phone ?? "",

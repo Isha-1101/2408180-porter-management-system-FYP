@@ -11,7 +11,7 @@ const RegistrationTypeSelection = ({ selectedType, onSelect }) => {
             icon: User,
         },
         {
-            id: "team_member",
+            id: "team",
             title: "Team Porter",
             description: "Register as part of a team",
             icon: Users,

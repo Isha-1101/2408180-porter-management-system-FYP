@@ -1,4 +1,3 @@
-// models/porterBooking.model.js
 import mongoose from "mongoose";
 
 const porterBookingSchema = new mongoose.Schema(
@@ -12,7 +11,7 @@ const porterBookingSchema = new mongoose.Schema(
     porterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "porters",
-      default: null, // used for individual hire
+      default: null,
     },
 
     teamId: {

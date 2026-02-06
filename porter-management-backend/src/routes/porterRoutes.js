@@ -4,10 +4,10 @@ import {
   getAllPortersDetails,
   getPorterByUserId,
   getPorterDetailsById,
-  getPorterdocumetsByPorterId,
-  getVehicleDetailsByPorterId,
-  SavePorterDocuments,
-  SaveVehicleDetails,
+  // getPorterdocumetsByPorterId,
+  // getVehicleDetailsByPorterId,
+  // SavePorterDocuments,
+  // SaveVehicleDetails,
   getPorterDetailsByUserId,
 } from "../controllers/porterController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
@@ -127,128 +127,128 @@ PorterRouter.get(
   getPorterDetailsById
 );
 
-/**
- * @swagger
- * /core-api/porters/vehicle/save/{id}:
- *   post:
- *     summary: Save Vehicle Details of Porter
- *     tags: [Porters]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           example:
- *             vehicleNumber: Bha1cha123
- *             vehicleCategory: "bike"
- *             capacity: 120cc
- *     responses:
- *       200:
- *         description: Vehicle Fetched Successfully
- *       401:
- *         description: Unauthorized
- */
-PorterRouter.post(
-  "/vehicle/save/:id",
-  authenticate,
-  authorizeRole("porter"),
-  SaveVehicleDetails
-);
-/**
- * @swagger
- * /core-api/porters/vehicle/get/{id}:
- *   get:
- *     summary: Get Vehicle Details of Porter
- *     tags: [Porters]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Vehicle Fetched Successfully
- *       401:
- *         description: Unauthorized
- */
-PorterRouter.get(
-  "/vehicle/get/:id",
-  authenticate,
-  authorizeRole("porter"),
-  getVehicleDetailsByPorterId
-);
+// /**
+//  * @swagger
+//  * /core-api/porters/vehicle/save/{id}:
+//  *   post:
+//  *     summary: Save Vehicle Details of Porter
+//  *     tags: [Porters]
+//  *     security:
+//  *       - BearerAuth: []
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: string
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           example:
+//  *             vehicleNumber: Bha1cha123
+//  *             vehicleCategory: "bike"
+//  *             capacity: 120cc
+//  *     responses:
+//  *       200:
+//  *         description: Vehicle Fetched Successfully
+//  *       401:
+//  *         description: Unauthorized
+//  */
+// PorterRouter.post(
+//   "/vehicle/save/:id",
+//   authenticate,
+//   authorizeRole("porter"),
+//   SaveVehicleDetails
+// );
+// /**
+//  * @swagger
+//  * /core-api/porters/vehicle/get/{id}:
+//  *   get:
+//  *     summary: Get Vehicle Details of Porter
+//  *     tags: [Porters]
+//  *     security:
+//  *       - BearerAuth: []
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: Vehicle Fetched Successfully
+//  *       401:
+//  *         description: Unauthorized
+//  */
+// PorterRouter.get(
+//   "/vehicle/get/:id",
+//   authenticate,
+//   authorizeRole("porter"),
+//   getVehicleDetailsByPorterId
+// );
 
-/**
- * @swagger
- * /core-api/porters/document/save/{id}:
- *   post:
- *     summary: Save document details of Porter
- *     tags: [Porters]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               porterLicenseNumber:
- *                 type: string
- *               porterLicenseDocument:
- *                 type: string
- *                 format: binary
- *     responses:
- *       200:
- *         description: Document details saved successfully
- *       401:
- *         description: Unauthorized
- */
-PorterRouter.post(
-  "/document/save/:id",
-  authenticate,
-  authorizeRole("porter"),
-  upload.single("porterLicenseDocument"),
-  SavePorterDocuments
-);
-/**
- * @swagger
- * /core-api/porters/document/get/{id}:
- *   get:
- *     summary: Get document Details of Porter
- *     tags: [Porters]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: porterId
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: porter document fetched successfully
- *       401:
- *         description: Unauthorized
- */
-PorterRouter.get(
-  "/document/get/:id",
-  authenticate,
-  authorizeRole("porter"),
-  getPorterdocumetsByPorterId
-);
+// /**
+//  * @swagger
+//  * /core-api/porters/document/save/{id}:
+//  *   post:
+//  *     summary: Save document details of Porter
+//  *     tags: [Porters]
+//  *     security:
+//  *       - BearerAuth: []
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: string
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         multipart/form-data:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               porterLicenseNumber:
+//  *                 type: string
+//  *               porterLicenseDocument:
+//  *                 type: string
+//  *                 format: binary
+//  *     responses:
+//  *       200:
+//  *         description: Document details saved successfully
+//  *       401:
+//  *         description: Unauthorized
+//  */
+// PorterRouter.post(
+//   "/document/save/:id",
+//   authenticate,
+//   authorizeRole("porter"),
+//   upload.single("porterLicenseDocument"),
+//   SavePorterDocuments
+// );
+// /**
+//  * @swagger
+//  * /core-api/porters/document/get/{id}:
+//  *   get:
+//  *     summary: Get document Details of Porter
+//  *     tags: [Porters]
+//  *     security:
+//  *       - BearerAuth: []
+//  *     parameters:
+//  *       - in: query
+//  *         name: porterId
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: porter document fetched successfully
+//  *       401:
+//  *         description: Unauthorized
+//  */
+// PorterRouter.get(
+//   "/document/get/:id",
+//   authenticate,
+//   authorizeRole("porter"),
+//   getPorterdocumetsByPorterId
+// );
 export default PorterRouter;

@@ -41,9 +41,9 @@ export const startRegistration = async (req, res) => {
   try {
     const { registrationType } = req.body;
 
-    if (!registrationType) {
-      return res.status(400).json({ message: "registrationType is required" });
-    }
+    // if (!registrationType) {
+    //   return res.status(400).json({ message: "registrationType is required" });
+    // }
 
     const targetUserId = req.user.id;
 
@@ -54,6 +54,14 @@ export const startRegistration = async (req, res) => {
       status: { $ne: "submitted" },
     });
 
+    if(existingRegistration){
+      if(!existingRegistration.registrationId){
+        return res.status(400).json({
+          success: false,
+          message: "Existing registration found without registrationId. Please contact support.",
+        });
+      }
+    }
     if (existingRegistration) {
       return res.status(200).json({
         success: true,
@@ -315,6 +323,7 @@ export const getRegistrationProgress = async (req, res) => {
 export const getProterRegistrationByUserId = async (req, res) => {
   const userId = req.user.id;
   try {
+    console.log("testinggg")
     const registration = await PorterRegistration.find({
       userId: userId,
     }).populate("userId");

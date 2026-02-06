@@ -5,7 +5,7 @@ import { memo } from "react";
 import UiLoader from "../components/common/UiLoader";
 
 const PorterPendingGuard = memo(({ children }) => {
-  const { porter, isLoading, isFetching } = usePorter();
+  const { porter, isLoading, isFetching,porterRegistrationData ,isRegistrationFetching} = usePorter();
   const { user } = useAuthStore();
 
   // Show nothing while loading

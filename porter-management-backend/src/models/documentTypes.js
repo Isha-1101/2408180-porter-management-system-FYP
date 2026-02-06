@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const VehicleTypesSchema = new mongoose.Schema(
+const DocumentTypesSchema = new mongoose.Schema(
   {
     systemName: {
       type: String,
@@ -14,4 +14,4 @@ const VehicleTypesSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export default mongoose.model("VehicleTypes", VehicleTypesSchema);
+export default mongoose.model("DocumentTypes", DocumentTypesSchema);

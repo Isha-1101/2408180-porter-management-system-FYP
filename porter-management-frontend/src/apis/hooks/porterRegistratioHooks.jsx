@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { porterRestrationService } from "../services/porterRegistration";
 const useRegstrationStartMutation = () => {
   return useMutation({
-    mutationFn: () => porterRestrationService.porterRegistrationStart(),
+    mutationFn: (registrationType) => porterRestrationService.porterRegistrationStart(registrationType),
   });
 };
 

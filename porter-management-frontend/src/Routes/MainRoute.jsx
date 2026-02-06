@@ -92,17 +92,17 @@ const MainRoute = () => {
                 <Route
                   path="register"
                   element={
-                    // <PorterRegisterGuard>
+                    <PorterRegisterGuard>
                       <PorterRegister />
-                    // </PorterRegisterGuard>
+                    </PorterRegisterGuard>
                   }
                 />
                 <Route
                   path="pending"
                   element={
-                    // <PorterPendingGuard>
+                    <PorterPendingGuard>
                       <PorterPending />
-                    // </PorterPendingGuard>
+                    </PorterPendingGuard>
                   }
                 />
 

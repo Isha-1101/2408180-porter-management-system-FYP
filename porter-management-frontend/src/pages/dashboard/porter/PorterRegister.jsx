@@ -24,7 +24,7 @@ const PorterRegister = () => {
     registrationSteps,
     setRegistrationSteps,
   } = usePorterRegistration();
-
+  console.log(formData);
   const [step, setStep] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -41,6 +41,25 @@ const PorterRegister = () => {
   //getting registrationId when page loads
   const { mutateAsync: startRegistration } =
     porterRetgistrationHooks.useRegstrationStartMutation();
+
+  const startRegistrations = async () => {
+    try {
+      const res = await startRegistration(formData?.registrationType);
+      if (res.status === 200) {
+        toast.success("Registration started successfully");
+        setRegistrationId(res?.data?.registrationId);
+        setFormData((prev) => ({
+          ...prev,
+          registrationType: prev.registrationType,
+        }));
+      }
+      
+    } catch (err) {
+      console.error("Registration start failed", err);
+      toast.error("Failed to start registration. Please try again.");
+    }
+  };
+
   useEffect(() => {
     const initRegistration = async () => {
       try {
@@ -103,8 +122,8 @@ const PorterRegister = () => {
   //   }));
   // };
 
-
-  const { mutateAsync: submitPorterRegistration, isPending: isSubmitting } = porterRetgistrationHooks.useSubmitPorterRegistrationMutation();
+  const { mutateAsync: submitPorterRegistration, isPending: isSubmitting } =
+    porterRetgistrationHooks.useSubmitPorterRegistrationMutation();
   const handleFinalSavePorterInformation = async () => {
     try {
       await submitPorterRegistration(registrationId);
@@ -116,6 +135,9 @@ const PorterRegister = () => {
 
   const handleNextStep = async () => {
     try {
+      if (step === 1) {
+        await startRegistrations();
+      }
       if (step === 2) {
         await handleSaveStep1();
       }
@@ -136,9 +158,7 @@ const PorterRegister = () => {
   };
 
   return (
-    <div
-      className="p-4 lg:p-8 min-h-screen bg-gray-50/50"
-    >
+    <div className="p-4 lg:p-8 min-h-screen bg-gray-50/50">
       <div className="max-w-7xl mx-auto flex gap-3 relative">
         {/* Sidebar */}
         <SidebarSteps
@@ -183,9 +203,15 @@ const PorterRegister = () => {
             <CardContent>
               {step === 1 && (
                 <RegistrationTypeSelection
-                  selectedType={formData?.basicInfo?.porterType}
+                  selectedType={formData?.registrationType}
+                  // onSelect={(type) => {
+                  //   handleIndividualTypeSelection(type);
+                  // }}
                   onSelect={(type) => {
-                    handleChange("basicInfo", "porterType", type);
+                    setFormData((prev) => ({
+                      ...prev,
+                      registrationType: type,
+                    }));
                   }}
                 />
               )}
@@ -224,9 +250,12 @@ const PorterRegister = () => {
                   <ChevronLeft size={16} /> Previous
                 </Button>
 
-
-
-                <Button disabled={step === 5 || (step === 1 && !formData?.basicInfo?.porterType)} onClick={handleNextStep}>
+                <Button
+                  disabled={
+                    step === 5 || (step === 1 && !formData?.registrationType)
+                  }
+                  onClick={handleNextStep}
+                >
                   Next <ChevronRight size={16} />
                 </Button>
               </div>
@@ -234,7 +263,6 @@ const PorterRegister = () => {
           </Card>
         )}
       </div>
-
     </div>
   );
 };

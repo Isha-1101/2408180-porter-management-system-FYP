@@ -12,6 +12,23 @@ const PorterBasicInfoSchema = new mongoose.Schema(
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
     address: { type: String, required: true },
+    registrationIdType: {
+      type: String,
+      required: true,
+      ref: "DocumentTypes",
+    },
+    registrationIdNumber: { type: String, required: true },
+    registrationIdDocument: [
+      {
+        idFront: {
+          type: String,
+          required: true,
+        },
+        idBack: {
+          type: String,
+        },
+      },
+    ],
 
     porterPhoto: { type: String, required: true },
     experienceYears: { type: Number, default: 1 },
