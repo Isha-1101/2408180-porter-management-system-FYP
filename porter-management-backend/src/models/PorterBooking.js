@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const porterBookingSchema = new mongoose.Schema(
+const bookingSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -8,65 +8,46 @@ const porterBookingSchema = new mongoose.Schema(
       required: true,
     },
 
-    porterId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "porters",
-      default: null,
+    pickup: {
+      lat: Number,
+      lng: Number,
     },
 
-    teamId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "porter_teams",
-      default: null, // used for team hire
+    drop: {
+      address: String,
+      lat: Number,
+      lng: Number,
     },
 
-    numberOfPorters: {
-      type: Number,
-      default: 1,
-      min: 1,
-    },
-
-    pickupLocation: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    dropLocation: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    pickupLat: {
+    weightKg: {
       type: Number,
       required: true,
     },
 
-    pickupLng: {
+    radiusKm: {
       type: Number,
-      required: true,
-    },
-
-    bookingDate: {
-      type: Date,
-      default: Date.now,
+      default: 5,
     },
 
     status: {
       type: String,
-      enum: ["pending", "accepted", "completed", "cancelled"],
-      default: "pending",
+      enum: [
+        "SEARCHING",
+        "WAITING_PORTER",
+        "ASSIGNED",
+        "CANCELLED",
+        "COMPLETED",
+      ],
+      default: "SEARCHING",
+    },
+
+    assignedPorterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Porter",
+      default: null,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const PorterBooking = mongoose.model(
-  "porter_bookings",
-  porterBookingSchema
-);
-
-export default PorterBooking;
+export default mongoose.model("PorterBooking", bookingSchema);

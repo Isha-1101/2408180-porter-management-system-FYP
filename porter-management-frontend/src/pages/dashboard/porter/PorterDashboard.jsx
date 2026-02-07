@@ -267,13 +267,14 @@ export default function PorterDashboard() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 border border-red-400 relative">
+      <div className="col-start-1 sticky top-0 h-full">
         <MapContainer
           center={porterLocation}
           zoom={13}
           scrollWheelZoom={true}
           style={{ height: "100%", width: "100%" }}
+          className="z-0"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -289,7 +290,7 @@ export default function PorterDashboard() {
       </div>
 
       {/* Right Column - Booking Requests */}
-      <Card className="h-full">
+      <Card className="h-full col-start-2">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center space-x-2">

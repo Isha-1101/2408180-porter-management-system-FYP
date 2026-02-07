@@ -12,19 +12,19 @@ const PorterBasicInfoSchema = new mongoose.Schema(
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
     address: { type: String, required: true },
-    registrationIdType: {
+    identityType: {
       type: String,
       required: true,
       ref: "DocumentTypes",
     },
-    registrationIdNumber: { type: String, required: true },
+    identityNumber: { type: String, required: true },
     registrationIdDocument: [
       {
-        idFront: {
+        identityCardImageFront: {
           type: String,
           required: true,
         },
-        idBack: {
+        identityCardImageBack: {
           type: String,
         },
       },

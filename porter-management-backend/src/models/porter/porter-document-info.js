@@ -9,9 +9,9 @@ const PorterDocumentSchema = new mongoose.Schema(
       index: true,
     },
 
-    documentType: { type: String, required: true },
-    documentNumber:{ type: String, required: true },
-    documentFile: { type: String, required: true },
+    // documentType: { type: String, required: true },
+    licenseNumber:{ type: String, required: true },
+    porterLicenseDocument: { type: String, required: true },
   },
   { timestamps: true }
 );

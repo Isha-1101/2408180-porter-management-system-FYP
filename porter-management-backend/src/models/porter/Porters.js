@@ -49,9 +49,42 @@ const PorterSchema = new mongoose.Schema(
       default: false,
     },
 
-    latitude: Number,
-    longitude: Number,
+    //porter job status
+    currentStatus: {
+      type: String,
+      enum: ["online", "offline", "busy"],
+      default: "offline",
+    },
+    //porter can takes
+    maxWeightKg: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    //porter current location
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number], //lat, lng
+        default: [0, 0],
+        required: true,
+      },
+    },
+    lastLocationUpdatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    maxDistance: {
+      type: Number,
+      required: true,
+      default: 5000,
+    },
   },
   { timestamps: true },
 );
+PorterSchema.index({ location: "2dsphere" });
 export default mongoose.model("Porters", PorterSchema);

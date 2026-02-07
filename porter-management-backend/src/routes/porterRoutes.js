@@ -13,6 +13,7 @@ import {
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
 import upload from "../middlewares/uploadFile.js";
+import { createBookingAndNotifyPorters } from "../controllers/book-porter/porter-booking-controller.js";
 
 const PorterRouter = express.Router();
 /**
@@ -126,6 +127,15 @@ PorterRouter.get(
   authorizeRole("porter"),
   getPorterDetailsById
 );
+
+// ##### PORTER BOOKINGS ####
+PorterRouter.post(
+  "/porter-booking",
+  authenticate,
+  authorizeRole("user"),
+  createBookingAndNotifyPorters,
+);
+  
 
 // /**
 //  * @swagger

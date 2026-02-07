@@ -41,9 +41,9 @@ export const startRegistration = async (req, res) => {
   try {
     const { registrationType } = req.body;
 
-    // if (!registrationType) {
-    //   return res.status(400).json({ message: "registrationType is required" });
-    // }
+    if (!registrationType) {
+      return res.status(400).json({ message: "registrationType is required" });
+    }
 
     const targetUserId = req.user.id;
 
@@ -54,11 +54,12 @@ export const startRegistration = async (req, res) => {
       status: { $ne: "submitted" },
     });
 
-    if(existingRegistration){
-      if(!existingRegistration.registrationId){
+    if (existingRegistration) {
+      if (!existingRegistration.registrationId) {
         return res.status(400).json({
           success: false,
-          message: "Existing registration found without registrationId. Please contact support.",
+          message:
+            "Existing registration found without registrationId. Please contact support.",
         });
       }
     }
@@ -128,30 +129,50 @@ export const startRegistration = async (req, res) => {
 export const saveBasicInfo = async (req, res) => {
   try {
     const { registrationId } = req.params; // this registration ID is created RegistrationID using Date.now()
-    const file = req.file;
-    if (!file) {
+
+    if (!req.files || typeof req.files !== "object") {
       return res.status(400).json({
         success: false,
-        message: "Porter photo is required.",
+        message: "Files are required and must be valid.",
       });
     }
+    const files = req.files;
+    //get porter photo
+    const porterPhoto = files.porterPhoto ? files.porterPhoto[0] : null;
+
+    //get identity type and number
+    const identityCardImageFront = files.identityCardImageFront
+      ? files.identityCardImageFront[0]
+      : null;
+
+    //get identity number
+    const identityCardImageBack = files.identityCardImageBack
+      ? files.identityCardImageBack[0]
+      : null;
     const registration = await PorterRegistration.findOne({ registrationId });
     if (!registration) {
       return res.status(404).json({ message: "Registration not found" });
     }
 
-    const { fullName, phone, address } = req.body;
-    if (!fullName || !phone || !address) {
+    const { fullName, phone, address, identityType, identityNumber } = req.body;
+    if (!fullName || !phone || !address || !identityType || !identityNumber) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
     const existingBasicInfo = await PorterBasicInfo.findOne({
       registrationId: registration._id,
     });
-    const updatePayload = { fullName, phone, address };
+    const updatePayload = {
+      fullName,
+      phone,
+      address,
+      identityType,
+      identityNumber,
+      registrationIdDocument: existingBasicInfo?.registrationIdDocument || {},
+    };
 
-    if (file) {
-      const uploaded = await uploadToCloudinary(file);
+    if (porterPhoto) {
+      const uploaded = await uploadToCloudinary(porterPhoto);
       const url = uploaded.url;
       const trimmedUrl = url.split("image")[1];
       updatePayload.porterPhoto = trimmedUrl;
@@ -159,6 +180,29 @@ export const saveBasicInfo = async (req, res) => {
       updatePayload.porterPhoto = existingBasicInfo.porterPhoto;
     }
 
+    if (identityCardImageFront) {
+      const uploaded = await uploadToCloudinary(identityCardImageFront);
+      const url = uploaded.url;
+      const trimmedUrl = url.split("image")[1];
+      updatePayload.registrationIdDocument.identityCardImageFront = trimmedUrl;
+    } else if (
+      existingBasicInfo?.registrationIdDocument.identityCardImageFront
+    ) {
+      updatePayload.registrationIdDocument.identityCardImageFront =
+        existingBasicInfo.registrationIdDocument.identityCardImageFront;
+    }
+
+    if (identityCardImageBack) {
+      const uploaded = await uploadToCloudinary(identityCardImageBack);
+      const url = uploaded.url;
+      const trimmedUrl = url.split("image")[1];
+      updatePayload.registrationIdDocument.identityCardImageBack = trimmedUrl;
+    } else if (
+      existingBasicInfo?.registrationIdDocument.identityCardImageBack
+    ) {
+      updatePayload.registrationIdDocument.identityCardImageBack =
+        existingBasicInfo.registrationIdDocument.identityCardImageBack;
+    }
     await PorterBasicInfo.findOneAndUpdate(
       { registrationId: registration._id },
       updatePayload,
@@ -187,9 +231,9 @@ export const saveBasicInfo = async (req, res) => {
 export const saveDocuments = async (req, res) => {
   const { registrationId } = req.params;
 
-  const { documentType, documentNumber } = req.body;
-  if (!documentType || !documentNumber) {
-    return res.status(400).json({ message: "All fields are required." });
+  const { licenseNumber } = req.body;
+  if (!licenseNumber) {
+    return res.status(400).json({ message: "License number is required." });
   }
 
   const file = req.file;
@@ -210,14 +254,15 @@ export const saveDocuments = async (req, res) => {
       registrationId: registration._id,
     });
 
-    const updatePayload = { documentType, documentNumber };
+    const updatePayload = { licenseNumber };
     if (file) {
       const uploaded = await uploadToCloudinary(file);
       const url = uploaded.url;
       const trimmedUrl = url.split("image")[1];
-      updatePayload.documentFile = trimmedUrl;
-    } else if (existingDocuments?.documentFile) {
-      updatePayload.documentFile = existingDocuments.documentFile;
+      updatePayload.porterLicenseDocument = trimmedUrl;
+    } else if (existingDocuments?.porterLicenseDocument) {
+      updatePayload.porterLicenseDocument =
+        existingDocuments.porterLicenseDocument;
     }
 
     await PorterDocument.findOneAndUpdate(
@@ -248,12 +293,6 @@ export const saveDocuments = async (req, res) => {
 export const saveVehicleInfo = async (req, res) => {
   const { registrationId } = req.params;
   const { vehicleCategory, vehicleNumber, hasVehicle, capacity } = req.body;
-
-  if (!hasVehicle) {
-    return res
-      .status(400)
-      .json({ message: "Please select if you have a vehicle" });
-  }
 
   if (hasVehicle === "true") {
     if (!vehicleCategory || !vehicleNumber) {
@@ -323,11 +362,10 @@ export const getRegistrationProgress = async (req, res) => {
 export const getProterRegistrationByUserId = async (req, res) => {
   const userId = req.user.id;
   try {
-    console.log("testinggg")
     const registration = await PorterRegistration.find({
       userId: userId,
     }).populate("userId");
-    if (!registration) {
+    if (!registration || registration.length === 0) {
       return res.status(404).json({ message: "Registration not found" });
     }
     res.status(200).json({ success: true, registration });
@@ -372,7 +410,6 @@ export const submitRegistration = async (req, res) => {
 export const approveRegistration = async (req, res) => {
   const { registrationId } = req.params;
   const session = await mongoose.startSession();
-
   try {
     await session.withTransaction(async () => {
       const registration = await PorterRegistration.findOne(
@@ -433,10 +470,7 @@ export const approveRegistration = async (req, res) => {
       );
       const user = await User.findById(userId);
       registration.status = "approved";
-      await registeredAsPorterMailController(
-        user.email,
-        user.name,
-      );
+      await registeredAsPorterMailController(user.email, user.name);
       await registration.save({ session });
     });
 

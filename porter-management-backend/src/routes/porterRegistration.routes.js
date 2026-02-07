@@ -33,7 +33,11 @@ porterRegistrationRouter.put(
   "/:registrationId/basic-info",
   authenticate,
   authorizeRole("porter"),
-  upload.single("porterPhoto"),
+  upload.fields([
+    { name: "identityCardImageFront", maxCount: 1 },
+    { name: "identityCardImageBack", maxCount: 1 },
+    { name: "porterPhoto", maxCount: 1 },
+  ]),
   saveBasicInfo
 );
 
@@ -54,7 +58,7 @@ porterRegistrationRouter.put(
   "/:registrationId/documents",
   authenticate,
   authorizeRole("porter"),
-  upload.single("documentFile"),
+  upload.single("porterLicenseDocument"),
   saveDocuments
 );
 
@@ -62,17 +66,17 @@ porterRegistrationRouter.put(
  * Get full progress (resume)
  */
 porterRegistrationRouter.get(
-  "/:registrationId",
-  authenticate,
-  authorizeRole("porter"),
-  getRegistrationProgress
-);
-
-porterRegistrationRouter.get(
   "/user",
   authenticate,
   authorizeRole("porter"),
   getProterRegistrationByUserId
+);
+
+porterRegistrationRouter.get(
+  "/:registrationId",
+  authenticate,
+  authorizeRole("porter"),
+  getRegistrationProgress
 );
 /**
  * Submit registration
