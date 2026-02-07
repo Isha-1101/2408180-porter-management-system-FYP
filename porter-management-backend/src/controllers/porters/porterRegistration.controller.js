@@ -41,9 +41,9 @@ export const startRegistration = async (req, res) => {
   try {
     const { registrationType } = req.body;
 
-    if (!registrationType) {
-      return res.status(400).json({ message: "registrationType is required" });
-    }
+    // if (!registrationType) {
+    //   return res.status(400).json({ message: "registrationType is required" });
+    // }
 
     const targetUserId = req.user.id;
 
