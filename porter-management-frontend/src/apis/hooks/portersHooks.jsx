@@ -25,19 +25,19 @@ export const useGetPorterById = (id) => {
   });
 };
 
-export const useGetPorterByUser = () =>{
+export const useGetPorterByUser = () => {
   const { user } = useAuthStore();
   return useQuery({
     queryKey: ["porterByUser"],
     queryFn: () => porterService.getPorterByUser(),
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
+    enabled: user?.role === "porter",
+    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes - cache persists for 10 minutes
+    retry: false, // Don't retry on error to prevent repeated API calls
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
-}
+};
 
 //vehicle details
 export const useCreateVechicleDetais = () => {
@@ -45,7 +45,7 @@ export const useCreateVechicleDetais = () => {
     mutationFn: async (porterId, vehiclePayload) => {
       const response = await porterService.saveVehicleDetailsPorter(
         porterId,
-        vehiclePayload
+        vehiclePayload,
       );
       return response;
     },
@@ -61,11 +61,11 @@ export const useGetVehicleTypes = () => {
 
 //document details
 export const useCreateDocumentDetails = () => {
-   return useMutation({
+  return useMutation({
     mutationFn: async ({ porterId, documentPayload }) => {
       return await porterService.saveDocumentOfPorter(
         porterId,
-        documentPayload
+        documentPayload,
       );
     },
   });

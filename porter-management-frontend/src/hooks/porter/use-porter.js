@@ -20,8 +20,7 @@ export const usePorter = () => {
     isFetching: isRegistrationFetching,
     isError: isRegistrationError,
     error: registrationError,
-  } = porterRetgistrationHooks.usegetPorterRegistrationByUser();;
-    console.log("🚀 ~ usePorter ~ porterRegistrationData:", porterRegistrationData)
+  } = porterRetgistrationHooks.usegetPorterRegistrationByUser();
 
   useEffect(() => {
     if (porterData?.data?.porter !== undefined) {

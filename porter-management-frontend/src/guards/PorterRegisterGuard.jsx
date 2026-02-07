@@ -6,7 +6,11 @@ import { Loader2 } from "lucide-react";
 import UiLoader from "../components/common/UiLoader";
 
 const PorterRegisterGuard = memo(({ children }) => {
-  const {porterRegistrationData, isRegistrationLoading, isRegistrationFetching } = usePorter();
+  const {
+    porterRegistrationData,
+    isRegistrationLoading,
+    isRegistrationFetching,
+  } = usePorter();
   const { user } = useAuthStore();
 
   // Show nothing while loading
@@ -23,8 +27,18 @@ const PorterRegisterGuard = memo(({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // If already registered, redirect to porters dashboard
-  if (porterRegistrationData && ( porterRegistrationData[0]?.status === "completed" || porterRegistrationData[0]?.status === "pending" || porterRegistrationData[0]?.status === "submitted")) {
+  // waiting for admin approval
+  if (
+    porterRegistrationData &&
+    porterRegistrationData[0]?.status === "submitted"
+  ) {
+    return <Navigate to="/dashboard/porters/pending" replace />;
+  }
+  // If already registered(approved), redirect to porters dashboard
+  if (
+    porterRegistrationData &&
+    porterRegistrationData[0]?.status === "approved"
+  ) {
     return <Navigate to="/dashboard/porters" replace />;
   }
 

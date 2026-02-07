@@ -444,6 +444,7 @@ export const approveRegistration = async (req, res) => {
         role = "worker";
         canAcceptBooking = true;
         userId = registration.userId;
+        teamId = registration.teamId ? registration.teamId : null;
       }
 
       if (registration.registrationType === "team") {
@@ -451,6 +452,7 @@ export const approveRegistration = async (req, res) => {
         role = "owner";
         canAcceptBooking = false;
         userId = registration.userId;
+        teamId = registration?.teamId;
       }
 
       const porter = await Porters.create(

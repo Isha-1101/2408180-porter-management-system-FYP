@@ -5,7 +5,12 @@ import { memo } from "react";
 import UiLoader from "../components/common/UiLoader";
 
 const PorterPendingGuard = memo(({ children }) => {
-  const { porterRegistrationData, isRegistrationFetching,isRegistrationLoading } = usePorter();
+  const {
+    porterRegistrationData,
+    isRegistrationFetching,
+    isRegistrationLoading,
+    isRegistrationError,
+  } = usePorter();
   const { user } = useAuthStore();
 
   // Show nothing while loading
@@ -22,7 +27,14 @@ const PorterPendingGuard = memo(({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (!porterRegistrationData || porterRegistrationData[0]?.status !== "submitted") {
+  if (isRegistrationError) {
+    return <Navigate to="/dashboard/porters/register" replace />;
+  }
+
+  if (
+    !porterRegistrationData ||
+    porterRegistrationData[0]?.status !== "submitted"
+  ) {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 

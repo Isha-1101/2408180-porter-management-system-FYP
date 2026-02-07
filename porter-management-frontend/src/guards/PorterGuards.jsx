@@ -8,18 +8,12 @@ const PorterGuards = memo(() => {
   const {
     porter,
     isLoading,
-    isFetching,
     porterRegistrationData,
     isRegistrationLoading,
-    isRegistrationFetching,
+    isError,
+    isRegistrationError,
   } = usePorter();
-  console.log("🚀 ~ isRegistrationFetching:", porterRegistrationData?.[0]?.status);
   const { user } = useAuthStore();
-
-  // Show nothing while loading, but don't redirect
-  if (isLoading || isFetching || isRegistrationFetching || isRegistrationLoading) {
-    return <UiLoader />;
-  }
 
   // No user logged in
   if (!user) {
@@ -31,10 +25,23 @@ const PorterGuards = memo(() => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Not registered
+  // Show loader only when queries are enabled AND loading
+  // When user.role === "porter", queries are enabled, so we check loading states
+  if (isLoading || isRegistrationLoading) {
+    return <UiLoader />;
+  }
+
+  // If there's an error fetching porter data or registration data, redirect to register
+  // This handles the case where the API fails or returns an error
+  if (isError && isRegistrationError) {
+    return <Navigate to="/dashboard/porters/register" replace />;
+  }
+
+  // Not registered - check if porter is null/undefined AND registration data is empty
   if (
-    !porter && porterRegistrationData?.length === 0)
-   {
+    !porter &&
+    (!porterRegistrationData || porterRegistrationData?.length === 0)
+  ) {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 

@@ -2,11 +2,9 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
 import "leaflet/dist/leaflet.css";
 import {
-  MapPin,
   Navigation,
   Package,
   Clock,
-  User,
   Truck,
   Filter,
   Star,
@@ -43,8 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-
-import PageLayout from "@/components/common/PageLayout";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Recenter } from "../../../utils/helper";
@@ -127,7 +123,7 @@ const priorityColors = {
 };
 
 export default function PorterDashboard() {
-  const { porter, isFetching } = usePorter();
+  const { porter, isLoading } = usePorter();
   const [bookingRequests, setBookingRequests] = useState(mockBookingRequests);
   const [selectedRequest, setSelectedRequest] = useState(
     mockBookingRequests[0],
@@ -139,20 +135,6 @@ export default function PorterDashboard() {
   const [porterLocation, setPorterLocation] = useState([27.7172, 85.324]);
 
   // WebSocket connection
-  if (isFetching) {
-    return (
-      <div
-        style={{ padding: "24px", background: "#f6f7fb", minHeight: "100vh" }}
-      >
-        <h2 style={{ marginBottom: "6px" }}>Porter Dashboard</h2>
-        <p style={{ color: "#666", marginBottom: "24px" }}>
-          Your location is shared automatically while you are online.
-        </p>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -187,29 +169,6 @@ export default function PorterDashboard() {
     }, 5000); // every 5 seconds
   };
 
-  // Listen for location updates from other porters
-  useEffect(() => {
-    socket.on("all-porter-locations", (locations) => {
-      console.log("📍 Received all porter locations:", locations);
-      setAllPorterLocations(locations);
-    });
-
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
-    });
-
-    return () => {
-      socket.off("all-porter-locations");
-      socket.off("connect");
-      socket.off("disconnect");
-    };
-  }, []);
-
-  console.log("📍 Current porter location:", porterLocation);
   const stopAutoLocation = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
@@ -255,7 +214,7 @@ export default function PorterDashboard() {
     (req) => req.status === "PENDING" && !req.acceptedBy,
   ).length;
 
-  if (isFetching) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
