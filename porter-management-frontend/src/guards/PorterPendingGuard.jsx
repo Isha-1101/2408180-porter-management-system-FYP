@@ -5,12 +5,12 @@ import { memo } from "react";
 import UiLoader from "../components/common/UiLoader";
 
 const PorterPendingGuard = memo(({ children }) => {
-  const { porter, isLoading, isFetching,porterRegistrationData ,isRegistrationFetching} = usePorter();
+  const { porterRegistrationData, isRegistrationFetching,isRegistrationLoading } = usePorter();
   const { user } = useAuthStore();
 
   // Show nothing while loading
-  if (isLoading || isFetching) {
- return <UiLoader />
+  if (isRegistrationFetching || isRegistrationLoading) {
+    return <UiLoader />;
   }
 
   // No user logged in
@@ -22,19 +22,18 @@ const PorterPendingGuard = memo(({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (!porter) {
+  if (!porterRegistrationData || porterRegistrationData[0]?.status !== "submitted") {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 
-  // Only show pending page if status is pending
-  if (porter?.status !== "pending") {
-    return <Navigate to="/dashboard/porters" replace />;
-  }
+  // // Only show pending page if status is pending
+  // if (porterRegistrationData.status !== "pending") {
+  //   return <Navigate to="/dashboard/porters" replace />;
+  // }
 
   return children;
 });
 
 PorterPendingGuard.displayName = "PorterPendingGuard";
-
 
 export default PorterPendingGuard;

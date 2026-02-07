@@ -5,11 +5,19 @@ import { memo } from "react";
 import UiLoader from "../components/common/UiLoader";
 
 const PorterGuards = memo(() => {
-  const { porter, isLoading, isFetching } = usePorter();
+  const {
+    porter,
+    isLoading,
+    isFetching,
+    porterRegistrationData,
+    isRegistrationLoading,
+    isRegistrationFetching,
+  } = usePorter();
+  console.log("🚀 ~ isRegistrationFetching:", porterRegistrationData?.[0]?.status);
   const { user } = useAuthStore();
 
   // Show nothing while loading, but don't redirect
-  if (isLoading || isFetching) {
+  if (isLoading || isFetching || isRegistrationFetching || isRegistrationLoading) {
     return <UiLoader />;
   }
 
@@ -24,12 +32,14 @@ const PorterGuards = memo(() => {
   }
 
   // Not registered
-  if (!porter) {
+  if (
+    !porter && porterRegistrationData?.length === 0)
+   {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 
   // Registered but not approved
-  if (porter?.status === "pending") {
+  if (porterRegistrationData?.[0]?.status === "submitted") {
     return <Navigate to="/dashboard/porters/pending" replace />;
   }
 

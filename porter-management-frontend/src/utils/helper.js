@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useMap } from "react-leaflet";
+
 export const convertToBase64 = async (fileUrl) => {
   const fullUrl = `https://res.cloudinary.com/${
     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
@@ -19,3 +22,12 @@ export const getCloudinaryUrl = (fileUrl) => {
     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
   }/image${fileUrl}`;
 };
+
+
+export function Recenter({ pos }) {
+  const map = useMap();
+  useEffect(() => {
+    if (pos) map.setView(pos, 14);
+  }, [pos, map]);
+  return null;
+}

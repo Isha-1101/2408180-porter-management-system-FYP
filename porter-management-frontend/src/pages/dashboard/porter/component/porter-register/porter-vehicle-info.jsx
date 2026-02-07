@@ -21,13 +21,13 @@ const VehicleInfo = ({ data, onChange }) => {
   ];
 
   const handleHasVehicleChange = (value) => {
+    console.log(value);
     onChange("vehicle", "hasVehicle", value);
-    // Optional: Clear other fields if No?
-    // if (!value) {
-    //   onChange("vehicle", "vehicleNumber", "");
-    //   onChange("vehicle", "vehicleCategory", "");
-    //   onChange("vehicle", "capacity", "");
-    // }
+    if (!value) {
+      onChange("vehicle", "vehicleNumber", "");
+      onChange("vehicle", "vehicleCategory", "");
+      onChange("vehicle", "capacity", "");
+    }
   };
 
   return (

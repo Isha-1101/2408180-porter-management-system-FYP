@@ -24,7 +24,7 @@ const PorterRegister = () => {
     registrationSteps,
     setRegistrationSteps,
   } = usePorterRegistration();
-  console.log(formData);
+console.log("🚀 ~ file: PorterRegister.jsx:24 ~ PorterRegister ~ formData:", formData)
   const [step, setStep] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -53,7 +53,6 @@ const PorterRegister = () => {
           registrationType: prev.registrationType,
         }));
       }
-      
     } catch (err) {
       console.error("Registration start failed", err);
       toast.error("Failed to start registration. Please try again.");
@@ -76,8 +75,29 @@ const PorterRegister = () => {
   const { mutateAsync: savePersonalInfo, isPending: isSavingPersonalInfo } =
     porterRetgistrationHooks.useSavePorterBasicInfoMutation();
 
-  // const handleSaveStep1 = async () => {
   const handleSaveStep1 = async () => {
+    const payload = new FormData();
+    payload.append("fullName", formData.basicInfo.fullName);
+    payload.append("phone", formData.basicInfo.phone);
+    payload.append("address", formData.basicInfo.address);
+    payload.append("porterType", formData.basicInfo.porterType);
+    if (formData.basicInfo.porterPhoto instanceof File) {
+      payload.append("porterPhoto", formData.basicInfo.porterPhoto);
+    } else {
+      payload.append("porterPhoto", "");
+    }
+    payload.append("identityType", formData.basicInfo.identityType);
+    payload.append("identityNumber", formData.basicInfo.identityNumber);
+    payload.append(
+      "identityCardImageFront",
+      formData.basicInfo.identityCardImageFront,
+    );
+    payload.append(
+      "identityCardImageBack",
+      formData.basicInfo.identityCardImageBack,
+    );
+
+    await savePersonalInfo({ registrationId, data: payload });
     setRegistrationSteps((prev) => ({
       ...prev,
       basicInfo: { ...prev.basicInfo, isCompleted: true },
@@ -87,8 +107,12 @@ const PorterRegister = () => {
   const { mutateAsync: saveVehicleInfo, isPending: isSavingVehicleInfo } =
     porterRetgistrationHooks.useSavePorterVehicleInfoMutation();
 
-  //   const handleSaveStep2 = async () => {
   const handleSaveStep2 = async () => {
+    console.log("Saving vehicle info with data:", formData.vehicle);
+    await saveVehicleInfo({
+      registrationId,
+      data: formData.vehicle,
+    });
     setRegistrationSteps((prev) => ({
       ...prev,
       vehicle: { ...prev.vehicle, isCompleted: true },
@@ -99,28 +123,22 @@ const PorterRegister = () => {
     porterRetgistrationHooks.useSavePorterDocumentsInfoMutation();
 
   const handleSaveStep3 = async () => {
+    const payload = new FormData();
+    payload.append("licenseNumber", formData.documents.licenseNumber);
+
+    if (formData.documents.porterLicenseDocument instanceof File) {
+      payload.append(
+        "porterLicenseDocument",
+        formData.documents.porterLicenseDocument,
+      );
+    }
+
+    await saveDocumentInfo({ registrationId, data: payload });
     setRegistrationSteps((prev) => ({
       ...prev,
       documents: { ...prev.documents, isCompleted: true },
     }));
   };
-  // const handleSaveStep3 = async () => {
-  //   const payload = new FormData();
-  //   payload.append("licenseNumber", formData.documents.licenseNumber);
-
-  //   if (formData.documents.porterLicenseDocument instanceof File) {
-  //     payload.append(
-  //       "porterLicenseDocument",
-  //       formData.documents.porterLicenseDocument
-  //     );
-  //   }
-
-  //   await saveDocumentInfo({ registrationId, data: payload });
-  //   setRegistrationSteps((prev) => ({
-  //     ...prev,
-  //     documents: { ...prev.documents, isCompleted: true },
-  //   }));
-  // };
 
   const { mutateAsync: submitPorterRegistration, isPending: isSubmitting } =
     porterRetgistrationHooks.useSubmitPorterRegistrationMutation();

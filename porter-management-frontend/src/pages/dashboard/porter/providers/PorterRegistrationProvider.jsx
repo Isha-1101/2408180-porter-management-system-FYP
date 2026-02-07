@@ -89,7 +89,6 @@ export const PorterRegistrationProvider = ({ children }) => {
       const res = await fetchRegistration(registrationId);
       const payload = res?.data;
       if (!payload) return;
-      console.log("Fetched registration data:", payload);
       setSteps(payload?.registration?.steps ?? steps);
 
       setFormData({
@@ -102,8 +101,8 @@ export const PorterRegistrationProvider = ({ children }) => {
           porterPhoto: payload?.basicInfo?.porterPhoto ?? null,
           identityType: payload?.basicInfo?.identityType ?? "",
           identityNumber: payload?.basicInfo?.identityNumber ?? "",
-          identityCardImageFront: payload?.basicInfo?.identityCardImageFront ?? null,
-          identityCardImageBack: payload?.basicInfo?.identityCardImageBack ?? null,
+          identityCardImageFront: payload?.basicInfo?.registrationIdDocument?.[0]?.identityCardImageFront ?? null,
+          identityCardImageBack: payload?.basicInfo?.registrationIdDocument?.[0]?.identityCardImageBack ?? null,
         },
         vehicle: {
           vehicleNumber: payload?.vehicle?.vehicleNumber ?? "",

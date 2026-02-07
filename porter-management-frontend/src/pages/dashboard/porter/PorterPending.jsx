@@ -36,7 +36,7 @@ const PorterPending = () => {
 
   return (
     <PageLayout
-      className="space-y-4"
+      className="space-y-4 p-4"
       title="Porter Application Status"
       description="Your porter application is currently under review"
     >

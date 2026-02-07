@@ -14,12 +14,13 @@ const savePorterBasicInfo = (registrationId, data) => {
 };
 const savePorterVehicleInfo = (
   registrationId,
-  { vehicleNumber, vehicleCategory, capacity },
+  { vehicleNumber, vehicleCategory, capacity, hasVehicle },
 ) => {
   return axiosInstance.put(`/porter-registration/${registrationId}/vehicle`, {
     vehicleNumber,
     vehicleCategory,
     capacity,
+    hasVehicle,
   });
 };
 

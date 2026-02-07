@@ -21,6 +21,7 @@ export const usePorter = () => {
     isError: isRegistrationError,
     error: registrationError,
   } = porterRetgistrationHooks.usegetPorterRegistrationByUser();;
+    console.log("🚀 ~ usePorter ~ porterRegistrationData:", porterRegistrationData)
 
   useEffect(() => {
     if (porterData?.data?.porter !== undefined) {
@@ -35,7 +36,7 @@ export const usePorter = () => {
     isFetching,
     isError,
     error,
-    porterRegistrationData,
+    porterRegistrationData: porterRegistrationData?.data?.registration?? null,
     isRegistrationLoading,
     isRegistrationFetching,
     isRegistrationError,
