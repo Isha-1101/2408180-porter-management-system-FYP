@@ -25,6 +25,8 @@ const PorterBooking = () => {
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
   const [weight, setWeight] = useState("");
+  const [teamSize, setTeamSize] = useState("");
+  const [requirements, setRequirements] = useState("");
   const [porterType, setPorterType] = useState("individual"); // "individual" or "team"
   const [hasSearched, setHasSearched] = useState(false);
   const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
@@ -119,6 +121,8 @@ const PorterBooking = () => {
         pickup,
         dropoff,
         weight,
+        teamSize: porterType === "team" ? teamSize : null,
+        requirements: porterType === "team" ? requirements : null,
         vehicleType,
       },
     });
@@ -137,11 +141,29 @@ const PorterBooking = () => {
           {/* Left: Inputs */}
           <div className="lg:col-span-8">
             <Card className="rounded-4">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Search className="w-5 h-5 text-primary" />
-                  Find Your Porter
-                </CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex bg-gray-100 p-1.5 rounded-lg w-full">
+                  <button
+                    onClick={() => setPorterType("individual")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "individual"
+                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                      }`}
+                  >
+                    <User className="w-4 h-4" />
+                    Individual Porter
+                  </button>
+                  <button
+                    onClick={() => setPorterType("team")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "team"
+                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                      }`}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Team Porter
+                  </button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Vehicle Category Selection */}
@@ -224,7 +246,8 @@ const PorterBooking = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                   {/* Weight Input */}
-                  <div className="md:col-span-12 space-y-2">
+                  {/* Weight Input */}
+                  <div className={`${porterType === "team" ? "md:col-span-6" : "md:col-span-12"} space-y-2`}>
                     <Label
                       htmlFor="weight"
                       className="text-sm font-medium flex items-center gap-2 text-gray-700"
@@ -255,6 +278,58 @@ const PorterBooking = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Team Size Input (Only for Team Porter) */}
+                  {porterType === "team" && (
+                    <div className="md:col-span-6 space-y-2">
+                      <Label
+                        htmlFor="teamSize"
+                        className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                      >
+                        <UserPlus className="w-4 h-4 text-primary" />
+                        Number of Porters
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="teamSize"
+                          type="number"
+                          placeholder="Ex: 3"
+                          value={teamSize}
+                          min="1"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || parseFloat(val) >= 1) {
+                              setTeamSize(val);
+                            }
+                          }}
+                          className="pl-9"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                          <UserPlus className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Requirements Input (Only for Team Porter) */}
+                  {porterType === "team" && (
+                    <div className="md:col-span-12 space-y-2">
+                      <Label
+                        htmlFor="requirements"
+                        className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                      >
+                        <Search className="w-4 h-4 text-primary" />
+                        Requirements
+                      </Label>
+                      <textarea
+                        id="requirements"
+                        placeholder="Describe your specific requirements (e.g., heavy lifting, specialized equipment needed)..."
+                        value={requirements}
+                        onChange={(e) => setRequirements(e.target.value)}
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Search Button */}
@@ -273,36 +348,14 @@ const PorterBooking = () => {
           {/* Right: Available Porters / Info */}
           <div className="lg:col-span-4">
             <Card className="h-full shadow-sm">
-              <CardHeader className="pb-2 border-b">
-                <div className="flex items-center justify-between mb-2">
+              <CardHeader className="pb-3 border-b">
+                <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">
                     Available Porters{" "}
                     <span className="text-sm font-normal text-gray-500 ml-1">
                       ({hasSearched ? filteredPorters.length : 0})
                     </span>
                   </CardTitle>
-                </div>
-
-                {/* Porter Type Toggle */}
-                <div className="flex bg-gray-100 p-1 rounded-lg w-full">
-                  <button
-                    onClick={() => setPorterType("individual")}
-                    className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${porterType === "individual"
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Individual
-                  </button>
-                  <button
-                    onClick={() => setPorterType("team")}
-                    className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all ${porterType === "team"
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Team
-                  </button>
                 </div>
               </CardHeader>
               <CardContent className="p-3 h-[400px] overflow-y-auto custom-scrollbar">
