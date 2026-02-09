@@ -38,6 +38,7 @@ const submitPorterRegistration = (registrationId) => {
   return axiosInstance.post(`/porter-registration/${registrationId}/submit`);
 };
 
+//get registration status by logged in user if user is porter
 const getPorterRegistrationByUser = () => {
   return axiosInstance.get(`/porter-registration/user`);
 };

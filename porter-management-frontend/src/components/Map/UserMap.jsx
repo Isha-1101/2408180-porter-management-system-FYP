@@ -190,13 +190,13 @@ import { Label } from "../ui/label";
 import { Recenter } from "../../utils/helper";
 
 // Use environment variable or ensure correct URL
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-const socket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"],
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-});
+// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+// const socket = io(SOCKET_URL, {
+//   transports: ["websocket", "polling"],
+//   reconnection: true,
+//   reconnectionAttempts: 5,
+//   reconnectionDelay: 1000,
+// });
 
 // Fix for Leaflet icons in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -258,41 +258,41 @@ const UserMap = ({ className = "", showSidebar = true }) => {
       setLoadingLocation(false);
     }
 
-    // Socket connection events
-    socket.on("connect", () => {
-      setSocketConnected(true);
-      // Request initial porter locations
-      socket.emit("get-porter-locations");
-    });
+    // // Socket connection events
+    // socket.on("connect", () => {
+    //   setSocketConnected(true);
+    //   // Request initial porter locations
+    //   socket.emit("get-porter-locations");
+    // });
 
-    socket.on("disconnect", () => {
-      setSocketConnected(false);
-    });
+    // socket.on("disconnect", () => {
+    //   setSocketConnected(false);
+    // });
 
-    socket.on("all-porter-locations", (data) => {
-      setPorters(data);
-      console.log(data);
-    });
+    // socket.on("all-porter-locations", (data) => {
+    //   setPorters(data);
+    //   console.log(data);
+    // });
 
-    socket.on("porter-location-update", (data) => {
-      setPorters((prev) => ({
-        ...prev,
-        [data.porterId]: {
-          lat: data.lat,
-          lng: data.lng,
-          teamId: data.teamId,
-          timestamp: Date.now(),
-        },
-      }));
-    });
+    // socket.on("porter-location-update", (data) => {
+    //   setPorters((prev) => ({
+    //     ...prev,
+    //     [data.porterId]: {
+    //       lat: data.lat,
+    //       lng: data.lng,
+    //       teamId: data.teamId,
+    //       timestamp: Date.now(),
+    //     },
+    //   }));
+    // });
 
-    // Cleanup
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("all-porter-locations");
-      socket.off("porter-location-update");
-    };
+    // // Cleanup
+    // return () => {
+    //   socket.off("connect");
+    //   socket.off("disconnect");
+    //   socket.off("all-porter-locations");
+    //   socket.off("porter-location-update");
+    // };
   }, []);
 
   const nearby = useMemo(() => {

@@ -3,6 +3,41 @@ import PorterBooking from "../../models/PorterBooking.js";
 import Porters from "../../models/porter/Porters.js";
 import BookintgPorterRequest from "../../models/BookintgPorterRequest.js";
 
+export const searchPorters = async (req, res) => {
+  //search porter as team and individual
+  try {
+    const { porterType, pickup, drop, weightKg, vehicleCategory } = req.body;
+
+    if (!porterType || !pickup || !drop || !weightKg || !vehicleCategory) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required." });
+    }
+    const porters = await Porters.find({
+      status: "active",
+      isVerified: true,
+      canAcceptBooking: true,
+      currentStatus: "online",
+    });
+
+    if (porterType === "team") {
+      porters.push(
+        ...(await Porters.find({
+          teamId: { $exists: true },
+        })),
+      );
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: "Porters found successfully",
+      data: porters,
+    });
+  } catch (error) {
+    console.error("Error searching for porters:", error);
+    res.status(500).json({ success: false, message: "An error occurred." });
+  }
+};
 export const createBookingAndNotifyPorters = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();

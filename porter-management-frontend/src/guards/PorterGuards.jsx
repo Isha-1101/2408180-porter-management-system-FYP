@@ -13,6 +13,7 @@ const PorterGuards = memo(() => {
     isError,
     isRegistrationError,
   } = usePorter();
+  
   const { user } = useAuthStore();
 
   // No user logged in

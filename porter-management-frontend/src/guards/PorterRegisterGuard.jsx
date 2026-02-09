@@ -11,6 +11,7 @@ const PorterRegisterGuard = memo(({ children }) => {
     isRegistrationLoading,
     isRegistrationFetching,
   } = usePorter();
+  
   const { user } = useAuthStore();
 
   // Show nothing while loading

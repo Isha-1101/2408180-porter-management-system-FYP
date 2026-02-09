@@ -8,15 +8,18 @@ const ReactQueryProvider = ({ children }) => {
           queries: {
             refetchOnWindowFocus: false,
             refetchOnMount: false,
-            staleTime: 6 * 60 * 60,
-            retry: 1,
+            retry: false,
+            staleTime: 5 * 60 * 1000,
+            gcTime: 10 * 60 * 1000,
           },
         },
-      })
+      }),
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+      </QueryClientProvider>
   );
 };
 

@@ -27,11 +27,12 @@ export const porterService = {
     const response = axiosInstance.get(`/porters/${id}`);
     return response;
   },
-
+// this service is used to get porter by user
   getPorterByUser: async () => {
     const response = axiosInstance.get(`/porters/by-user`);
     return response;
   },
+
   saveVehicleDetailsPorter: async (payload) => {
     const response = axiosInstance.post(
       `/porters/vehicle/save/${payload.porterId}`,

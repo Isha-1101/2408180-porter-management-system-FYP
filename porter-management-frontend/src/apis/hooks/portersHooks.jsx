@@ -28,14 +28,9 @@ export const useGetPorterById = (id) => {
 export const useGetPorterByUser = () => {
   const { user } = useAuthStore();
   return useQuery({
-    queryKey: ["porterByUser"],
+    queryKey: ["porterByUser", user?.id],
     queryFn: () => porterService.getPorterByUser(),
     enabled: user?.role === "porter",
-    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes - cache persists for 10 minutes
-    retry: false, // Don't retry on error to prevent repeated API calls
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 };
 

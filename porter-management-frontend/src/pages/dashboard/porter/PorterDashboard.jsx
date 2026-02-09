@@ -137,41 +137,41 @@ export default function PorterDashboard() {
   // WebSocket connection
   const intervalRef = useRef(null);
 
-  useEffect(() => {
-    if (porter?._id) {
-      startAutoLocation(porter._id);
-    }
+  // useEffect(() => {
+  //   if (porter?._id) {
+  //     startAutoLocation(porter._id);
+  //   }
 
-    return () => stopAutoLocation();
-  }, [porter?._id]);
+  //   return () => stopAutoLocation();
+  // }, [porter?._id]);
 
-  const startAutoLocation = (id) => {
-    if (!id) return;
-    intervalRef.current = setInterval(() => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            setPorterLocation([lat, lng]);
+  // const startAutoLocation = (id) => {
+  //   if (!id) return;
+  //   intervalRef.current = setInterval(() => {
+  //     if (navigator.geolocation) {
+  //       navigator.geolocation.getCurrentPosition(
+  //         (pos) => {
+  //           const lat = pos.coords.latitude;
+  //           const lng = pos.coords.longitude;
+  //           setPorterLocation([lat, lng]);
 
-            console.log("📍 Sending location:", { porterId: id, lat, lng });
-            socket.emit("porter-location", {
-              porterId: id,
-              lat,
-              lng,
-            });
-          },
-          (err) => console.error("Error getting location:", err),
-          { enableHighAccuracy: true },
-        );
-      }
-    }, 5000); // every 5 seconds
-  };
+  //           console.log("📍 Sending location:", { porterId: id, lat, lng });
+  //           socket.emit("porter-location", {
+  //             porterId: id,
+  //             lat,
+  //             lng,
+  //           });
+  //         },
+  //         (err) => console.error("Error getting location:", err),
+  //         { enableHighAccuracy: true },
+  //       );
+  //     }
+  //   }, 5000); // every 5 seconds
+  // };
 
-  const stopAutoLocation = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  };
+  // const stopAutoLocation = () => {
+  //   if (intervalRef.current) clearInterval(intervalRef.current);
+  // };
 
   const handleAcceptRequest = (requestId) => {
     console.log("Accepting request:", requestId);

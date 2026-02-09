@@ -58,14 +58,9 @@ const useSubmitPorterRegistrationMutation = () => {
 const usegetPorterRegistrationByUser = () => {
   const { user } = useAuthStore();
   return useQuery({
-    queryKey: ["porter-registration-by-user"],
+    queryKey: ["porter-registration-by-user", user?.id],
     queryFn: () => porterRestrationService.getPorterRegistrationByUser(),
-    enabled: user?.role === "porter", // Only fetch when user is in porter role
-    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes - cache persists for 10 minutes
-    retry: false, // Don't retry on error to prevent repeated API calls
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    enabled: user?.role === "porter",
   });
 };
 
