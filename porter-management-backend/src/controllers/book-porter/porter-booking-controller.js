@@ -3,6 +3,14 @@ import PorterBooking from "../../models/PorterBooking.js";
 import Porters from "../../models/porter/Porters.js";
 import BookintgPorterRequest from "../../models/BookintgPorterRequest.js";
 
+/**
+ * Search porters as team and individual
+ * @param {Object} req.body - Request body containing the search parameters
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ * @returns {Promise} - Promise containing the response data
+ */
+
 export const searchPorters = async (req, res) => {
   //search porter as team and individual
   try {
@@ -38,6 +46,17 @@ export const searchPorters = async (req, res) => {
     res.status(500).json({ success: false, message: "An error occurred." });
   }
 };
+
+
+
+/**
+ * Create a booking and notify eligible porters within 5km
+ * @param {Object} req.body - Request body containing the booking details
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ * @returns {Promise} - Promise containing the response data
+ */
+
 export const createBookingAndNotifyPorters = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
