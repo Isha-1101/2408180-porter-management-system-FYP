@@ -45,16 +45,21 @@ const BookingConfirmation = () => {
     const weightCharge = extraWeight * pricePerKg;
 
     const serviceFee = 40;
-    const subTotal = basePrice + weightCharge + serviceFee;
-    const tax = subTotal * 0.13; // 13% VAT
-    const totalPrice = Math.round(subTotal + tax);
+    const totalPrice = Math.round(basePrice + weightCharge + serviceFee);
 
     const handleConfirm = () => {
-        // In a real app, you would verify payment or create order via API here
-        // For now, we'll navigate to orders
-        // navigate("/dashboard/orders");
-        alert("Booking Confirmed! (Mock)");
-        navigate("/dashboard/orders");
+        // Navigate to payment page with booking data
+        navigate("/dashboard/booking/payment", {
+            state: {
+                totalPrice,
+                bookingDetails: {
+                    porter,
+                    pickup,
+                    dropoff,
+                    weight,
+                },
+            },
+        });
     };
 
     return (
@@ -153,11 +158,6 @@ const BookingConfirmation = () => {
                                     <span className="text-muted-foreground">Platform Fee</span>
                                     <span>NPR {serviceFee}</span>
                                 </div>
-
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Tax (13% VAT)</span>
-                                    <span>NPR {tax.toFixed(2)}</span>
-                                </div>
                             </div>
 
                             <Separator className="my-2" />
@@ -183,7 +183,7 @@ const BookingConfirmation = () => {
                             onClick={handleConfirm}
                         >
                             <CheckCircle2 className="w-5 h-5" />
-                            Confirm & Pay
+                            Continue to Payment
                         </Button>
                     </CardFooter>
                 </Card>

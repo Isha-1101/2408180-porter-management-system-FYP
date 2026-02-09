@@ -48,6 +48,7 @@ import PorterBooking from "../pages/dashboard/user/PorterBooking";
 import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
 import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
+import Payment from "../pages/dashboard/user/Payment";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
 import DashboardLayout from "../pages/dashboard/layout";
 
@@ -78,6 +79,7 @@ const MainRoute = () => {
               path="booking/confirmation"
               element={<BookingConfirmation />}
             />
+            <Route path="booking/payment" element={<Payment />} />
             <Route path="settings" element={<Settings />} />
 
             {/* Porter routes */}

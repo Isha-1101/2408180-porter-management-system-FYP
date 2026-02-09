@@ -11,6 +11,8 @@ import {
   Footprints,
   Bike,
   Car,
+  Truck,
+  Package2,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,9 @@ const PorterBooking = () => {
   const [weight, setWeight] = useState("");
   const [teamSize, setTeamSize] = useState("");
   const [requirements, setRequirements] = useState("");
+  const [numberOfVehicles, setNumberOfVehicles] = useState("");
   const [porterType, setPorterType] = useState("individual"); // "individual" or "team"
+  const [hasVehicle, setHasVehicle] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
 
@@ -96,7 +100,7 @@ const PorterBooking = () => {
       }));
   }, [porters, porterType, calculatedPriceMultiplier]);
 
-  const [vehicleType, setVehicleType] = useState("none"); // "none", "two-wheeler", "four-wheeler"
+  const [vehicleType, setVehicleType] = useState("bike"); // "bike", "van", "mini-truck", "truck"
 
   const navigate = useNavigate();
 
@@ -123,7 +127,8 @@ const PorterBooking = () => {
         weight,
         teamSize: porterType === "team" ? teamSize : null,
         requirements: porterType === "team" ? requirements : null,
-        vehicleType,
+        vehicleType: hasVehicle ? vehicleType : null,
+        numberOfVehicles: porterType === "team" && hasVehicle ? numberOfVehicles : null,
       },
     });
   };
@@ -166,27 +171,6 @@ const PorterBooking = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Vehicle Category Selection */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {[
-                    { id: "none", label: "No vehicles", icon: Footprints },
-                    { id: "two-wheeler", label: "Two wheelers", icon: Bike },
-                    { id: "four-wheeler", label: "Four Wheelers", icon: Car },
-                  ].map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => setVehicleType(type.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
-                        ? "bg-primary text-white border-primary"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                        }`}
-                    >
-                      <type.icon className="w-4 h-4" />
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* From Location */}
                   <div className="space-y-2">
@@ -277,6 +261,79 @@ const PorterBooking = () => {
                         kg
                       </div>
                     </div>
+                  </div>
+
+                  {/* Vehicle Toggle */}
+                  <div className="md:col-span-12 space-y-3">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Truck className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">Include Vehicle</p>
+                          </div>
+                          <p className="text-xs text-gray-500">Porter with vehicle assistance</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setHasVehicle(!hasVehicle)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? 'bg-primary' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVehicle ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+
+                    {/* Vehicle Type Selection (Only when hasVehicle is true) */}
+                    {hasVehicle && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">Select Vehicle Type</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { id: "bike", label: "Bike", icon: Bike },
+                            { id: "van", label: "Van", icon: Car },
+                            { id: "mini-truck", label: "Mini Truck", icon: Truck },
+                            { id: "truck", label: "Truck", icon: Package2 },
+                          ].map((type) => (
+                            <button
+                              key={type.id}
+                              onClick={() => setVehicleType(type.id)}
+                              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
+                                ? "bg-primary text-white border-primary"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                                }`}
+                            >
+                              <type.icon className="w-4 h-4" />
+                              {type.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Number of Vehicles (Only for Team Porter) */}
+                        {porterType === "team" && (
+                          <div className="space-y-2 mt-3">
+                            <Label htmlFor="numberOfVehicles" className="text-sm font-medium text-gray-700">
+                              Number of Vehicles
+                            </Label>
+                            <Input
+                              id="numberOfVehicles"
+                              type="number"
+                              placeholder="Ex: 2"
+                              value={numberOfVehicles}
+                              min="1"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "" || parseFloat(val) >= 1) {
+                                  setNumberOfVehicles(val);
+                                }
+                              }}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Team Size Input (Only for Team Porter) */}
