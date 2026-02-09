@@ -38,7 +38,7 @@ const PorterSchema = new mongoose.Schema(
       default: false,
     },
 
-    status: {
+    SystemStatus: {
       type: String,
       enum: ["active", "pending", "inactive", "banned"],
       default: "pending",
@@ -52,8 +52,13 @@ const PorterSchema = new mongoose.Schema(
     //porter job status
     currentStatus: {
       type: String,
-      enum: ["online", "offline", "busy"],
+      enum: ["online", "offline", "busy", "assigned"],
       default: "offline",
+    },
+    assigned_status: {
+      type: String,
+      enum: ["assigned", "not_assigned"],
+      default: "not_assigned",
     },
     //porter can takes
     maxWeightKg: {

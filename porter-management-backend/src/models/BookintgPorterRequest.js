@@ -15,6 +15,12 @@ const bookingPorterRequestSchema = new mongoose.Schema(
       required: true,
     },
 
+    teamId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PorterTeam",
+      required: true,
+    },
+    
     distanceKm: {
       type: Number,
       required: true,

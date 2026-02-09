@@ -7,6 +7,8 @@ const PorterTeamSchema = new mongoose.Schema({
     required: true,
   },
   isActive: { type: Boolean, default: true },
+  noOfMember: { type: Number, default: 0 },
+  noOfAvailableMember: { type: Number, default: 0 },
 }, { timestamps: true });
 
 export default mongoose.model("PorterTeam", PorterTeamSchema);

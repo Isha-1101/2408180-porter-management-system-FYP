@@ -14,7 +14,7 @@ import BookintgPorterRequest from "../../models/BookintgPorterRequest.js";
 export const searchPorters = async (req, res) => {
   //search porter as team and individual
   try {
-    const { porterType, pickup, drop, weightKg, vehicleCategory } = req.body;
+    const { porterType, pickup, drop, weightKg, vehicleCategory } = req.query;
 
     if (!porterType || !pickup || !drop || !weightKg || !vehicleCategory) {
       return res
@@ -26,6 +26,7 @@ export const searchPorters = async (req, res) => {
       isVerified: true,
       canAcceptBooking: true,
       currentStatus: "online",
+      teamId: { $exists: false },
     });
 
     if (porterType === "team") {
