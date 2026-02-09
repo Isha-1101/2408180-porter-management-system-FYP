@@ -5,19 +5,30 @@ const bookingPorterRequestSchema = new mongoose.Schema(
   {
     bookingId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Booking",
+      ref: "PorterBooking",
       required: true,
     },
 
     porterId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Porter",
+      ref: "Porters",
       required: true,
     },
 
     distanceKm: {
       type: Number,
       required: true,
+    },
+
+    notificationType: {
+      type: String,
+      enum: ["DIRECT", "TEAM_LEAD", "TEAM_MEMBER"],
+      default: "DIRECT",
+    },
+
+    isTeamLead: {
+      type: Boolean,
+      default: false,
     },
 
     status: {

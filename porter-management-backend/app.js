@@ -12,6 +12,7 @@ import { multerErrorHandler } from "./src/middlewares/multerErrorHandler.js";
 import aiRouter from "./src/routes/aiRoutes.js";
 import teamRouter from "./src/routes/team/teamRoutes.js";
 import adminRouter from "./src/routes/admin/adminApproved.js";
+import bookingRouter from "./src/routes/bookingRoutes.js";
 
 dotenv.config({
   path: new URL("./.env", import.meta.url),
@@ -44,6 +45,7 @@ app.use("/core-api/location", locationRouter);
 app.use("/core-api/ask-questions", aiRouter);
 app.use("/core-api/team-porters", teamRouter);
 app.use("/core-api/admin", adminRouter);
+app.use("/core-api/bookings", bookingRouter);
 
 app.get("/", (req, res) => {
   res.send("Porter Management Backend API (ISHA)");
