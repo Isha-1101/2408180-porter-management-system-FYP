@@ -117,14 +117,14 @@ const Payment = () => {
                                     key={method.id}
                                     onClick={() => setSelectedMethod(method.id)}
                                     className={`w-full text-left transition-all ${selectedMethod === method.id
-                                            ? "ring-2 ring-primary scale-[1.02]"
-                                            : "hover:shadow-md"
+                                        ? "ring-2 ring-primary scale-[1.02]"
+                                        : "hover:shadow-md"
                                         }`}
                                 >
                                     <Card
                                         className={`${selectedMethod === method.id
-                                                ? "border-primary bg-primary/5"
-                                                : ""
+                                            ? "border-primary bg-primary/5"
+                                            : ""
                                             }`}
                                     >
                                         <CardContent className="p-4">

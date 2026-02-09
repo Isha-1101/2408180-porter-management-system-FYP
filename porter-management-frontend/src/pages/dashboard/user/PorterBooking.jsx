@@ -13,6 +13,8 @@ import {
   Car,
   Truck,
   Package2,
+  CalendarDays,
+  Clock,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,8 @@ const PorterBooking = () => {
   const [teamSize, setTeamSize] = useState("");
   const [requirements, setRequirements] = useState("");
   const [numberOfVehicles, setNumberOfVehicles] = useState("");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
   const [porterType, setPorterType] = useState("individual"); // "individual" or "team"
   const [hasVehicle, setHasVehicle] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -127,6 +131,8 @@ const PorterBooking = () => {
         weight,
         teamSize: porterType === "team" ? teamSize : null,
         requirements: porterType === "team" ? requirements : null,
+        bookingDate: porterType === "team" ? bookingDate : null,
+        bookingTime: porterType === "team" ? bookingTime : null,
         vehicleType: hasVehicle ? vehicleType : null,
         numberOfVehicles: porterType === "team" && hasVehicle ? numberOfVehicles : null,
       },
@@ -386,6 +392,46 @@ const PorterBooking = () => {
                         className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </div>
+                  )}
+
+                  {/* Booking Date & Time (Only for Team Porter) */}
+                  {porterType === "team" && (
+                    <>
+                      <div className="md:col-span-6 space-y-2">
+                        <Label
+                          htmlFor="bookingDate"
+                          className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                        >
+                          <CalendarDays className="w-4 h-4 text-primary" />
+                          Booking Date
+                        </Label>
+                        <Input
+                          id="bookingDate"
+                          type="date"
+                          value={bookingDate}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={(e) => setBookingDate(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="md:col-span-6 space-y-2">
+                        <Label
+                          htmlFor="bookingTime"
+                          className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                        >
+                          <Clock className="w-4 h-4 text-primary" />
+                          Booking Time
+                        </Label>
+                        <Input
+                          id="bookingTime"
+                          type="time"
+                          value={bookingTime}
+                          onChange={(e) => setBookingTime(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
 
