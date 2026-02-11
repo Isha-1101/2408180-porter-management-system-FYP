@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-// import { io } from "socket.io-client";
+import { io } from "socket.io-client";
 import "leaflet/dist/leaflet.css";
 import {
   Navigation,
@@ -45,8 +45,8 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Recenter } from "../../../utils/helper";
 import { userIcon } from "../../../utils/lefleticons";
-// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-// const socket = io(SOCKET_URL);
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const socket = io(SOCKET_URL);
 
 // Mock data for booking requests
 const mockBookingRequests = [
@@ -137,41 +137,41 @@ export default function PorterDashboard() {
   // WebSocket connection
   const intervalRef = useRef(null);
 
-  // useEffect(() => {
-  //   if (porter?._id) {
-  //     startAutoLocation(porter._id);
-  //   }
+  useEffect(() => {
+    if (porter?._id) {
+      startAutoLocation(porter._id);
+    }
 
-  //   return () => stopAutoLocation();
-  // }, [porter?._id]);
+    return () => stopAutoLocation();
+  }, [porter?._id]);
 
-  // const startAutoLocation = (id) => {
-  //   if (!id) return;
-  //   intervalRef.current = setInterval(() => {
-  //     if (navigator.geolocation) {
-  //       navigator.geolocation.getCurrentPosition(
-  //         (pos) => {
-  //           const lat = pos.coords.latitude;
-  //           const lng = pos.coords.longitude;
-  //           setPorterLocation([lat, lng]);
+  const startAutoLocation = (id) => {
+    if (!id) return;
+    intervalRef.current = setInterval(() => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setPorterLocation([lat, lng]);
 
-  //           console.log("📍 Sending location:", { porterId: id, lat, lng });
-  //           socket.emit("porter-location", {
-  //             porterId: id,
-  //             lat,
-  //             lng,
-  //           });
-  //         },
-  //         (err) => console.error("Error getting location:", err),
-  //         { enableHighAccuracy: true },
-  //       );
-  //     }
-  //   }, 5000); // every 5 seconds
-  // };
+            console.log("📍 Sending location:", { porterId: id, lat, lng });
+            socket.emit("porter-location", {
+              porterId: id,
+              lat,
+              lng,
+            });
+          },
+          (err) => console.error("Error getting location:", err),
+          { enableHighAccuracy: true },
+        );
+      }
+    }, 5000); // every 5 seconds
+  };
 
-  // const stopAutoLocation = () => {
-  //   if (intervalRef.current) clearInterval(intervalRef.current);
-  // };
+  const stopAutoLocation = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
 
   const handleAcceptRequest = (requestId) => {
     console.log("Accepting request:", requestId);
