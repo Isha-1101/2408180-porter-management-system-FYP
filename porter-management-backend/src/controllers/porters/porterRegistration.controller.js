@@ -463,7 +463,7 @@ export const approveRegistration = async (req, res) => {
             role,
             teamId,
             canAcceptBooking,
-            status: "active",
+            SystemStatus: "active",
             isVerified: true,
             registrationId: registration._id,
           },

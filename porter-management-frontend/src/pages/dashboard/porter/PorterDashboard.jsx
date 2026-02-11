@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 import "leaflet/dist/leaflet.css";
 import {
   Navigation,
@@ -45,8 +45,8 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Recenter } from "../../../utils/helper";
 import { userIcon } from "../../../utils/lefleticons";
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-const socket = io(SOCKET_URL);
+// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+// const socket = io(SOCKET_URL);
 
 // Mock data for booking requests
 const mockBookingRequests = [

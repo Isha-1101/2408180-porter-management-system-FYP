@@ -171,7 +171,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 import { getDistanceKm } from "../../utils/haversine";
 import { fetchRouteCoords } from "../../utils/osrm";
 import RouteLayer from "./RouteLayer";

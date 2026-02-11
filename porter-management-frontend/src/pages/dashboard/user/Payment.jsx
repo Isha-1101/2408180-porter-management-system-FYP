@@ -65,9 +65,14 @@ const Payment = () => {
             // For now, mock success
             navigate("/dashboard/orders");
         } else {
-            // Cash on delivery
-            alert("Booking confirmed! Pay cash on delivery.");
-            navigate("/dashboard/orders");
+            // Cash on delivery - navigate to success page
+            navigate("/dashboard/booking/success", {
+                state: {
+                    totalPrice,
+                    bookingDetails,
+                    paymentMethod: "cash",
+                },
+            });
         }
     };
 
@@ -117,13 +122,13 @@ const Payment = () => {
                                     key={method.id}
                                     onClick={() => setSelectedMethod(method.id)}
                                     className={`w-full text-left transition-all ${selectedMethod === method.id
-                                        ? "ring-2 ring-primary scale-[1.02]"
+                                        ? "scale-[1.02]"
                                         : "hover:shadow-md"
                                         }`}
                                 >
                                     <Card
                                         className={`${selectedMethod === method.id
-                                            ? "border-primary bg-primary/5"
+                                            ? "border-primary border-2 bg-primary/5"
                                             : ""
                                             }`}
                                     >
