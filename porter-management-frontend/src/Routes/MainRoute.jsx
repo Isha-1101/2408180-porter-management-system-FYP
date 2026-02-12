@@ -44,6 +44,7 @@ import PorterPending from "../pages/dashboard/porter/PorterPending";
 import PorterRegisterGuard from "../guards/PorterRegisterGuard";
 import PorterPendingGuard from "../guards/PorterPendingGuard";
 import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
+import AcceptedBookingDetails from "../pages/dashboard/porter/AcceptedBookingDetails";
 import PorterBooking from "../pages/dashboard/user/PorterBooking";
 import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
@@ -112,6 +113,7 @@ const MainRoute = () => {
 
                 {/* <Route element={<PorterGuards />}> */}
                 <Route index element={<PorterDashboard />} />
+                <Route path="accepted-booking" element={<AcceptedBookingDetails />} />
                 {/* </Route> */}
               </Route>
             </Route>

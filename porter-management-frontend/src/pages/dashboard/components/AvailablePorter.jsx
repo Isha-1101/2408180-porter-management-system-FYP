@@ -1,8 +1,9 @@
 import { Clock, Star, User } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
+import { getCloudinaryUrl } from "../../../utils/helper.js";
 
-const AvailablePorter = ({ availablePorters, onBook }) => {
-  return availablePorters && availablePorters.length > 0 ? (
+const AvailablePorter = ({ availablePorters, onBook, isLoadingPorter }) => {
+  return availablePorters && !isLoadingPorter && availablePorters.length > 0 ? (
     <div className="p-4 space-y-4">
       {availablePorters?.map((porter) => (
         <div
@@ -12,9 +13,12 @@ const AvailablePorter = ({ availablePorters, onBook }) => {
           {/* Porter Info */}
           <div className="flex items-start gap-4 mb-4">
             {/* Avatar */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-md">
-                {porter.name.charAt(0)}
+                <img
+                  src={getCloudinaryUrl(porter.photo)}
+                  alt={porter.porterName}
+                />
               </div>
             </div>
 
@@ -22,29 +26,30 @@ const AvailablePorter = ({ availablePorters, onBook }) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <h3 className="font-bold text-secondary text-base">
-                  {porter.name}
+                  {porter.porterName}
                 </h3>
-                <div className="text-right flex-shrink-0">
+                {/* <div className="text-right flex-shrink-0">
                   <div className="text-sm text-gray-500 font-medium">
                     Estimated
                   </div>
                   <div className="text-md font-semibold text-primary">
                     Rs. {porter.price}
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Stats */}
               <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="inline-flex items-center gap-1.5">
+                {/* <span className="inline-flex items-center gap-1.5">
                   <Star className="w-4 h-4 text-primary fill-primary" />
                   <span className="font-semibold text-gray-900">
                     {porter.rating}
                   </span>
-                </span>
+                </span> */}
                 <span className="inline-flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="font-medium">{porter.etaMin} min</span>
+                  <span className="font-medium text-xs text-muted-foreground">
+                    Porter is {Math.round(porter.distanceMeters)} meters away
+                  </span>
                 </span>
               </div>
             </div>
@@ -53,7 +58,7 @@ const AvailablePorter = ({ availablePorters, onBook }) => {
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
             <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-              {porter.completed} trips
+              {porter.experienceYears} years of experience
             </span>
           </div>
 

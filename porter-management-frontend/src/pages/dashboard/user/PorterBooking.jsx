@@ -15,6 +15,8 @@ import {
   Package2,
   CalendarDays,
   Clock,
+  Loader,
+  SearchIcon,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,11 @@ import { Label } from "@/components/ui/label";
 import AvailablePorter from "@/pages/dashboard/components/AvailablePorter";
 import UserMap from "@/components/Map/UserMap";
 import PageLayout from "@/components/common/PageLayout";
+import {
+  usecreatePorterBooking,
+  useSearchNearByPorter,
+} from "../../../apis/hooks/porterBookingsHooks";
+import { traverseInPorter } from "../../../utils/helper";
 // import PageLayout from "../../../components/common/PageLayout";
 
 const PorterBooking = () => {
@@ -38,105 +45,147 @@ const PorterBooking = () => {
   const [hasVehicle, setHasVehicle] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
+  const [porters, setPorters] = useState([]);
+  // const porters = useMemo(
+  //   () => [
+  //     {
+  //       id: "p-101",
+  //       name: "Ramesh Tamang",
+  //       rating: 4.8,
+  //       completed: 312,
+  //       etaMin: 12,
+  //       basePrice: 220,
+  //       type: "individual",
+  //       tags: ["Fast", "Nearby"],
+  //     },
+  //     {
+  //       id: "p-102",
+  //       name: "Sita Gurung",
+  //       rating: 4.9,
+  //       completed: 540,
+  //       etaMin: 18,
+  //       basePrice: 260,
+  //       type: "individual",
+  //       tags: ["Top Rated"],
+  //     },
+  //     {
+  //       id: "p-103",
+  //       name: "Team Alpha",
+  //       rating: 4.6,
+  //       completed: 190,
+  //       etaMin: 9,
+  //       basePrice: 450,
+  //       type: "team",
+  //       tags: ["Team", "Heavy Load"],
+  //     },
+  //     {
+  //       id: "p-104",
+  //       name: "Bikash Karki",
+  //       rating: 4.7,
+  //       completed: 260,
+  //       etaMin: 22,
+  //       basePrice: 340,
+  //       type: "individual",
+  //       tags: ["Experienced"],
+  //     },
+  //     {
+  //       id: "p-105",
+  //       name: "Team Bravo",
+  //       rating: 4.8,
+  //       completed: 310,
+  //       etaMin: 15,
+  //       basePrice: 500,
+  //       type: "team",
+  //       tags: ["Team", "Fast Service"],
+  //     },
+  //   ],
+  //   [],
+  // );
 
-  const porters = useMemo(
-    () => [
-      {
-        id: "p-101",
-        name: "Ramesh Tamang",
-        rating: 4.8,
-        completed: 312,
-        etaMin: 12,
-        basePrice: 220,
-        type: "individual",
-        tags: ["Fast", "Nearby"],
-      },
-      {
-        id: "p-102",
-        name: "Sita Gurung",
-        rating: 4.9,
-        completed: 540,
-        etaMin: 18,
-        basePrice: 260,
-        type: "individual",
-        tags: ["Top Rated"],
-      },
-      {
-        id: "p-103",
-        name: "Team Alpha",
-        rating: 4.6,
-        completed: 190,
-        etaMin: 9,
-        basePrice: 450,
-        type: "team",
-        tags: ["Team", "Heavy Load"],
-      },
-      {
-        id: "p-104",
-        name: "Bikash Karki",
-        rating: 4.7,
-        completed: 260,
-        etaMin: 22,
-        basePrice: 340,
-        type: "individual",
-        tags: ["Experienced"],
-      },
-      {
-        id: "p-105",
-        name: "Team Bravo",
-        rating: 4.8,
-        completed: 310,
-        etaMin: 15,
-        basePrice: 500,
-        type: "team",
-        tags: ["Team", "Fast Service"],
-      },
-    ],
-    [],
-  );
-
-  const filteredPorters = useMemo(() => {
-    return porters
-      .filter((p) => p.type === porterType)
-      .map((p) => ({
-        ...p,
-        price: Math.round(p.basePrice * calculatedPriceMultiplier),
-      }));
-  }, [porters, porterType, calculatedPriceMultiplier]);
-
+  //mutation function
+  const {
+    mutateAsync: searchNearByPorter,
+    isPending: searchNearByPorterPending,
+  } = useSearchNearByPorter();
+  const {
+    mutateAsync: createPorterBooking,
+    isPending: createPorterBookingPending,
+  } = usecreatePorterBooking();
   const [vehicleType, setVehicleType] = useState("bike"); // "bike", "van", "mini-truck", "truck"
 
   const navigate = useNavigate();
 
-  const handleSearch = () => {
-    // Mock price calculation logic
-    // In a real app, this would use distance from the map/API
-    if (pickup && dropoff) {
-      setHasSearched(true);
-      // random multiplier between 1.1 and 1.5 to simulate "calculated price"
-      setCalculatedPriceMultiplier(1.1 + Math.random() * 0.4);
-    } else {
-      // Just show them anyway if fields are empty, or validation could go here
-      setHasSearched(true);
-      setCalculatedPriceMultiplier(1);
-    }
-  };
-
-  const handleBookPorter = (porter) => {
-    navigate("/dashboard/booking/confirmation", {
-      state: {
-        porter,
+  const handleSearch = async () => {
+    try {
+      const res = await searchNearByPorter({
+        bookingType: porterType,
         pickup,
         dropoff,
         weight,
         teamSize: porterType === "team" ? teamSize : null,
         requirements: porterType === "team" ? requirements : null,
-        bookingDate: porterType === "team" ? bookingDate : null,
-        bookingTime: porterType === "team" ? bookingTime : null,
+        numberOfVehicles: porterType === "team" ? numberOfVehicles : null,
+        bookingDate,
+        bookingTime,
         vehicleType: hasVehicle ? vehicleType : null,
-        numberOfVehicles: porterType === "team" && hasVehicle ? numberOfVehicles : null,
-      },
-    });
+      });
+      const actualPorter = traverseInPorter(res?.data?.data);
+      setPorters([actualPorter]);
+      setHasSearched(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log(porters);
+  // const handleSearch = () => {
+  //   // Mock price calculation logic
+  //   // In a real app, this would use distance from the map/API
+  //   if (pickup && dropoff) {
+  //     setHasSearched(true);
+  //     // random multiplier between 1.1 and 1.5 to simulate "calculated price"
+  //     setCalculatedPriceMultiplier(1.1 + Math.random() * 0.4);
+  //   } else {
+  //     // Just show them anyway if fields are empty, or validation could go here
+  //     setHasSearched(true);
+  //     setCalculatedPriceMultiplier(1);
+  //   }
+  // };
+
+  const handleBookPorter = async (porter) => {
+    try {
+      const res = await createPorterBooking({
+        bookingType: porterType,
+        porterId: porter.id,
+        pickup,
+        dropoff,
+        weight,
+        teamSize: porterType === "team" ? teamSize : null,
+        requirements: porterType === "team" ? requirements : null,
+        numberOfVehicles: porterType === "team" ? numberOfVehicles : null,
+        bookingDate,
+        bookingTime,
+        vehicleType: hasVehicle ? vehicleType : null,
+      });
+      console.log(res?.data);
+    } catch (error) {
+      console.log(error);
+    }
+    // navigate("/dashboard/booking/confirmation", {
+    //   state: {
+    //     porterId: porter.id,
+    //     porter,
+    //     pickup,
+    //     dropoff,
+    //     weight,
+    //     teamSize: porterType === "team" ? teamSize : null,
+    //     requirements: porterType === "team" ? requirements : null,
+    //     bookingDate: porterType === "team" ? bookingDate : null,
+    //     bookingTime: porterType === "team" ? bookingTime : null,
+    //     vehicleType: hasVehicle ? vehicleType : null,
+    //     numberOfVehicles:
+    //       porterType === "team" && hasVehicle ? numberOfVehicles : null,
+    //   },
+    // });
   };
 
   return (
@@ -156,20 +205,22 @@ const PorterBooking = () => {
                 <div className="flex bg-gray-100 p-1.5 rounded-lg w-full">
                   <button
                     onClick={() => setPorterType("individual")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "individual"
-                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                      }`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
+                      porterType === "individual"
+                        ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                    }`}
                   >
                     <User className="w-4 h-4" />
                     Individual Porter
                   </button>
                   <button
                     onClick={() => setPorterType("team")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "team"
-                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                      }`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
+                      porterType === "team"
+                        ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                    }`}
                   >
                     <UserPlus className="w-4 h-4" />
                     Team Porter
@@ -237,7 +288,9 @@ const PorterBooking = () => {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                   {/* Weight Input */}
                   {/* Weight Input */}
-                  <div className={`${porterType === "team" ? "md:col-span-6" : "md:col-span-12"} space-y-2`}>
+                  <div
+                    className={`${porterType === "team" ? "md:col-span-6" : "md:col-span-12"} space-y-2`}
+                  >
                     <Label
                       htmlFor="weight"
                       className="text-sm font-medium flex items-center gap-2 text-gray-700"
@@ -278,37 +331,50 @@ const PorterBooking = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">Include Vehicle</p>
+                            <p className="font-medium text-sm">
+                              Include Vehicle
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-500">Porter with vehicle assistance</p>
+                          <p className="text-xs text-gray-500">
+                            Porter with vehicle assistance
+                          </p>
                         </div>
                       </div>
                       <button
                         onClick={() => setHasVehicle(!hasVehicle)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? 'bg-primary' : 'bg-gray-300'}`}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? "bg-primary" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVehicle ? 'translate-x-6' : 'translate-x-1'}`} />
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVehicle ? "translate-x-6" : "translate-x-1"}`}
+                        />
                       </button>
                     </div>
 
                     {/* Vehicle Type Selection (Only when hasVehicle is true) */}
                     {hasVehicle && (
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Select Vehicle Type</Label>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Select Vehicle Type
+                        </Label>
                         <div className="flex flex-wrap gap-2">
                           {[
                             { id: "bike", label: "Bike", icon: Bike },
                             { id: "van", label: "Van", icon: Car },
-                            { id: "mini-truck", label: "Mini Truck", icon: Truck },
+                            {
+                              id: "mini-truck",
+                              label: "Mini Truck",
+                              icon: Truck,
+                            },
                             { id: "truck", label: "Truck", icon: Package2 },
                           ].map((type) => (
                             <button
                               key={type.id}
                               onClick={() => setVehicleType(type.id)}
-                              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
-                                ? "bg-primary text-white border-primary"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                                }`}
+                              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${
+                                vehicleType === type.id
+                                  ? "bg-primary text-white border-primary"
+                                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                              }`}
                             >
                               <type.icon className="w-4 h-4" />
                               {type.label}
@@ -319,7 +385,10 @@ const PorterBooking = () => {
                         {/* Number of Vehicles (Only for Team Porter) */}
                         {porterType === "team" && (
                           <div className="space-y-2 mt-3">
-                            <Label htmlFor="numberOfVehicles" className="text-sm font-medium text-gray-700">
+                            <Label
+                              htmlFor="numberOfVehicles"
+                              className="text-sm font-medium text-gray-700"
+                            >
                               Number of Vehicles
                             </Label>
                             <Input
@@ -456,16 +525,39 @@ const PorterBooking = () => {
                   <CardTitle className="text-lg">
                     Available Porters{" "}
                     <span className="text-sm font-normal text-gray-500 ml-1">
-                      ({hasSearched ? filteredPorters.length : 0})
+                      ({hasSearched ? porters.length : 0})
                     </span>
                   </CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="p-3 h-[400px] overflow-y-auto custom-scrollbar">
-                {hasSearched ? (
+                {searchNearByPorterPending ? (
+                  <div className="flex flex-col items-center justify-center p-8 max-w-sm mx-auto">
+                    <div className="relative">
+                      <SearchIcon className="w-10 h-10 text-primary animate-pulse" />
+                      {/* Optional pulsing ring effect */}
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="w-12 h-12 rounded-full border-2 border-primary/30 animate-ping absolute" />
+                      </span>
+                    </div>
+                    <h3 className="mt-5 text-lg font-semibold text-gray-700 tracking-wide">
+                      Searching{" "}
+                      <span className="text-primary font-bold">Porter</span>
+                      <span className="inline-flex ml-1">
+                        <span className="animate-bounce delay-0">.</span>
+                        <span className="animate-bounce delay-150">.</span>
+                        <span className="animate-bounce delay-300">.</span>
+                      </span>
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500 font-medium">
+                      Please wait a moment
+                    </p>
+                  </div>
+                ) : hasSearched ? (
                   <AvailablePorter
-                    availablePorters={filteredPorters}
+                    availablePorters={porters}
                     onBook={handleBookPorter}
+                    isLoadingPorter={searchNearByPorterPending}
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">

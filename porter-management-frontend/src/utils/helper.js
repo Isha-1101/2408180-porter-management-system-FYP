@@ -23,7 +23,6 @@ export const getCloudinaryUrl = (fileUrl) => {
   }/image${fileUrl}`;
 };
 
-
 export function Recenter({ pos }) {
   const map = useMap();
   useEffect(() => {
@@ -31,3 +30,25 @@ export function Recenter({ pos }) {
   }, [pos, map]);
   return null;
 }
+
+export const traverseInPorter = (porter) => {
+  let data = {};
+  porter.forEach((por) => {
+    if (por.basicInfo) {
+      data.porterName = por.basicInfo.fullName;
+      data.address = por.basicInfo.address;
+      data.photo = por.basicInfo.porterPhoto;
+      data.phoneNumber = por.basicInfo.phone;
+      data.experienceYears = por.basicInfo.experienceYears;
+    }
+    if (por.vehicle) {
+      data.hasVehicle = por.vehicle.hasVehicle;
+      data.vehicle = por.vehicleCategory;
+    }
+    data.porterType = por.porterType;
+    data.distanceMeters = por.distanceMeters;
+    data.id = por._id;
+  });
+
+  return data;
+};

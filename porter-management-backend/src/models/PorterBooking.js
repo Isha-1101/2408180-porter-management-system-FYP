@@ -81,6 +81,7 @@ const bookingSchema = new mongoose.Schema(
         "WAITING_PORTER",
         "WAITING_TEAM_LEAD",
         "TEAM_LEAD_SELECTING",
+        "WAITING_PORTER_CONFIRMATION",
         "WAITING_PORTER_RESPONSE",
         "TEAM_LEAD_CONFIRMING",
         "CONFIRMED",

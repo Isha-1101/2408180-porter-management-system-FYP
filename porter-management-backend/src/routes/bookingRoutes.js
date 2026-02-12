@@ -1,36 +1,61 @@
 import express from "express";
 import {
-    createIndividualBooking,
-    porterAcceptBooking,
-    porterRejectBooking,
-    completeBooking,
+  createIndividualBooking,
+  porterAcceptBooking,
+  porterRejectBooking,
+  completeBooking,
 } from "../controllers/book-porter/individual-booking-controller.js";
 import {
-    createTeamBooking,
-    teamLeadAcceptBooking,
-    teamLeadSelectPorters,
-    teamMemberRespond,
-    teamLeadConfirm,
-    teamLeadRejectBooking,
-    completeTeamBooking,
+  createTeamBooking,
+  teamLeadAcceptBooking,
+  teamLeadSelectPorters,
+  teamMemberRespond,
+  teamLeadConfirm,
+  teamLeadRejectBooking,
+  completeTeamBooking,
 } from "../controllers/book-porter/team-booking-controller.js";
 import {
-    getUserBookings,
-    getPorterBookings,
-    getBookingDetails,
-    cancelBooking,
+  getUserBookings,
+  getPorterBookings,
+  getBookingDetails,
+  cancelBooking,
+  searchNearbyPorters,
+  createBookingWithSelectedPorter,
 } from "../controllers/book-porter/porter-booking-controller.js";
 
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
 import { attachPorterId } from "../middlewares/porterMiddleware.js";
-
 const router = express.Router();
 
 // Middleware helpers
 const userOnly = [authenticate, attachPorterId, authorizeRole("user")];
 const porterOnly = [authenticate, attachPorterId, authorizeRole("porter")];
 const protect = [authenticate, attachPorterId]; // For routes accessible by both
+
+//============================================
+// SEARCH NEARBY PORTERS
+//============================================
+/**
+ * @route   POST /api/bookings/search-porters
+ * @desc    Search for nearby porters
+ * @access  Private (User)
+ */
+router.post("/search-porters/:bookingType", ...userOnly, searchNearbyPorters);
+
+//============================================
+// CREATE BOOKING WITH SELECTED PORTER
+//============================================
+/**
+ * @route   POST /api/bookings/create-booking-with-selected-porter
+ * @desc    Create booking with selected porter
+ * @access  Private (User)
+ */
+router.post(
+  "/create-booking-with-selected-porter/:bookingType",
+  ...userOnly,
+  createBookingWithSelectedPorter
+);
 
 // ============================================
 // INDIVIDUAL BOOKING ROUTES
@@ -87,7 +112,11 @@ router.post("/team/:id/team-lead/accept", ...porterOnly, teamLeadAcceptBooking);
  * @desc    Team lead selects porters for the booking
  * @access  Private (Team Lead Porter)
  */
-router.post("/team/:id/team-lead/select-porters", ...porterOnly, teamLeadSelectPorters);
+router.post(
+  "/team/:id/team-lead/select-porters",
+  ...porterOnly,
+  teamLeadSelectPorters,
+);
 
 /**
  * @route   POST /api/bookings/team/:id/team-lead/confirm
@@ -108,7 +137,11 @@ router.post("/team/:id/team-lead/reject", ...porterOnly, teamLeadRejectBooking);
  * @desc    Team member responds to porter selection
  * @access  Private (Porter)
  */
-router.post("/team/:id/porter/:porterId/respond", ...porterOnly, teamMemberRespond);
+router.post(
+  "/team/:id/porter/:porterId/respond",
+  ...porterOnly,
+  teamMemberRespond,
+);
 
 /**
  * @route   POST /api/bookings/team/:id/complete
