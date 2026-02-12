@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 // import { io } from "socket.io-client";
-import "leaflet/dist/leaflet.css";
+
 import {
   Navigation,
   Package,
@@ -42,9 +43,7 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { Recenter } from "../../../utils/helper";
-import { userIcon } from "../../../utils/lefleticons";
+
 // const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 // const socket = io(SOCKET_URL);
 
@@ -132,7 +131,7 @@ export default function PorterDashboard() {
   const [filter, setFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("distance");
 
-  const [porterLocation, setPorterLocation] = useState([27.7172, 85.324]);
+
 
   // WebSocket connection
   const intervalRef = useRef(null);
@@ -175,14 +174,20 @@ export default function PorterDashboard() {
 
   const handleAcceptRequest = (requestId) => {
     console.log("Accepting request:", requestId);
-    setBookingRequests(
-      bookingRequests.map((req) =>
-        req.id === requestId
-          ? { ...req, acceptedBy: "PORTER001", status: "ACCEPTED" }
-          : req,
-      ),
-    );
-    setCurrentJob(bookingRequests.find((req) => req.id === requestId) || null);
+    const request = bookingRequests.find((req) => req.id === requestId);
+
+    if (request) {
+      // Optimistically update local state
+      setBookingRequests(
+        bookingRequests.map((req) =>
+          req.id === requestId
+            ? { ...req, acceptedBy: "PORTER001", status: "ACCEPTED" }
+            : req
+        )
+      );
+      // Navigate to details page
+      navigate("/dashboard/porters/accepted-booking", { state: { booking: request } });
+    }
   };
 
   const handleRejectRequest = (requestId) => {
@@ -226,30 +231,10 @@ export default function PorterDashboard() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 border border-red-400 relative">
-      <div className="col-start-1 sticky top-0 h-full">
-        <MapContainer
-          center={porterLocation}
-          zoom={13}
-          scrollWheelZoom={true}
-          style={{ height: "100%", width: "100%" }}
-          className="z-0"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {porterLocation && (
-            <Marker position={porterLocation} icon={userIcon}>
-              <Popup>Your Location</Popup>
-            </Marker>
-          )}
-          <Recenter pos={porterLocation} />
-        </MapContainer>
-      </div>
+    <div className="container mx-auto p-6">
 
       {/* Right Column - Booking Requests */}
-      <Card className="h-full col-start-2">
+      <Card className="h-full">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center space-x-2">
@@ -321,11 +306,10 @@ export default function PorterDashboard() {
                 {filteredAndSortedRequests.map((request) => (
                   <Card
                     key={request.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedRequest?.id === request.id
-                        ? "border-primary ring-2 ring-primary/20"
-                        : ""
-                    } ${request.status === "ACCEPTED" ? "opacity-70" : ""}`}
+                    className={`cursor-pointer transition-all hover:shadow-md ${selectedRequest?.id === request.id
+                      ? "border-primary ring-2 ring-primary/20"
+                      : ""
+                      } ${request.status === "ACCEPTED" ? "opacity-70" : ""}`}
                     onClick={() => setSelectedRequest(request)}
                   >
                     <CardHeader className="p-4 pb-2">
@@ -415,26 +399,26 @@ export default function PorterDashboard() {
                     </CardContent>
                     <CardFooter className="p-4 pt-0">
                       {request.status === "PENDING" && !request.acceptedBy ? (
-                        <div className="flex space-x-2 w-full">
+                        <div className="flex space-x-2 w-full justify-end">
                           <Button
                             variant="outline"
-                            className="flex-1"
+                            size="sm"
+                            className="w-32 focus-visible:ring-0 focus-visible:ring-offset-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRejectRequest(request.id);
                             }}
                           >
-                            <XCircle className="mr-2 h-4 w-4" />
                             Reject
                           </Button>
                           <Button
-                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            size="sm"
+                            className="w-32 bg-green-600 hover:bg-green-700 focus-visible:ring-0 focus-visible:ring-offset-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAcceptRequest(request.id);
                             }}
                           >
-                            <CheckCircle className="mr-2 h-4 w-4" />
                             Accept
                           </Button>
                         </div>
