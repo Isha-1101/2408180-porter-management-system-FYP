@@ -60,6 +60,37 @@ export const registerRequestForPorter = async (req, res) => {
   }
 };
 
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns all porter that are request by the team owner
+ * @method: GET
+ */
+export const getAllRegisterRequestedPorter = async (req, res) => {
+  const teamId = req.params.teamId;
+  try {
+    const requestedPorter = await RequestedUserPorter.find({
+      teamId: teamId,
+    });
+    if (!requestedPorter) {
+      return res
+        .status(404)
+        .json({ message: "Requested porter not found for the given team" });
+    }
+    return res.status(200).json({
+      success: true,
+      data: requestedPorter,
+      message: "Requested porter fetched successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
 //admin register approved
 export const approvePorterRegisterRequest = async (req, res) => {
   const requestId = req.params.id;

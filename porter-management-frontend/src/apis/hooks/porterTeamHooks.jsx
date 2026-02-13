@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import {
   getPorterByTeam,
+  getRequestedPorterByTeam,
   requestPorterUserRegistration,
 } from "../services/teamSearvice";
 export const useRequestPorterUserRegistration = () => {
@@ -23,6 +24,17 @@ export const useRequestPorterUserRegistration = () => {
     },
   });
 };
+
+export const useGetAllRequestedPorterByTeam = (teamId) => {
+  return useQuery({
+    queryKey: ["requestedPorterByTeam", teamId],
+    queryFn: async () => {
+      const response = await getRequestedPorterByTeam(teamId);
+      return response;
+    },
+    enabled: !!teamId,
+  });
+}
 
 export const useGetPorterByTeam = (teamId) => {
   return useQuery({

@@ -6,7 +6,9 @@ export const requestPorterUserRegistration = (payload) => {
     phone: payload.phone
    });
 };
-
+export const getRequestedPorterByTeam = (teamId) =>{
+  return axiosInstance.get(`/team-porters/register-request/${teamId}`);
+}
 export const getPorterByTeam = (teamId) =>{
   return axiosInstance.get(`/team-porters/${teamId}`);
 }

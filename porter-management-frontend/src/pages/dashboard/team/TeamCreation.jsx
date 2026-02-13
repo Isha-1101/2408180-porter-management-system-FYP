@@ -23,22 +23,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "react-hot-toast";
-import { useGetPorterByTeam, useRequestPorterUserRegistration } from "../../../apis/hooks/porterTeamHooks";
+import {
+  useGetAllRequestedPorterByTeam,
+  useGetPorterByTeam,
+  useRequestPorterUserRegistration,
+} from "../../../apis/hooks/porterTeamHooks";
 import { usePorter } from "../../../hooks/porter/use-porter";
 const TeamCreation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [members, setMembers] = useState([]);
+
+  // porter registration Request
   const {
     mutateAsync: requestPorterUserRegistration,
     isLoading: isRequestPorterUserRegistrationLoading,
   } = useRequestPorterUserRegistration();
+
+  //get fetched porter form the porter Hooks
   const { porter } = usePorter();
-  console.log(porter, "porter");
-  //get team linked porter
-  const { data: porterByTeam } = useGetPorterByTeam(porter?.teamId);
-  const teamDetails = porterByTeam?.data;
-  console.log(porterByTeam, "porterByTeam");
+
+  // Get Requested Porter by Team which was not approved by admin
+  const { data: porterByTeam, isFetching: porterByTeamIsFetching } =
+    useGetAllRequestedPorterByTeam(porter?.teamId);
+  const requestedPorter = porterByTeam?.data?.data ?? [];
+
+  //hook form
   const {
     register,
     handleSubmit,
@@ -54,8 +64,8 @@ const TeamCreation = () => {
         phone: data.phone,
       };
       const response = await requestPorterUserRegistration(newMember);
-      if(response.status !== 200) throw new Error("Failed to add team member.");
-      setMembers([...members, newMember]);
+      if (response.status !== 200)
+        throw new Error("Failed to add team member.");
       toast.success("Team member added successfully!");
       setIsOpen(false);
       reset();
@@ -204,7 +214,7 @@ const TeamCreation = () => {
       <Card className="shadow-md">
         <CardHeader className="bg-white border-b">
           <CardTitle className="text-xl font-semibold">
-            Team Members ({members.length})
+            Team Members ({requestedPorter?.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -214,13 +224,22 @@ const TeamCreation = () => {
                 <TableHead className="font-semibold">Name</TableHead>
                 <TableHead className="font-semibold">Email</TableHead>
                 <TableHead className="font-semibold">Phone</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="text-right font-semibold">
                   Actions
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.length === 0 ? (
+              {/* Loading State */}
+              {porterByTeamIsFetching ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-12">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : requestedPorter.length === 0 ? (
+                /* Empty State */
                 <TableRow>
                   <TableCell
                     colSpan={4}
@@ -236,24 +255,24 @@ const TeamCreation = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                members.map((member) => (
-                  <TableRow key={member.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell className="text-gray-600">
-                      {member.email}
+                /* Data Render */
+                requestedPorter.map((member) => (
+                  <TableRow key={member._id} className="hover:bg-gray-50">
+                    <TableCell className="font-medium capitalize">
+                      {member.userName}
                     </TableCell>
-                    <TableCell className="text-gray-600">
-                      {member.phone}
-                    </TableCell>
+                    <TableCell className="captialize">{member.email}</TableCell>
+                    <TableCell className="captialize">{member.phone}</TableCell>
+                    <TableCell className="captialize"><span className="bg-orange-500 pl-2 pr-2 p-1 rounded-xl text-primary-foreground ">
+                      {member.status}
+                      </span></TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(member.id)}
-                        title="Remove member"
+                        onClick={() => handleDelete(member._id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </TableCell>
                   </TableRow>
