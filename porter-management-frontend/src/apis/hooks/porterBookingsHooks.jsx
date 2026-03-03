@@ -11,7 +11,8 @@ export const useSearchNearByPorter = () => {
       return response;
     },
     onError: (error) => {
-      toast.error(error?.response?.data?.message || "Registration failed");
+      console.log(error,"ERROR");
+      toast.error(error?.response?.data?.message || "Search failed");
     },
   });
 };

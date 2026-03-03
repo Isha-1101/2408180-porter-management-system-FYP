@@ -152,40 +152,40 @@ const PorterBooking = () => {
   // };
 
   const handleBookPorter = async (porter) => {
-    try {
-      const res = await createPorterBooking({
-        bookingType: porterType,
-        porterId: porter.id,
-        pickup,
-        dropoff,
-        weight,
-        teamSize: porterType === "team" ? teamSize : null,
-        requirements: porterType === "team" ? requirements : null,
-        numberOfVehicles: porterType === "team" ? numberOfVehicles : null,
-        bookingDate,
-        bookingTime,
-        vehicleType: hasVehicle ? vehicleType : null,
-      });
-      console.log(res?.data);
-    } catch (error) {
-      console.log(error);
-    }
-    // navigate("/dashboard/booking/confirmation", {
-    //   state: {
+    // try {
+    //   const res = await createPorterBooking({
+    //     bookingType: porterType,
     //     porterId: porter.id,
-    //     porter,
     //     pickup,
     //     dropoff,
     //     weight,
     //     teamSize: porterType === "team" ? teamSize : null,
     //     requirements: porterType === "team" ? requirements : null,
-    //     bookingDate: porterType === "team" ? bookingDate : null,
-    //     bookingTime: porterType === "team" ? bookingTime : null,
+    //     numberOfVehicles: porterType === "team" ? numberOfVehicles : null,
+    //     bookingDate,
+    //     bookingTime,
     //     vehicleType: hasVehicle ? vehicleType : null,
-    //     numberOfVehicles:
-    //       porterType === "team" && hasVehicle ? numberOfVehicles : null,
-    //   },
-    // });
+    //   });
+    //   console.log(res?.data);
+    // } catch (error) {
+    //   console.log(error);
+    // }
+    navigate("/dashboard/booking/confirmation", {
+      state: {
+        porterId: porter.id,
+        porter,
+        pickup,
+        dropoff,
+        weight,
+        teamSize: porterType === "team" ? teamSize : null,
+        requirements: porterType === "team" ? requirements : null,
+        bookingDate: porterType === "team" ? bookingDate : null,
+        bookingTime: porterType === "team" ? bookingTime : null,
+        vehicleType: hasVehicle ? vehicleType : null,
+        numberOfVehicles:
+          porterType === "team" && hasVehicle ? numberOfVehicles : null,
+      },
+    });
   };
 
   return (

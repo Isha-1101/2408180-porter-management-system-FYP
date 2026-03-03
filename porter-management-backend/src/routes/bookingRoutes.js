@@ -26,6 +26,8 @@ import {
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
 import { attachPorterId } from "../middlewares/porterMiddleware.js";
+import { PorterSearchValidation } from "../validator/porter-booking-validator.js";
+import { validate } from "../middlewares/validate.js";
 const router = express.Router();
 
 // Middleware helpers
@@ -41,7 +43,13 @@ const protect = [authenticate, attachPorterId]; // For routes accessible by both
  * @desc    Search for nearby porters
  * @access  Private (User)
  */
-router.post("/search-porters/:bookingType", ...userOnly, searchNearbyPorters);
+router.post(
+  "/search-porters/:bookingType",
+  ...userOnly,
+  PorterSearchValidation,
+  validate,
+  searchNearbyPorters,
+);
 
 //============================================
 // CREATE BOOKING WITH SELECTED PORTER
@@ -54,7 +62,7 @@ router.post("/search-porters/:bookingType", ...userOnly, searchNearbyPorters);
 router.post(
   "/create-booking-with-selected-porter/:bookingType",
   ...userOnly,
-  createBookingWithSelectedPorter
+  createBookingWithSelectedPorter,
 );
 
 // ============================================

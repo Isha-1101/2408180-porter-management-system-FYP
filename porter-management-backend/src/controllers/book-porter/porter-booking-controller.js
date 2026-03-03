@@ -3,6 +3,7 @@ import PorterBooking from "../../models/PorterBooking.js";
 import Porters from "../../models/porter/Porters.js";
 import BookintgPorterRequest from "../../models/BookintgPorterRequest.js";
 import { notifyPorter } from "../../utils/notification-service.js";
+import { getDistanceKm } from "../../utils/helper.js";
 
 /**
  * Search porters as team and individual
@@ -21,17 +22,15 @@ export const searchNearbyPorters = async (req, res) => {
       vehicleType,
       requiredTeamSize = 1,
       radiusKm = 5,
+      purpose,
     } = req.body;
 
-    const bookingType = req.params.bookingType;
-
-    if (!pickup || !weightKg || !bookingType) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
+    if(purpose === "transportaion"){
+      
+    }else if(purpose === "delivery"){
+      
     }
-
+    const bookingType = req.params.bookingType;
     const matchQuery = {
       porterType: bookingType,
       status: "active",
