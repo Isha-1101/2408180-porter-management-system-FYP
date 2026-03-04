@@ -17,6 +17,11 @@ import {
   Clock,
   Loader,
   SearchIcon,
+  Layers,
+  Route,
+  Calculator,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +51,43 @@ const PorterBooking = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
   const [porters, setPorters] = useState([]);
+  const [numberOfFloors, setNumberOfFloors] = useState("");
+  const [distanceKm, setDistanceKm] = useState("");
+  const [showFareBreakdown, setShowFareBreakdown] = useState(true);
+
+  // ── Fare Estimation ──────────────────────────────────────────────
+  const fareEstimate = useMemo(() => {
+    const w = parseFloat(weight) || 0;
+    const floors = parseInt(numberOfFloors) || 0;
+    const dist = parseFloat(distanceKm) || 0;
+    const extraKg = Math.max(0, w - 5);
+
+    const floorCharge = floors * 5;
+    const weightTravelCharge = extraKg * 2;
+    const weightFloorCarryCharge = extraKg * 3;
+    const vehicleCharge = hasVehicle ? extraKg * 5 : 0;
+    const tripCharge = dist > 0 ? Math.ceil(dist / 15) * 5 : 0;
+    const basicCost = 80;
+
+    const total =
+      floorCharge +
+      weightTravelCharge +
+      weightFloorCarryCharge +
+      vehicleCharge +
+      tripCharge +
+      basicCost;
+
+    return {
+      floorCharge,
+      weightTravelCharge,
+      weightFloorCarryCharge,
+      vehicleCharge,
+      tripCharge,
+      basicCost,
+      total,
+      hasAnyInput: w > 0 || floors > 0 || dist > 0,
+    };
+  }, [weight, numberOfFloors, distanceKm, hasVehicle]);
   // const porters = useMemo(
   //   () => [
   //     {
@@ -205,22 +247,20 @@ const PorterBooking = () => {
                 <div className="flex bg-gray-100 p-1.5 rounded-lg w-full">
                   <button
                     onClick={() => setPorterType("individual")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
-                      porterType === "individual"
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "individual"
                         ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                    }`}
+                      }`}
                   >
                     <User className="w-4 h-4" />
                     Individual Porter
                   </button>
                   <button
                     onClick={() => setPorterType("team")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
-                      porterType === "team"
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "team"
                         ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                    }`}
+                      }`}
                   >
                     <UserPlus className="w-4 h-4" />
                     Team Porter
@@ -280,6 +320,71 @@ const PorterBooking = () => {
                       />
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                         <Navigation className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floors & Distance Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Number of Floors */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="floors"
+                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                    >
+                      <Layers className="w-4 h-4 text-primary" />
+                      Number of Floors
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="floors"
+                        type="number"
+                        placeholder="e.g. 4"
+                        value={numberOfFloors}
+                        min="0"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || parseInt(val) >= 0)
+                            setNumberOfFloors(val);
+                        }}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      />
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <Layers className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Estimated Distance */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="distanceKm"
+                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                    >
+                      <Route className="w-4 h-4 text-primary" />
+                      Estimated Distance (km)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="distanceKm"
+                        type="number"
+                        placeholder="e.g. 2.5"
+                        value={distanceKm}
+                        min="0"
+                        step="0.1"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || parseFloat(val) >= 0)
+                            setDistanceKm(val);
+                        }}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-10 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      />
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <Route className="w-4 h-4" />
+                      </div>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
+                        km
                       </div>
                     </div>
                   </div>
@@ -370,11 +475,10 @@ const PorterBooking = () => {
                             <button
                               key={type.id}
                               onClick={() => setVehicleType(type.id)}
-                              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${
-                                vehicleType === type.id
+                              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
                                   ? "bg-primary text-white border-primary"
                                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                              }`}
+                                }`}
                             >
                               <type.icon className="w-4 h-4" />
                               {type.label}
@@ -503,6 +607,110 @@ const PorterBooking = () => {
                     </>
                   )}
                 </div>
+
+                {/* ── Fare Estimate Breakdown ── */}
+                {fareEstimate.hasAnyInput && (
+                  <div className="rounded-xl border border-orange-200 overflow-hidden shadow-sm">
+                    {/* Header */}
+                    <button
+                      type="button"
+                      onClick={() => setShowFareBreakdown((v) => !v)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#D35400] to-[#E67E22] text-white"
+                    >
+                      <span className="flex items-center gap-2 font-semibold text-sm">
+                        <Calculator className="w-4 h-4" />
+                        Estimated Fare
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span className="font-bold text-base">Rs. {fareEstimate.total}</span>
+                        {showFareBreakdown ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </span>
+                    </button>
+
+                    {/* Breakdown rows */}
+                    {showFareBreakdown && (
+                      <div className="bg-orange-50/60 divide-y divide-orange-100">
+                        {/* Floor Charge */}
+                        <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Layers className="w-3.5 h-3.5 text-orange-400" />
+                            <span>Floor Charge</span>
+                            <span className="text-xs text-gray-400">({numberOfFloors || 0} floors × Rs.5)</span>
+                          </div>
+                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.floorCharge}</span>
+                        </div>
+
+                        {/* Weight surcharge – travel */}
+                        <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Weight className="w-3.5 h-3.5 text-orange-400" />
+                            <span>Weight Surcharge (travel)</span>
+                            <span className="text-xs text-gray-400">(extra kg × Rs.2)</span>
+                          </div>
+                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.weightTravelCharge}</span>
+                        </div>
+
+                        {/* Weight surcharge – floor carry */}
+                        <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Weight className="w-3.5 h-3.5 text-orange-400" />
+                            <span>Weight Surcharge (floor carry)</span>
+                            <span className="text-xs text-gray-400">(extra kg × Rs.3)</span>
+                          </div>
+                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.weightFloorCarryCharge}</span>
+                        </div>
+
+                        {/* Vehicle charge */}
+                        {hasVehicle && (
+                          <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Truck className="w-3.5 h-3.5 text-orange-400" />
+                              <span>Vehicle Surcharge</span>
+                              <span className="text-xs text-gray-400">(extra kg × Rs.5)</span>
+                            </div>
+                            <span className="font-semibold text-gray-800">Rs. {fareEstimate.vehicleCharge}</span>
+                          </div>
+                        )}
+
+                        {/* Trip charge */}
+                        <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Route className="w-3.5 h-3.5 text-orange-400" />
+                            <span>Trip Charge</span>
+                            <span className="text-xs text-gray-400">(⌈{distanceKm || 0}km ÷ 15⌉ × Rs.5)</span>
+                          </div>
+                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.tripCharge}</span>
+                        </div>
+
+                        {/* Basic cost */}
+                        <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <span className="w-3.5 h-3.5 flex items-center justify-center text-orange-400 font-bold text-xs">₨</span>
+                            <span>Basic Cost</span>
+                          </div>
+                          <span className="font-semibold text-gray-800">Rs. 80</span>
+                        </div>
+
+                        {/* Total */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-orange-100/70">
+                          <span className="font-bold text-gray-800 flex items-center gap-1.5">
+                            <Calculator className="w-4 h-4 text-[#D35400]" />
+                            Estimated Total
+                          </span>
+                          <span className="font-bold text-lg text-[#D35400]">Rs. {fareEstimate.total}</span>
+                        </div>
+
+                        <p className="text-center text-xs text-gray-400 px-4 py-2 italic">
+                          * First 5 kg included in base cost. Extra kg charged at Rs. 2 (travel) + Rs. 3 (floor carry){hasVehicle ? " + Rs. 5 (vehicle)" : ""}.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Search Button */}
                 <div className="pt-4 flex justify-center">
