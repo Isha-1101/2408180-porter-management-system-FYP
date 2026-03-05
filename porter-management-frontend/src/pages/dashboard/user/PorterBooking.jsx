@@ -35,7 +35,13 @@ import {
   useSearchNearByPorter,
 } from "../../../apis/hooks/porterBookingsHooks";
 import { traverseInPorter } from "../../../utils/helper";
-// import PageLayout from "../../../components/common/PageLayout";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PorterBooking = () => {
   const [pickup, setPickup] = useState("");
@@ -54,6 +60,7 @@ const PorterBooking = () => {
   const [numberOfFloors, setNumberOfFloors] = useState("");
   const [distanceKm, setDistanceKm] = useState("");
   const [showFareBreakdown, setShowFareBreakdown] = useState(true);
+  const [purpose, setPurpose] = useState("");
 
   // ── Fare Estimation ──────────────────────────────────────────────
   const fareEstimate = useMemo(() => {
@@ -88,61 +95,6 @@ const PorterBooking = () => {
       hasAnyInput: w > 0 || floors > 0 || dist > 0,
     };
   }, [weight, numberOfFloors, distanceKm, hasVehicle]);
-  // const porters = useMemo(
-  //   () => [
-  //     {
-  //       id: "p-101",
-  //       name: "Ramesh Tamang",
-  //       rating: 4.8,
-  //       completed: 312,
-  //       etaMin: 12,
-  //       basePrice: 220,
-  //       type: "individual",
-  //       tags: ["Fast", "Nearby"],
-  //     },
-  //     {
-  //       id: "p-102",
-  //       name: "Sita Gurung",
-  //       rating: 4.9,
-  //       completed: 540,
-  //       etaMin: 18,
-  //       basePrice: 260,
-  //       type: "individual",
-  //       tags: ["Top Rated"],
-  //     },
-  //     {
-  //       id: "p-103",
-  //       name: "Team Alpha",
-  //       rating: 4.6,
-  //       completed: 190,
-  //       etaMin: 9,
-  //       basePrice: 450,
-  //       type: "team",
-  //       tags: ["Team", "Heavy Load"],
-  //     },
-  //     {
-  //       id: "p-104",
-  //       name: "Bikash Karki",
-  //       rating: 4.7,
-  //       completed: 260,
-  //       etaMin: 22,
-  //       basePrice: 340,
-  //       type: "individual",
-  //       tags: ["Experienced"],
-  //     },
-  //     {
-  //       id: "p-105",
-  //       name: "Team Bravo",
-  //       rating: 4.8,
-  //       completed: 310,
-  //       etaMin: 15,
-  //       basePrice: 500,
-  //       type: "team",
-  //       tags: ["Team", "Fast Service"],
-  //     },
-  //   ],
-  //   [],
-  // );
 
   //mutation function
   const {
@@ -247,20 +199,22 @@ const PorterBooking = () => {
                 <div className="flex bg-gray-100 p-1.5 rounded-lg w-full">
                   <button
                     onClick={() => setPorterType("individual")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "individual"
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
+                      porterType === "individual"
                         ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                      }`}
+                    }`}
                   >
                     <User className="w-4 h-4" />
                     Individual Porter
                   </button>
                   <button
                     onClick={() => setPorterType("team")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "team"
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
+                      porterType === "team"
                         ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                      }`}
+                    }`}
                   >
                     <UserPlus className="w-4 h-4" />
                     Team Porter
@@ -325,70 +279,188 @@ const PorterBooking = () => {
                   </div>
                 </div>
 
-                {/* Floors & Distance Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Number of Floors */}
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="floors"
-                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
-                    >
-                      <Layers className="w-4 h-4 text-primary" />
-                      Number of Floors
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="floors"
-                        type="number"
-                        placeholder="e.g. 4"
-                        value={numberOfFloors}
-                        min="0"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || parseInt(val) >= 0)
-                            setNumberOfFloors(val);
-                        }}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      />
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <Layers className="w-4 h-4" />
+                {/* Vehicle Toggle */}
+                <div className="md:col-span-12 space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Truck className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">Include Vehicle</p>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Porter with vehicle assistance
+                        </p>
                       </div>
                     </div>
+                    <button
+                      onClick={() => setHasVehicle(!hasVehicle)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? "bg-primary" : "bg-gray-300"}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVehicle ? "translate-x-6" : "translate-x-1"}`}
+                      />
+                    </button>
                   </div>
 
-                  {/* Estimated Distance */}
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="distanceKm"
-                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
-                    >
-                      <Route className="w-4 h-4 text-primary" />
-                      Estimated Distance (km)
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="distanceKm"
-                        type="number"
-                        placeholder="e.g. 2.5"
-                        value={distanceKm}
-                        min="0"
-                        step="0.1"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || parseFloat(val) >= 0)
-                            setDistanceKm(val);
-                        }}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-10 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      />
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <Route className="w-4 h-4" />
+                  {/* Vehicle Type Selection (Only when hasVehicle is true) */}
+                  {hasVehicle && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Select Vehicle Type
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { id: "bike", label: "Bike", icon: Bike },
+                          { id: "van", label: "Van", icon: Car },
+                          {
+                            id: "mini-truck",
+                            label: "Mini Truck",
+                            icon: Truck,
+                          },
+                          { id: "truck", label: "Truck", icon: Package2 },
+                        ].map((type) => (
+                          <button
+                            key={type.id}
+                            onClick={() => setVehicleType(type.id)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${
+                              vehicleType === type.id
+                                ? "bg-primary text-white border-primary"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                            }`}
+                          >
+                            <type.icon className="w-4 h-4" />
+                            {type.label}
+                          </button>
+                        ))}
                       </div>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
-                        km
-                      </div>
+
+                      {/* Number of Vehicles (Only for Team Porter) */}
+                      {porterType === "team" && (
+                        <div className="space-y-2 mt-3">
+                          <Label
+                            htmlFor="numberOfVehicles"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Number of Vehicles
+                          </Label>
+                          <Input
+                            id="numberOfVehicles"
+                            type="number"
+                            placeholder="Ex: 2"
+                            value={numberOfVehicles}
+                            min="1"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || parseFloat(val) >= 1) {
+                                setNumberOfVehicles(val);
+                              }
+                            }}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
+
+                {/* {purpose of booking} */}
+                {!hasVehicle && (
+                  <div className="space-y-2">
+                    <div className="max-w-full">
+                      <Label
+                        htmlFor="purpose"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Purpose of Booking
+                      </Label>
+                      <Select
+                        id="purpose"
+                        value={purpose}
+                        onValueChange={(e) => setPurpose(e)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select purpose" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="transportation">
+                            Transportation{" "}
+                          </SelectItem>
+                          <SelectItem value="delivery">Delivery </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {purpose === "transportation" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Floors & Distance Row */}
+                        {/* Number of Floors */}
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="floors"
+                            className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                          >
+                            <Layers className="w-4 h-4 text-primary" />
+                            Number of Floors
+                          </label>
+                          <div className="relative">
+                            <input
+                              id="floors"
+                              type="number"
+                              placeholder="e.g. 4"
+                              value={numberOfFloors}
+                              min="0"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "" || parseInt(val) >= 0)
+                                  setNumberOfFloors(val);
+                              }}
+                              className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                              <Layers className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Estimated Distance */}
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="distanceKm"
+                            className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                          >
+                            <Route className="w-4 h-4 text-primary" />
+                            Estimated Distance (km)
+                          </label>
+                          <div className="relative">
+                            <input
+                              id="distanceKm"
+                              type="number"
+                              placeholder="e.g. 2.5"
+                              value={distanceKm}
+                              min="0"
+                              step="0.1"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "" || parseFloat(val) >= 0)
+                                  setDistanceKm(val);
+                              }}
+                              className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-10 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                              <Route className="w-4 h-4" />
+                            </div>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
+                              km
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                   {/* Weight Input */}
@@ -425,94 +497,6 @@ const PorterBooking = () => {
                         kg
                       </div>
                     </div>
-                  </div>
-
-                  {/* Vehicle Toggle */}
-                  <div className="md:col-span-12 space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Truck className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">
-                              Include Vehicle
-                            </p>
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            Porter with vehicle assistance
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setHasVehicle(!hasVehicle)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? "bg-primary" : "bg-gray-300"}`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVehicle ? "translate-x-6" : "translate-x-1"}`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Vehicle Type Selection (Only when hasVehicle is true) */}
-                    {hasVehicle && (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">
-                          Select Vehicle Type
-                        </Label>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { id: "bike", label: "Bike", icon: Bike },
-                            { id: "van", label: "Van", icon: Car },
-                            {
-                              id: "mini-truck",
-                              label: "Mini Truck",
-                              icon: Truck,
-                            },
-                            { id: "truck", label: "Truck", icon: Package2 },
-                          ].map((type) => (
-                            <button
-                              key={type.id}
-                              onClick={() => setVehicleType(type.id)}
-                              className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
-                                  ? "bg-primary text-white border-primary"
-                                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                                }`}
-                            >
-                              <type.icon className="w-4 h-4" />
-                              {type.label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Number of Vehicles (Only for Team Porter) */}
-                        {porterType === "team" && (
-                          <div className="space-y-2 mt-3">
-                            <Label
-                              htmlFor="numberOfVehicles"
-                              className="text-sm font-medium text-gray-700"
-                            >
-                              Number of Vehicles
-                            </Label>
-                            <Input
-                              id="numberOfVehicles"
-                              type="number"
-                              placeholder="Ex: 2"
-                              value={numberOfVehicles}
-                              min="1"
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === "" || parseFloat(val) >= 1) {
-                                  setNumberOfVehicles(val);
-                                }
-                              }}
-                              className="w-full"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   {/* Team Size Input (Only for Team Porter) */}
@@ -615,14 +599,16 @@ const PorterBooking = () => {
                     <button
                       type="button"
                       onClick={() => setShowFareBreakdown((v) => !v)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#D35400] to-[#E67E22] text-white"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-linear-to-r from-[#D35400] to-[#E67E22] text-white"
                     >
                       <span className="flex items-center gap-2 font-semibold text-sm">
                         <Calculator className="w-4 h-4" />
                         Estimated Fare
                       </span>
                       <span className="flex items-center gap-2">
-                        <span className="font-bold text-base">Rs. {fareEstimate.total}</span>
+                        <span className="font-bold text-base">
+                          Rs. {fareEstimate.total}
+                        </span>
                         {showFareBreakdown ? (
                           <ChevronUp className="w-4 h-4" />
                         ) : (
@@ -639,9 +625,13 @@ const PorterBooking = () => {
                           <div className="flex items-center gap-2 text-gray-600">
                             <Layers className="w-3.5 h-3.5 text-orange-400" />
                             <span>Floor Charge</span>
-                            <span className="text-xs text-gray-400">({numberOfFloors || 0} floors × Rs.5)</span>
+                            <span className="text-xs text-gray-400">
+                              ({numberOfFloors || 0} floors × Rs.5)
+                            </span>
                           </div>
-                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.floorCharge}</span>
+                          <span className="font-semibold text-gray-800">
+                            Rs. {fareEstimate.floorCharge}
+                          </span>
                         </div>
 
                         {/* Weight surcharge – travel */}
@@ -649,9 +639,13 @@ const PorterBooking = () => {
                           <div className="flex items-center gap-2 text-gray-600">
                             <Weight className="w-3.5 h-3.5 text-orange-400" />
                             <span>Weight Surcharge (travel)</span>
-                            <span className="text-xs text-gray-400">(extra kg × Rs.2)</span>
+                            <span className="text-xs text-gray-400">
+                              (extra kg × Rs.2)
+                            </span>
                           </div>
-                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.weightTravelCharge}</span>
+                          <span className="font-semibold text-gray-800">
+                            Rs. {fareEstimate.weightTravelCharge}
+                          </span>
                         </div>
 
                         {/* Weight surcharge – floor carry */}
@@ -659,9 +653,13 @@ const PorterBooking = () => {
                           <div className="flex items-center gap-2 text-gray-600">
                             <Weight className="w-3.5 h-3.5 text-orange-400" />
                             <span>Weight Surcharge (floor carry)</span>
-                            <span className="text-xs text-gray-400">(extra kg × Rs.3)</span>
+                            <span className="text-xs text-gray-400">
+                              (extra kg × Rs.3)
+                            </span>
                           </div>
-                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.weightFloorCarryCharge}</span>
+                          <span className="font-semibold text-gray-800">
+                            Rs. {fareEstimate.weightFloorCarryCharge}
+                          </span>
                         </div>
 
                         {/* Vehicle charge */}
@@ -670,9 +668,13 @@ const PorterBooking = () => {
                             <div className="flex items-center gap-2 text-gray-600">
                               <Truck className="w-3.5 h-3.5 text-orange-400" />
                               <span>Vehicle Surcharge</span>
-                              <span className="text-xs text-gray-400">(extra kg × Rs.5)</span>
+                              <span className="text-xs text-gray-400">
+                                (extra kg × Rs.5)
+                              </span>
                             </div>
-                            <span className="font-semibold text-gray-800">Rs. {fareEstimate.vehicleCharge}</span>
+                            <span className="font-semibold text-gray-800">
+                              Rs. {fareEstimate.vehicleCharge}
+                            </span>
                           </div>
                         )}
 
@@ -681,18 +683,26 @@ const PorterBooking = () => {
                           <div className="flex items-center gap-2 text-gray-600">
                             <Route className="w-3.5 h-3.5 text-orange-400" />
                             <span>Trip Charge</span>
-                            <span className="text-xs text-gray-400">(⌈{distanceKm || 0}km ÷ 15⌉ × Rs.5)</span>
+                            <span className="text-xs text-gray-400">
+                              (⌈{distanceKm || 0}km ÷ 15⌉ × Rs.5)
+                            </span>
                           </div>
-                          <span className="font-semibold text-gray-800">Rs. {fareEstimate.tripCharge}</span>
+                          <span className="font-semibold text-gray-800">
+                            Rs. {fareEstimate.tripCharge}
+                          </span>
                         </div>
 
                         {/* Basic cost */}
                         <div className="flex items-center justify-between px-4 py-2.5 text-sm">
                           <div className="flex items-center gap-2 text-gray-600">
-                            <span className="w-3.5 h-3.5 flex items-center justify-center text-orange-400 font-bold text-xs">₨</span>
+                            <span className="w-3.5 h-3.5 flex items-center justify-center text-orange-400 font-bold text-xs">
+                              ₨
+                            </span>
                             <span>Basic Cost</span>
                           </div>
-                          <span className="font-semibold text-gray-800">Rs. 80</span>
+                          <span className="font-semibold text-gray-800">
+                            Rs. 80
+                          </span>
                         </div>
 
                         {/* Total */}
@@ -701,11 +711,15 @@ const PorterBooking = () => {
                             <Calculator className="w-4 h-4 text-[#D35400]" />
                             Estimated Total
                           </span>
-                          <span className="font-bold text-lg text-[#D35400]">Rs. {fareEstimate.total}</span>
+                          <span className="font-bold text-lg text-[#D35400]">
+                            Rs. {fareEstimate.total}
+                          </span>
                         </div>
 
                         <p className="text-center text-xs text-gray-400 px-4 py-2 italic">
-                          * First 5 kg included in base cost. Extra kg charged at Rs. 2 (travel) + Rs. 3 (floor carry){hasVehicle ? " + Rs. 5 (vehicle)" : ""}.
+                          * First 5 kg included in base cost. Extra kg charged
+                          at Rs. 2 (travel) + Rs. 3 (floor carry)
+                          {hasVehicle ? " + Rs. 5 (vehicle)" : ""}.
                         </p>
                       </div>
                     )}
