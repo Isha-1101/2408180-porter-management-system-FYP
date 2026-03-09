@@ -58,22 +58,23 @@ const PorterBooking = () => {
   const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
   const [porters, setPorters] = useState([]);
   const [numberOfFloors, setNumberOfFloors] = useState("");
-  const [distanceKm, setDistanceKm] = useState("");
   const [showFareBreakdown, setShowFareBreakdown] = useState(true);
   const [purpose, setPurpose] = useState("");
+  const [hasLift, setHasLift] = useState(false);
+  const [numberOfTrips, setNumberOfTrips] = useState("");
 
   // ── Fare Estimation ──────────────────────────────────────────────
   const fareEstimate = useMemo(() => {
     const w = parseFloat(weight) || 0;
     const floors = parseInt(numberOfFloors) || 0;
-    const dist = parseFloat(distanceKm) || 0;
+    const trips = parseInt(numberOfTrips) || 0;
     const extraKg = Math.max(0, w - 5);
 
-    const floorCharge = floors * 5;
+    const floorCharge = hasLift ? 0 : floors * 5;
     const weightTravelCharge = extraKg * 2;
-    const weightFloorCarryCharge = extraKg * 3;
+    const weightFloorCarryCharge = hasLift ? 0 : extraKg * 3;
     const vehicleCharge = hasVehicle ? extraKg * 5 : 0;
-    const tripCharge = dist > 0 ? Math.ceil(dist / 15) * 5 : 0;
+    const tripCharge = trips > 0 ? trips * 5 : 0;
     const basicCost = 80;
 
     const total =
@@ -92,9 +93,9 @@ const PorterBooking = () => {
       tripCharge,
       basicCost,
       total,
-      hasAnyInput: w > 0 || floors > 0 || dist > 0,
+      hasAnyInput: w > 0 || floors > 0 || trips > 0,
     };
-  }, [weight, numberOfFloors, distanceKm, hasVehicle]);
+  }, [weight, numberOfFloors, numberOfTrips, hasVehicle, hasLift]);
 
   //mutation function
   const {
@@ -199,22 +200,20 @@ const PorterBooking = () => {
                 <div className="flex bg-gray-100 p-1.5 rounded-lg w-full">
                   <button
                     onClick={() => setPorterType("individual")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
-                      porterType === "individual"
-                        ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                    }`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "individual"
+                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                      }`}
                   >
                     <User className="w-4 h-4" />
                     Individual Porter
                   </button>
                   <button
                     onClick={() => setPorterType("team")}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
-                      porterType === "team"
-                        ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                    }`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${porterType === "team"
+                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                      }`}
                   >
                     <UserPlus className="w-4 h-4" />
                     Team Porter
@@ -325,11 +324,10 @@ const PorterBooking = () => {
                           <button
                             key={type.id}
                             onClick={() => setVehicleType(type.id)}
-                            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${
-                              vehicleType === type.id
-                                ? "bg-primary text-white border-primary"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                            }`}
+                            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${vehicleType === type.id
+                              ? "bg-primary text-white border-primary"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                              }`}
                           >
                             <type.icon className="w-4 h-4" />
                             {type.label}
@@ -368,11 +366,11 @@ const PorterBooking = () => {
 
                 {/* {purpose of booking} */}
                 {!hasVehicle && (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div className="max-w-full">
                       <Label
                         htmlFor="purpose"
-                        className="text-sm font-medium text-gray-700"
+                        className="text-sm font-medium text-gray-700 mb-2 block"
                       >
                         Purpose of Booking
                       </Label>
@@ -386,118 +384,131 @@ const PorterBooking = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="transportation">
-                            Transportation{" "}
+                            Transportation
                           </SelectItem>
-                          <SelectItem value="delivery">Delivery </SelectItem>
+                          <SelectItem value="delivery">Delivery</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {purpose === "transportation" && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Floors & Distance Row */}
-                        {/* Number of Floors */}
+                    {purpose && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        {/* Weight Input */}
                         <div className="space-y-2">
-                          <label
-                            htmlFor="floors"
+                          <Label
+                            htmlFor="weight"
                             className="text-sm font-medium flex items-center gap-2 text-gray-700"
                           >
-                            <Layers className="w-4 h-4 text-primary" />
-                            Number of Floors
-                          </label>
+                            <Weight className="w-4 h-4 text-primary" />
+                            Weight (kg)
+                          </Label>
                           <div className="relative">
-                            <input
-                              id="floors"
+                            <Input
+                              id="weight"
                               type="number"
-                              placeholder="e.g. 4"
-                              value={numberOfFloors}
-                              min="0"
+                              placeholder="Min 5kg"
+                              value={weight}
+                              min="5"
                               onChange={(e) => {
                                 const val = e.target.value;
-                                if (val === "" || parseInt(val) >= 0)
-                                  setNumberOfFloors(val);
+                                if (val === "" || parseFloat(val) >= 0) {
+                                  setWeight(val);
+                                }
                               }}
-                              className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              className="pl-9"
                             />
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                              <Layers className="w-4 h-4" />
+                              <Weight className="w-4 h-4" />
+                            </div>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
+                              kg
                             </div>
                           </div>
                         </div>
 
-                        {/* Estimated Distance */}
+                        {/* Number of Trips Input */}
                         <div className="space-y-2">
                           <label
-                            htmlFor="distanceKm"
+                            htmlFor="numberOfTrips"
                             className="text-sm font-medium flex items-center gap-2 text-gray-700"
                           >
                             <Route className="w-4 h-4 text-primary" />
-                            Estimated Distance (km)
+                            Number of Trips
                           </label>
                           <div className="relative">
                             <input
-                              id="distanceKm"
+                              id="numberOfTrips"
                               type="number"
-                              placeholder="e.g. 2.5"
-                              value={distanceKm}
-                              min="0"
-                              step="0.1"
+                              placeholder="e.g. 1"
+                              value={numberOfTrips}
+                              min="1"
                               onChange={(e) => {
                                 const val = e.target.value;
-                                if (val === "" || parseFloat(val) >= 0)
-                                  setDistanceKm(val);
+                                if (val === "" || parseInt(val) >= 1)
+                                  setNumberOfTrips(val);
                               }}
-                              className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-10 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                               <Route className="w-4 h-4" />
                             </div>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
-                              km
-                            </div>
                           </div>
                         </div>
+
+                        {purpose === "transportation" && (
+                          <>
+                            {/* Number of Floors */}
+                            <div className="space-y-2">
+                              <label
+                                htmlFor="floors"
+                                className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                              >
+                                <Layers className="w-4 h-4 text-primary" />
+                                Number of Floors
+                              </label>
+                              <div className="relative">
+                                <input
+                                  id="floors"
+                                  type="number"
+                                  placeholder="e.g. 4"
+                                  value={numberOfFloors}
+                                  min="0"
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || parseInt(val) >= 0)
+                                      setNumberOfFloors(val);
+                                  }}
+                                  className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                  <Layers className="w-4 h-4" />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Has Lift */}
+                            <div className="space-y-2 h-[68px] flex flex-col justify-end">
+                              <div className="flex items-center justify-between p-2 lg:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-sm text-gray-700">Elevator / Lift available?</p>
+                                </div>
+                                <button
+                                  onClick={() => setHasLift(!hasLift)}
+                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasLift ? "bg-primary" : "bg-gray-300"}`}
+                                  type="button"
+                                >
+                                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasLift ? "translate-x-6" : "translate-x-1"}`} />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                  {/* Weight Input */}
-                  {/* Weight Input */}
-                  <div
-                    className={`${porterType === "team" ? "md:col-span-6" : "md:col-span-12"} space-y-2`}
-                  >
-                    <Label
-                      htmlFor="weight"
-                      className="text-sm font-medium flex items-center gap-2 text-gray-700"
-                    >
-                      <Weight className="w-4 h-4 text-primary" />
-                      Weight (kg)
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="weight"
-                        type="number"
-                        placeholder="Min 5kg"
-                        value={weight}
-                        min="5"
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || parseFloat(val) >= 0) {
-                            setWeight(val);
-                          }
-                        }}
-                        className="pl-9"
-                      />
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <Weight className="w-4 h-4" />
-                      </div>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
-                        kg
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Team Size Input (Only for Team Porter) */}
                   {porterType === "team" && (
@@ -684,7 +695,7 @@ const PorterBooking = () => {
                             <Route className="w-3.5 h-3.5 text-orange-400" />
                             <span>Trip Charge</span>
                             <span className="text-xs text-gray-400">
-                              (⌈{distanceKm || 0}km ÷ 15⌉ × Rs.5)
+                              ({numberOfTrips || 0} trips × Rs.5)
                             </span>
                           </div>
                           <span className="font-semibold text-gray-800">
