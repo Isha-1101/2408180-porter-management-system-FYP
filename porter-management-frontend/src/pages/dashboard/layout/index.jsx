@@ -93,7 +93,13 @@ const DashboardLayout = () => {
 
                       <div className="py-2">
                         <button
-                          onClick={() => navigate("/dashboard/profile")}
+                          onClick={() =>
+                            navigate(
+                              user?.role === "porter"
+                                ? "/dashboard/porters/profile"
+                                : "/dashboard/profile"
+                            )
+                          }
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                         >
                           <User className="w-4 h-4" />

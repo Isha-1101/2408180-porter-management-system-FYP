@@ -42,6 +42,13 @@ const submitPorterRegistration = (registrationId) => {
 const getPorterRegistrationByUser = () => {
   return axiosInstance.get(`/porter-registration/user`);
 };
+const updatePorterContact = ({ phone, address }) => {
+  return axiosInstance.patch(`/porter-registration/update-contact`, {
+    phone,
+    address,
+  });
+};
+
 export const porterRestrationService = {
   porterRegistrationStart,
   savePorterBasicInfo,
@@ -50,4 +57,5 @@ export const porterRestrationService = {
   getPorterRegistredInformation,
   submitPorterRegistration,
   getPorterRegistrationByUser,
+  updatePorterContact,
 };

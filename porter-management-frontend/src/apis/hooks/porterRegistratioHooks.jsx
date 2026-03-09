@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { porterRestrationService } from "../services/porterRegistration";
 import { useAuthStore } from "../../store/auth.store";
 const useRegstrationStartMutation = () => {
@@ -64,6 +64,17 @@ const usegetPorterRegistrationByUser = () => {
   });
 };
 
+const useUpdatePorterContactMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ phone, address }) =>
+      porterRestrationService.updatePorterContact({ phone, address }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["porterByUser"] });
+    },
+  });
+};
+
 export const porterRetgistrationHooks = {
   useRegstrationStartMutation,
   useSavePorterBasicInfoMutation,
@@ -72,4 +83,5 @@ export const porterRetgistrationHooks = {
   useGetPorterRegistredInformationMutation,
   useSubmitPorterRegistrationMutation,
   usegetPorterRegistrationByUser,
+  useUpdatePorterContactMutation,
 };
