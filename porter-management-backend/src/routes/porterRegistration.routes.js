@@ -23,7 +23,7 @@ porterRegistrationRouter.post(
   "/start",
   authenticate,
   authorizeRole("porter"),
-  startRegistration
+  startRegistration,
 );
 
 /**
@@ -38,7 +38,7 @@ porterRegistrationRouter.put(
     { name: "identityCardImageBack", maxCount: 1 },
     { name: "porterPhoto", maxCount: 1 },
   ]),
-  saveBasicInfo
+  saveBasicInfo,
 );
 
 /**
@@ -48,7 +48,7 @@ porterRegistrationRouter.put(
   "/:registrationId/vehicle",
   authenticate,
   authorizeRole("porter"),
-  saveVehicleInfo
+  saveVehicleInfo,
 );
 
 /**
@@ -59,7 +59,7 @@ porterRegistrationRouter.put(
   authenticate,
   authorizeRole("porter"),
   upload.single("porterLicenseDocument"),
-  saveDocuments
+  saveDocuments,
 );
 
 /**
@@ -69,14 +69,14 @@ porterRegistrationRouter.get(
   "/user",
   authenticate,
   authorizeRole("porter"),
-  getProterRegistrationByUserId
+  getProterRegistrationByUserId,
 );
 
 porterRegistrationRouter.get(
   "/:registrationId",
   authenticate,
   authorizeRole("porter"),
-  getRegistrationProgress
+  getRegistrationProgress,
 );
 /**
  * Submit registration
@@ -85,7 +85,7 @@ porterRegistrationRouter.post(
   "/:registrationId/submit",
   authenticate,
   authorizeRole("porter"),
-  submitRegistration
+  submitRegistration,
 );
 
 //admin
@@ -96,7 +96,7 @@ porterRegistrationRouter.post(
   "/:registrationId/approve",
   authenticate,
   authorizeRole("admin"),
-  approveRegistration
+  approveRegistration,
 );
 
 export default porterRegistrationRouter;

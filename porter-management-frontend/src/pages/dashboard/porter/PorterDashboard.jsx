@@ -43,7 +43,6 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 
-
 // const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 // const socket = io(SOCKET_URL);
 
@@ -131,8 +130,6 @@ export default function PorterDashboard() {
   const [filter, setFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("distance");
 
-
-
   // WebSocket connection
   const intervalRef = useRef(null);
 
@@ -182,11 +179,13 @@ export default function PorterDashboard() {
         bookingRequests.map((req) =>
           req.id === requestId
             ? { ...req, acceptedBy: "PORTER001", status: "ACCEPTED" }
-            : req
-        )
+            : req,
+        ),
       );
       // Navigate to details page
-      navigate("/dashboard/porters/accepted-booking", { state: { booking: request } });
+      navigate("/dashboard/porters/accepted-booking", {
+        state: { booking: request },
+      });
     }
   };
 
@@ -232,7 +231,6 @@ export default function PorterDashboard() {
 
   return (
     <div className="container mx-auto p-6">
-
       {/* Right Column - Booking Requests */}
       <Card className="h-full">
         <CardHeader>
@@ -306,10 +304,11 @@ export default function PorterDashboard() {
                 {filteredAndSortedRequests.map((request) => (
                   <Card
                     key={request.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${selectedRequest?.id === request.id
-                      ? "border-primary ring-2 ring-primary/20"
-                      : ""
-                      } ${request.status === "ACCEPTED" ? "opacity-70" : ""}`}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      selectedRequest?.id === request.id
+                        ? "border-primary ring-2 ring-primary/20"
+                        : ""
+                    } ${request.status === "ACCEPTED" ? "opacity-70" : ""}`}
                     onClick={() => setSelectedRequest(request)}
                   >
                     <CardHeader className="p-4 pb-2">

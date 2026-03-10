@@ -2,8 +2,6 @@ import mongoose from "mongoose";
 import PorterBooking from "../../models/PorterBooking.js";
 import Porters from "../../models/porter/Porters.js";
 import BookintgPorterRequest from "../../models/BookintgPorterRequest.js";
-import { notifyPorter } from "../../utils/notification-service.js";
-import { getDistanceKm } from "../../utils/helper.js";
 
 /**
  * Search porters as team and individual
@@ -22,14 +20,8 @@ export const searchNearbyPorters = async (req, res) => {
       vehicleType,
       requiredTeamSize = 1,
       radiusKm = 5,
-      purpose,
     } = req.body;
 
-    if(purpose === "transportaion"){
-      
-    }else if(purpose === "delivery"){
-      
-    }
     const bookingType = req.params.bookingType;
     const matchQuery = {
       porterType: bookingType,
@@ -50,7 +42,7 @@ export const searchNearbyPorters = async (req, res) => {
             type: "Point",
             coordinates: [pickup.lng, pickup.lat],
           },
-          maxDistance: radiusKm * 1000, // Convert km to meters
+          maxDistance: radiusKm * 1000,
           distanceField: "distanceMeters",
           spherical: true,
           query: matchQuery,
@@ -142,7 +134,6 @@ export const createBookingWithSelectedPorter = async (req, res) => {
       canAcceptBooking: true,
     });
 
-
     if (!porter) {
       return res.status(400).json({
         success: false,
@@ -192,8 +183,8 @@ export const createBookingWithSelectedPorter = async (req, res) => {
     session.endSession();
 
     // Notify ONLY selected porter
-//   const ns = notifyPorter(porterId, bookingDoc, distanceKm);
-// console.log("ns",ns)
+    //   const ns = notifyPorter(porterId, bookingDoc, distanceKm);
+    // console.log("ns",ns)
     return res.status(201).json({
       success: true,
       message: "Booking created. Waiting for porter confirmation.",

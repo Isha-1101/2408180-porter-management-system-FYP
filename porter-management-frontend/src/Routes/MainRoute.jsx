@@ -114,7 +114,10 @@ const MainRoute = () => {
 
                 {/* <Route element={<PorterGuards />}> */}
                 <Route index element={<PorterDashboard />} />
-                <Route path="accepted-booking" element={<AcceptedBookingDetails />} />
+                <Route
+                  path="accepted-booking"
+                  element={<AcceptedBookingDetails />}
+                />
                 <Route path="team" element={<TeamCreation />} />
                 {/* </Route> */}
               </Route>

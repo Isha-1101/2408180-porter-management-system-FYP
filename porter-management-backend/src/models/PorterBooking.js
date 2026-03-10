@@ -74,6 +74,25 @@ const bookingSchema = new mongoose.Schema(
       default: null,
     },
 
+    // addons after discussion
+    noOfFloors: {
+      type: Number,
+      default: null,
+    },
+    hasLift: {
+      type: Boolean,
+      default: false,
+    },
+    no_of_trips: {
+      type: Number,
+      default: null,
+    },
+    purpose_of_booking: {
+      type: String,
+      enum: ["transportation", "delivery"],
+      default: "transportation",
+    },
+
     status: {
       type: String,
       enum: [
@@ -139,7 +158,7 @@ const bookingSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("PorterBooking", bookingSchema);

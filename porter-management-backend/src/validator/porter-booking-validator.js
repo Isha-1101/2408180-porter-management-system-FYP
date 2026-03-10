@@ -2,8 +2,12 @@ import { body } from "express-validator";
 
 export const PorterSearchValidation = [
   body("pickup").notEmpty().withMessage("pickup is required"),
-  body("drop").notEmpty().withMessage("drop is required"),
-  body("weightKg").notEmpty().withMessage("weightKg is required"),
+  body("dropoff").notEmpty().withMessage("dropoff is required"),
+  body("weightKg")
+    .if((value, { req }) => req.body.hasVehicle === false)
+    .notEmpty()
+    .withMessage("weightKg is required"),
+  // body("weightKg").notEmpty().withMessage("weightKg is required"),
 
   body("hasVehicle")
     .notEmpty()
@@ -24,14 +28,18 @@ export const PorterSearchValidation = [
 
   body("no_of_floors")
     .if((value, { req }) => {
-      return req.body.hasVehicle === false && req.body.purpose === "transportation";
+      return (
+        req.body.hasVehicle === false && req.body.purpose === "transportation"
+      );
     })
     .notEmpty()
     .withMessage("no_of_floors is required"),
 
   body("has_lift")
     .if((value, { req }) => {
-      return req.body.hasVehicle === false && req.body.purpose === "transportation";
+      return (
+        req.body.hasVehicle === false && req.body.purpose === "transportation"
+      );
     })
     .notEmpty()
     .withMessage("has_lift is required"),
