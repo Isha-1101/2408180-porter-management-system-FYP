@@ -38,7 +38,12 @@ export const createPorterBookingService = (payload) => {
 
 // User cancels a booking
 export const cancelBookingService = (bookingId) => {
-  return axiosInstance.post(`/bookings/individual/${bookingId}/cancel`);
+  return axiosInstance.delete(`/bookings/${bookingId}/cancel`);
+};
+
+// Porter starts a booking (marks as IN_PROGRESS)
+export const startBookingService = (bookingId) => {
+  return axiosInstance.post(`/bookings/individual/${bookingId}/start`);
 };
 
 // Porter completes a booking (marks as COMPLETED)

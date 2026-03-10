@@ -65,7 +65,7 @@ const bookingSchema = new mongoose.Schema(
 
     vehicleType: {
       type: String,
-      enum: ["bike", "van", "mini-truck", "truck", null],
+      enum: ["bike", "van", "mini-truck", "truck", null, "motorcycle"],
       default: null,
     },
 
@@ -104,6 +104,7 @@ const bookingSchema = new mongoose.Schema(
         "WAITING_PORTER_RESPONSE",
         "TEAM_LEAD_CONFIRMING",
         "CONFIRMED",
+        "IN_PROGRESS",
         "ASSIGNED",
         "CANCELLED",
         "COMPLETED",

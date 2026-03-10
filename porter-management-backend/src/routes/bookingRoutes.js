@@ -4,6 +4,7 @@ import {
   porterAcceptBooking,
   porterRejectBooking,
   completeBooking,
+  startBooking,
 } from "../controllers/book-porter/individual-booking-controller.js";
 import {
   createTeamBooking,
@@ -96,6 +97,13 @@ router.post("/individual/:id/reject", ...porterOnly, porterRejectBooking);
  * @access  Private (Porter)
  */
 router.post("/individual/:id/complete", ...porterOnly, completeBooking);
+
+/**
+ * @route   POST /api/bookings/individual/:id/start
+ * @desc    Porter starts the journey (sets IN_PROGRESS)
+ * @access  Private (Porter)
+ */
+router.post("/individual/:id/start", ...porterOnly, startBooking);
 
 // ============================================
 // TEAM BOOKING ROUTES

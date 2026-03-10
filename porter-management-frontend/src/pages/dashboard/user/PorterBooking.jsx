@@ -99,7 +99,7 @@ const PorterBooking = () => {
   const [hasVehicle, setHasVehicle] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
-  const [porters, setPorters] = useState([]);
+  const [porters, setPorters] = useState();
   const [numberOfFloors, setNumberOfFloors] = useState("");
   const [showFareBreakdown, setShowFareBreakdown] = useState(true);
   const [purpose, setPurpose] = useState("");
@@ -147,7 +147,8 @@ const PorterBooking = () => {
         trip: numberOfTrips,
       });
       const actualPorter = traverseInPorter(res?.data?.data);
-      setPorters([actualPorter]);
+      console.log("actualPorter", actualPorter);
+      setPorters(actualPorter);
       setHasSearched(true);
     } catch (error) {
       console.log(error);

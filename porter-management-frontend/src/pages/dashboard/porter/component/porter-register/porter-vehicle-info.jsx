@@ -12,12 +12,10 @@ import {
 
 const VehicleInfo = ({ data, onChange }) => {
   const vehicleCategories = [
-    { value: "motorcycle", label: "Motorcycle", icon: "🏍️" },
-    { value: "car", label: "Car", icon: "🚗" },
-    { value: "pickup", label: "Pickup Truck", icon: "🛻" },
-    { value: "van", label: "Van", icon: "🚐" },
-    { value: "truck", label: "Truck", icon: "🚚" },
-    { value: "three_wheeler", label: "Three-Wheeler", icon: "🛺" },
+    { value: "bike", label: "Motorcycle" },
+    { value: "truck", label: "Pickup Truck" },
+    { value: "van", label: "Van" },
+    { value: "mini-truck", label: "Truck" },
   ];
 
   const handleHasVehicleChange = (value) => {
@@ -41,15 +39,18 @@ const VehicleInfo = ({ data, onChange }) => {
       <CardContent className="space-y-6">
         {/* Do you have a vehicle? */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">Do you have a vehicle?</Label>
+          <Label className="text-base font-medium">
+            Do you have a vehicle?
+          </Label>
           <div className="flex gap-4">
             <div
               onClick={() => handleHasVehicleChange(true)}
               className={`
                 flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all flex items-center justify-center gap-2
-                ${data?.hasVehicle === true
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-muted hover:border-primary/50"
+                ${
+                  data?.hasVehicle === true
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-muted hover:border-primary/50"
                 }
               `}
             >
@@ -60,9 +61,10 @@ const VehicleInfo = ({ data, onChange }) => {
               onClick={() => handleHasVehicleChange(false)}
               className={`
                 flex-1 p-4 rounded-lg border-2 cursor-pointer transition-all flex items-center justify-center gap-2
-                ${data?.hasVehicle === false
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-muted hover:border-primary/50"
+                ${
+                  data?.hasVehicle === false
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-muted hover:border-primary/50"
                 }
               `}
             >
@@ -104,7 +106,10 @@ const VehicleInfo = ({ data, onChange }) => {
 
             {/* Vehicle Number */}
             <div className="space-y-2">
-              <Label htmlFor="vehicleNumber" className="flex items-center gap-2">
+              <Label
+                htmlFor="vehicleNumber"
+                className="flex items-center gap-2"
+              >
                 <Hash className="h-4 w-4" />
                 Vehicle Registration Number *
               </Label>
@@ -116,7 +121,7 @@ const VehicleInfo = ({ data, onChange }) => {
                     onChange(
                       "vehicle",
                       "vehicleNumber",
-                      e.target.value.toUpperCase()
+                      e.target.value.toUpperCase(),
                     )
                   }
                   placeholder="ABC-1234 or KA-01-AB-1234"

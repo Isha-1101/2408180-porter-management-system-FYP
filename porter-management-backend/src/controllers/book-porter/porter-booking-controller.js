@@ -12,6 +12,7 @@ import sseService from "../../utils/sse-service.js";
  * @returns {Promise} - Promise containing the response data
  */
 
+// this function is used to search porters as team and individual and this used in project booking and porter booking
 export const searchNearbyPorters = async (req, res) => {
   try {
     const {
@@ -24,17 +25,78 @@ export const searchNearbyPorters = async (req, res) => {
     } = req.body;
 
     const bookingType = req.params.bookingType;
+    const wghtInNum = Number(weightKg);
     const matchQuery = {
       porterType: bookingType,
       status: "active",
       isVerified: true,
       canAcceptBooking: true,
       currentStatus: "online",
-      maxWeightKg: { $gte: weightKg },
+      maxWeightKg: { $gte: wghtInNum },
     };
+    console.log("matchQuery", matchQuery);
+    console.log({
+      pickup,
+      weightKg,
+      hasVehicle,
+      vehicleType,
+      requiredTeamSize,
+      radiusKm,
+    });
     if (bookingType === "team") {
       matchQuery.teamSize = { $gte: requiredTeamSize };
     }
+
+    // const pipeline = [
+    //   {
+    //     $geoNear: {
+    //       near: {
+    //         type: "Point",
+    //         coordinates: [pickup.lng, pickup.lat],
+    //       },
+    //       maxDistance: radiusKm * 10000,
+    //       distanceField: "distanceMeters",
+    //       spherical: true,
+    //       query: matchQuery,
+    //     },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "portervehicles",
+    //       localField: "registrationId",
+    //       foreignField: "registrationId",
+    //       as: "vehicle",
+    //     },
+    //   },
+    //   {
+    //     $unwind: {
+    //       path: "$vehicle",
+    //       preserveNullAndEmptyArrays: true,
+    //     },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "porterbasicinfos",
+    //       localField: "registrationId",
+    //       foreignField: "registrationId",
+    //       as: "basicInfo",
+    //     },
+    //   },
+    //   { $unwind: { path: "$basicInfo", preserveNullAndEmptyArrays: true } },
+
+    //   ...(hasVehicle
+    //     ? [
+    //         {
+    //           $match: {
+    //             "vehicle.hasVehicle": hasVehicle,
+    //             "vehicle.vehicleCategory": vehicleType,
+    //           },
+    //         },
+    //       ]
+    //     : []),
+    //   { $sort: { distanceMeters: 1 } },
+    //   { $limit: 5 },
+    // ];
 
     const pipeline = [
       {
@@ -43,12 +105,13 @@ export const searchNearbyPorters = async (req, res) => {
             type: "Point",
             coordinates: [pickup.lng, pickup.lat],
           },
-          maxDistance: radiusKm * 1000,
+          maxDistance: radiusKm * 10000,
           distanceField: "distanceMeters",
           spherical: true,
           query: matchQuery,
         },
       },
+
       {
         $lookup: {
           from: "portervehicles",
@@ -57,12 +120,14 @@ export const searchNearbyPorters = async (req, res) => {
           as: "vehicle",
         },
       },
+
       {
         $unwind: {
           path: "$vehicle",
           preserveNullAndEmptyArrays: true,
         },
       },
+
       {
         $lookup: {
           from: "porterbasicinfos",
@@ -71,9 +136,14 @@ export const searchNearbyPorters = async (req, res) => {
           as: "basicInfo",
         },
       },
-      { $unwind: { path: "$basicInfo", preserveNullAndEmptyArrays: true } },
 
-      // Filter by vehicle requirements if specified
+      {
+        $unwind: {
+          path: "$basicInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
       ...(hasVehicle
         ? [
             {
@@ -83,11 +153,17 @@ export const searchNearbyPorters = async (req, res) => {
               },
             },
           ]
-        : []),
+        : [
+            {
+              $match: {
+                $or: [{ vehicle: null }, { "vehicle.hasVehicle": false }],
+              },
+            },
+          ]),
+
       { $sort: { distanceMeters: 1 } },
       { $limit: 5 },
     ];
-
     const porters = await Porters.aggregate(pipeline);
     return res.json({
       success: true,

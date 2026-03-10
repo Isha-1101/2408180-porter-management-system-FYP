@@ -15,12 +15,12 @@ import {
 export const createIndividualBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-
+  console.log(req.body);
   try {
     const {
       pickup,
       drop,
-      weightKg,
+      weightKg = 100,
       hasVehicle,
       vehicleType,
       radiusKm = 5,
@@ -29,7 +29,7 @@ export const createIndividualBooking = async (req, res) => {
     const userId = req.user.id;
 
     // Validate required fields
-    if (!pickup || !drop || !weightKg) {
+    if (!pickup || !drop) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
@@ -212,6 +212,13 @@ export const porterAcceptBooking = async (req, res) => {
     booking.assignedPorterId = porterId;
     await booking.save({ session });
 
+    //porter stauts
+    await Porters.findByIdAndUpdate(
+      porterId,
+      { currentStatus: "busy" },
+      { session },
+    );
+
     // Expire all other pending requests for this booking
     await BookingPorterRequest.updateMany(
       { bookingId, porterId: { $ne: porterId }, status: "PENDING" },
@@ -349,9 +356,21 @@ export const completeBooking = async (req, res) => {
     booking.completedAt = new Date();
     await booking.save();
 
+    // Notify user
     notifyUser(booking.userId, booking, "BOOKING_COMPLETED").catch((err) =>
       console.error("User notification error:", err),
     );
+
+    // Socket event
+    try {
+      const io = getIO();
+      io.emit("booking-completed", {
+        bookingId: booking._id,
+        status: "COMPLETED",
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
 
     return res.status(200).json({
       success: true,
@@ -363,6 +382,70 @@ export const completeBooking = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to complete booking",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Porter starts individual booking journey
+ * POST /api/bookings/individual/:id/start
+ */
+export const startBooking = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const porterId = req.user.porterId;
+
+    const booking = await PorterBooking.findById(bookingId);
+
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
+    }
+
+    if (
+      !booking.assignedPorterId ||
+      booking.assignedPorterId.toString() !== porterId.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not assigned to this booking",
+      });
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking must be CONFIRMED before starting",
+      });
+    }
+
+    booking.status = "IN_PROGRESS";
+    await booking.save();
+
+    // Notify user via socket
+    try {
+      const io = getIO();
+      io.emit("booking-in-progress", {
+        bookingId: booking._id,
+        porterId,
+        status: "IN_PROGRESS",
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Journey started",
+      data: { booking },
+    });
+  } catch (error) {
+    console.error("Error starting booking:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to start booking",
       error: error.message,
     });
   }

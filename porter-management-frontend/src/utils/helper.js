@@ -22,9 +22,10 @@ export const getCloudinaryUrl = (fileUrl) => {
   }/image${fileUrl}`;
 };
 
-export const traverseInPorter = (porter) => {
-  let data = {};
-  porter.forEach((por) => {
+export const traverseInPorter = (porters) => {
+  if (!Array.isArray(porters)) return [];
+  return porters.map((por) => {
+    const data = {};
     if (por.basicInfo) {
       data.porterName = por.basicInfo.fullName;
       data.address = por.basicInfo.address;
@@ -34,12 +35,12 @@ export const traverseInPorter = (porter) => {
     }
     if (por.vehicle) {
       data.hasVehicle = por.vehicle.hasVehicle;
-      data.vehicle = por.vehicleCategory;
+      data.vehicleCategory = por.vehicle.vehicleCategory;
     }
     data.porterType = por.porterType;
     data.distanceMeters = por.distanceMeters;
+    data.maxWeightKg = por.maxWeightKg;
     data.id = por._id;
+    return data;
   });
-
-  return data;
 };

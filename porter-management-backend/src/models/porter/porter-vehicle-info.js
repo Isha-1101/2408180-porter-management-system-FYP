@@ -18,7 +18,8 @@ const PorterVehicleSchema = new mongoose.Schema(
     },
     vehicleCategory: {
       type: String,
-       ref: "VehicleTypes",
+      enum: ["bike", "van", "mini-truck", "truck"],
+      // ref: "VehicleTypes",
       required: function () {
         return this.hasVehicle;
       },
