@@ -1,328 +1,159 @@
-// import React, { useEffect, useMemo, useState } from "react";
-// import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-// import L from "leaflet";
-// import { io } from "socket.io-client";
-// import { getDistanceKm } from "../../utils/haversine";
-// import { fetchRouteCoords } from "../../utils/osrm";
-// import RouteLayer from "./RouteLayer";
-
-// const socket = io("http://localhost:5000");
-
-// const userIcon = new L.Icon({
-//   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-//   iconSize: [25, 41],
-//   iconAnchor: [12, 41],
-// });
-// const porterIcon = new L.Icon({
-//   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-//   iconSize: [22, 36],
-//   iconAnchor: [11, 36],
-// });
-
-// function Recenter({ pos }) {
-//   const map = useMap();
-//   useEffect(() => {
-//     if (pos) map.setView(pos, 14);
-//   }, [pos]);
-//   return null;
-// }
-
-// export default function UserMap({ className = "", showSidebar = true }) {
-//   const [userPos, setUserPos] = useState(null);
-//   const [porters, setPorters] = useState({}); // object from socket
-//   const [radiusKm, setRadiusKm] = useState(3);
-//   const [selectedPorter, setSelectedPorter] = useState(null);
-//   const [routeCoords, setRouteCoords] = useState([]);
-//   console.log(routeCoords, userPos, "usermap");
-//   useEffect(() => {
-//     // Ask browser for user location
-//     if (navigator.geolocation) {
-//       navigator.geolocation.getCurrentPosition(
-//         (p) => {
-//           setUserPos([p.coords.latitude, p.coords.longitude]);
-//         },
-//         (err) => console.error(err),
-//         { enableHighAccuracy: true }
-//       );
-//     }
-//     socket.on("all-porter-locations", (data) => {
-//       console.log(data,"emited-porter-data")
-//       setPorters(data);
-//     });
-//     return () => socket.off("all-porter-locations");
-//   }, []);
-
-//   const nearby = useMemo(() => {
-//     if (!userPos) return [];
-//     const arr = Object.keys(porters).map((id) => {
-//       const { lat, lng, teamId, timestamp } = porters[id];
-//       const distance = getDistanceKm(userPos[0], userPos[1], lat, lng);
-//       console.log(distance, "distance");
-//       return { id, lat, lng, teamId, timestamp, distance };
-//     });
-//     arr.sort((a, b) => a.distance - b.distance);
-//     return arr.filter((p) => p.distance <= radiusKm);
-//   }, [porters, userPos, radiusKm]);
-//   console.log(porters, "porters");
-//   console.log(userPos, "userPos");
-//   console.log(nearby, "nearBy proter");
-
-//   const handleClickPorter = async (porter) => {
-//     console.log(porter, "porter");
-//     setSelectedPorter(porter);
-//     const coords = await fetchRouteCoords(
-//       userPos[0],
-//       userPos[1],
-//       porter.lat,
-//       porter.lng
-//     );
-//     setRouteCoords(coords);
-//   };
-
-//   return (
-//     <div
-//       className={`grid ${
-//         showSidebar ? "grid-cols-1 lg:grid-cols-[320px_1fr]" : "grid-cols-1"
-//       } gap-3 h-full ${className}`}
-//     >
-//       {showSidebar && (
-//         <div className="bg-white/80 rounded-xl border border-gray-100 p-3 overflow-auto">
-//           <div className="font-semibold text-gray-900">Nearby Porters</div>
-//           <div className="mt-3">
-//             <label className="text-sm text-gray-600">Radius (km)</label>
-//             <input
-//               type="number"
-//               value={radiusKm}
-//               onChange={(e) => setRadiusKm(Number(e.target.value))}
-//               className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30"
-//             />
-//           </div>
-
-//           <div className="mt-4 space-y-2">
-//             {nearby?.map((p) => (
-//               <button
-//                 key={p.id}
-//                 onClick={() => handleClickPorter(p)}
-//                 className="w-full text-left rounded-xl border border-gray-100 hover:border-primary/30 hover:bg-gray-50 transition px-3 py-2 cursor-pointer"
-//               >
-//                 <div className="font-medium text-gray-900">{p.id}</div>
-//                 <div className="text-xs text-gray-600">
-//                   {p.distance.toFixed(2)} km away
-//                   thisfoisdfsldjflskdjflsdkfsdlflsdflsdjflsldf
-//                 </div>
-//               </button>
-//             ))}
-//             {userPos && nearby.length === 0 && (
-//               <div className="text-sm text-gray-600">
-//                 No porters found within {radiusKm} km.
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       <div className="rounded-xl overflow-hidden border border-gray-100 h-full min-h-[260px]">
-//         <MapContainer
-//           center={userPos || [27.7, 85.3]}
-//           zoom={13}
-//           style={{ height: "100%", width: "100%" }}
-//         >
-//           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-//           {userPos && (
-//             <Marker position={userPos} icon={userIcon}>
-//               <Popup>You are here</Popup>
-//             </Marker>
-//           )}
-//           {nearby.map((p) => (
-//             <Marker
-//               key={p.id}
-//               position={[p.lat, p.lng]}
-//               icon={porterIcon}
-//               eventHandlers={{ click: () => handleClickPorter(p) }}
-//             >
-//               <Popup>
-//                 <div>
-//                   <div>Porter: {p.id}</div>
-//                   <div>Distance: {p.distance.toFixed(2)} km</div>
-//                   <button
-//                     onClick={() => handleClickPorter(p)}
-//                     className="mt-2 rounded-md bg-primary text-white px-3 py-1.5 text-sm cursor-pointer"
-//                   >
-//                     Show Route
-//                   </button>
-//                 </div>
-//               </Popup>
-//             </Marker>
-//           ))}
-//           <RouteLayer positions={routeCoords} />
-//           <Recenter
-//             pos={
-//               selectedPorter
-//                 ? [selectedPorter.lat, selectedPorter.lng]
-//                 : userPos
-//             }
-//           />
-//         </MapContainer>
-//       </div>
-//     </div>
-//   );
-// }
-
-import React, { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
-// import { io } from "socket.io-client";
+import "leaflet/dist/leaflet.css";
 import { getDistanceKm } from "../../utils/haversine";
 import { fetchRouteCoords } from "../../utils/osrm";
 import RouteLayer from "./RouteLayer";
-import {
-  MapPin,
-  Navigation,
-  Users,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  Locate,
-} from "lucide-react";
+import { Recenter } from "./Recenter";
+import { MapPin, Navigation, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Recenter } from "../../utils/helper";
+import socket from "../../utils/socket";
 
-// Use environment variable or ensure correct URL
-// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-// const socket = io(SOCKET_URL, {
-//   transports: ["websocket", "polling"],
-//   reconnection: true,
-//   reconnectionAttempts: 5,
-//   reconnectionDelay: 1000,
-// });
+// Fix Leaflet default icon paths (Vite breaks these)
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-// Fix for Leaflet icons in React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "leaflet/dist/images/marker-icon-2x.png",
-  iconUrl: "leaflet/dist/images/marker-icon.png",
-  shadowUrl: "leaflet/dist/images/marker-shadow.png",
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
 });
 
-const userIcon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+// Colored SVG-pin icons
+const makeColorIcon = (color) =>
+  new L.Icon({
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+    shadowUrl: markerShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
 
-const porterIcon = new L.Icon({
-  iconUrl:
-    "https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+const PICKUP_ICON = makeColorIcon("green");
+const DROPOFF_ICON = makeColorIcon("red");
+const PORTER_ICON = makeColorIcon("orange");
+const LIVE_PORTER_ICON = makeColorIcon("violet");
 
+function MapEvents({ onMapClick }) {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) onMapClick(e.latlng);
+    },
+  });
+  return null;
+}
 
-const UserMap = ({ className = "", showSidebar = true }) => {
-  const [userPos, setUserPos] = useState([27.7172, 85.324]); // Default to Kathmandu
-  const [porters, setPorters] = useState({}); // object from socket
-  const [radiusKm, setRadiusKm] = useState(10); // Increased default radius
-  const [selectedPorter, setSelectedPorter] = useState(null);
+const UserMap = ({
+  className = "",
+  showSidebar = true,
+  onMapClick,
+  pickupLocation,
+  dropoffLocation,
+  porterLocationOverride, // { lat, lng } — live porter position from parent
+}) => {
+  const [userPos, setUserPos] = useState([27.7172, 85.324]); // Default: Kathmandu
+  const [porters, setPorters] = useState({});
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [selectedPorterId, setSelectedPorterId] = useState(null);
   const [routeCoords, setRouteCoords] = useState([]);
-  const [socketConnected, setSocketConnected] = useState(false);
-  const [loadingLocation, setLoadingLocation] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(socket.connected);
+  // Ref to track if route fetch is in-flight so we don't spam OSRM on every porters update
+  const routeFetchRef = useRef(false);
 
-  // Location inputs
-  const [fromLocation, setFromLocation] = useState("");
-  const [toLocation, setToLocation] = useState("");
-
+  // ── Geolocation ──
   useEffect(() => {
-    // Ask browser for user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (p) => {
-          const newPos = [p.coords.latitude, p.coords.longitude];
-          setUserPos(newPos);
-          setLoadingLocation(false);
-        },
-        (err) => {
-          console.error("Geolocation error:", err);
-          setLoadingLocation(false);
-          // Keep default Kathmandu position
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      setLoadingLocation(false);
-    }
-
-    // // Socket connection events
-    // socket.on("connect", () => {
-    //   setSocketConnected(true);
-    //   // Request initial porter locations
-    //   socket.emit("get-porter-locations");
-    // });
-
-    // socket.on("disconnect", () => {
-    //   setSocketConnected(false);
-    // });
-
-    // socket.on("all-porter-locations", (data) => {
-    //   setPorters(data);
-    //   console.log(data);
-    // });
-
-    // socket.on("porter-location-update", (data) => {
-    //   setPorters((prev) => ({
-    //     ...prev,
-    //     [data.porterId]: {
-    //       lat: data.lat,
-    //       lng: data.lng,
-    //       teamId: data.teamId,
-    //       timestamp: Date.now(),
-    //     },
-    //   }));
-    // });
-
-    // // Cleanup
-    // return () => {
-    //   socket.off("connect");
-    //   socket.off("disconnect");
-    //   socket.off("all-porter-locations");
-    //   socket.off("porter-location-update");
-    // };
+    if (!navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (p) => setUserPos([p.coords.latitude, p.coords.longitude]),
+      (err) => console.error("Geolocation error:", err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
+  // ── Socket listeners ──
+  useEffect(() => {
+    const onConnect = () => {
+      setSocketConnected(true);
+      // Bug #1 fix: was "connection" — must be "connect"
+      // Bug #2 fix: request initial snapshot on (re)connect
+      socket.emit("get-porter-locations");
+    };
+
+    const onDisconnect = () => setSocketConnected(false);
+
+    // Full snapshot: replace entire porters map
+    const onAllPorterLocations = (data) => {
+      setPorters(data);
+    };
+
+    // Bug #3 fix: backend now emits "porter-location-update" — do an incremental merge
+    const onPorterLocationUpdate = (data) => {
+      setPorters((prev) => ({
+        ...prev,
+        [data.porterId]: {
+          lat: data.lat,
+          lng: data.lng,
+          teamId: data.teamId || null,
+          updatedAt: data.updatedAt,
+        },
+      }));
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("all-porter-locations", onAllPorterLocations);
+    socket.on("porter-location-update", onPorterLocationUpdate);
+
+    // If socket is already connected when this component mounts, request immediately
+    if (socket.connected) {
+      socket.emit("get-porter-locations");
+      setSocketConnected(true);
+    }
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("all-porter-locations", onAllPorterLocations);
+      socket.off("porter-location-update", onPorterLocationUpdate);
+    };
+  }, []);
+
+  // ── Nearby porters (derived from socket data + user position + radius) ──
   const nearby = useMemo(() => {
     if (!userPos) return [];
-
-    const arr = Object.entries(porters).map(([id, porter]) => {
-      const { lat, lng, teamId, timestamp } = porter;
-      const distance = getDistanceKm(userPos[0], userPos[1], lat, lng);
-      return {
-        id,
-        lat,
-        lng,
-        teamId,
-        timestamp,
-        distance,
-      };
-    });
-
-    // Sort by distance
+    const arr = Object.entries(porters).map(([id, porter]) => ({
+      id,
+      lat: porter.lat,
+      lng: porter.lng,
+      teamId: porter.teamId,
+      updatedAt: porter.updatedAt,
+      distance: getDistanceKm(userPos[0], userPos[1], porter.lat, porter.lng),
+    }));
     arr.sort((a, b) => a.distance - b.distance);
-
-    // Filter by radius
-    const filtered = arr.filter((p) => p.distance <= radiusKm);
-
-    return filtered;
+    return arr.filter((p) => p.distance <= radiusKm);
   }, [porters, userPos, radiusKm]);
-  const handleClickPorter = async (porter) => {
-    setSelectedPorter(porter);
 
-    if (userPos) {
+  // ── Route: re-fetch whenever the selected porter moves or user moves ──
+  useEffect(() => {
+    if (!selectedPorterId || !userPos) return;
+    const porter = porters[selectedPorterId];
+    if (!porter) return;
+
+    const updateRoute = async () => {
+      if (routeFetchRef.current) return;
+      routeFetchRef.current = true;
       try {
         const coords = await fetchRouteCoords(
           userPos[0],
@@ -331,34 +162,68 @@ const UserMap = ({ className = "", showSidebar = true }) => {
           porter.lng,
         );
         setRouteCoords(coords);
-      } catch (error) {
-        console.error("Error fetching route:", error);
+      } catch (err) {
+        console.error("Route fetch error:", err);
+      } finally {
+        routeFetchRef.current = false;
       }
-    }
-  };
+    };
 
-  const handleGetCurrentLocation = () => {
-    setLoadingLocation(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (p) => {
-          const newPos = [p.coords.latitude, p.coords.longitude];
-          setUserPos(newPos);
-          setFromLocation(`${newPos[0].toFixed(4)}, ${newPos[1].toFixed(4)}`);
-          setLoadingLocation(false);
-        },
-        (err) => {
-          console.error("Geolocation error:", err);
-          setLoadingLocation(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        },
-      );
-    }
-  };
+    updateRoute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedPorterId,
+    userPos,
+    porters[selectedPorterId]?.lat,
+    porters[selectedPorterId]?.lng,
+  ]);
+
+  // ── Static route: pickup → dropoff (used in AcceptedBookingDetails / porter view) ──
+  useEffect(() => {
+    if (selectedPorterId) return; // porter route takes priority
+    const hasPickup = pickupLocation?.lat && pickupLocation?.lng;
+    const hasDrop = dropoffLocation?.lat && dropoffLocation?.lng;
+    if (!hasPickup || !hasDrop) return;
+
+    const fetchStaticRoute = async () => {
+      if (routeFetchRef.current) return;
+      routeFetchRef.current = true;
+      try {
+        const coords = await fetchRouteCoords(
+          pickupLocation.lat,
+          pickupLocation.lng,
+          dropoffLocation.lat,
+          dropoffLocation.lng,
+        );
+        setRouteCoords(coords);
+      } catch (err) {
+        console.error("Static route fetch error:", err);
+      } finally {
+        routeFetchRef.current = false;
+      }
+    };
+
+    fetchStaticRoute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedPorterId,
+    pickupLocation?.lat,
+    pickupLocation?.lng,
+    dropoffLocation?.lat,
+    dropoffLocation?.lng,
+  ]);
+
+  const handleClickPorter = (porter) => setSelectedPorterId(porter.id);
+
+  // ── Recenter logic: selected porter → pickup → dropoff → user ──
+  const recenterPos =
+    selectedPorterId && porters[selectedPorterId]
+      ? [porters[selectedPorterId].lat, porters[selectedPorterId].lng]
+      : pickupLocation?.lat && pickupLocation?.lng
+        ? [pickupLocation.lat, pickupLocation.lng]
+        : dropoffLocation?.lat && dropoffLocation?.lng
+          ? [dropoffLocation.lat, dropoffLocation.lng]
+          : userPos;
 
   return (
     <div
@@ -368,81 +233,34 @@ const UserMap = ({ className = "", showSidebar = true }) => {
           : "grid-cols-1"
       } gap-4 h-full ${className}`}
     >
+      {/* Sidebar — only shown in full UserMap mode */}
       {showSidebar && !isMapExpanded && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-          {/* Sidebar Header */}
+          {/* Header */}
           <div className="p-4 border-b border-gray-200 bg-linear-to-r from-primary/5 to-blue-50">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-gray-900">Route Planning</h3>
+                <h3 className="font-bold text-gray-900">Nearby Porters</h3>
               </div>
               <div className="flex items-center gap-1.5">
                 <div
                   className={`w-2 h-2 rounded-full ${
                     socketConnected ? "bg-green-500" : "bg-red-500"
                   } animate-pulse`}
-                ></div>
-                <span className="text-xs text-gray-600">
+                />
+                <span className="text-xs text-gray-500">
                   {socketConnected ? "Live" : "Offline"}
                 </span>
               </div>
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-gray-500">
               {nearby.length} porter{nearby.length !== 1 ? "s" : ""} within{" "}
-              {radiusKm}km
+              {radiusKm} km
             </p>
           </div>
 
-          {/* Location Controls */}
-          <div className="p-4 border-b border-gray-200 space-y-3">
-            <div>
-              <Label
-                htmlFor="from-location"
-                className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2"
-              >
-                <MapPin className="w-4 h-4 text-primary" />
-                From Location
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="from-location"
-                  type="text"
-                  placeholder="Enter pickup location"
-                  value={fromLocation}
-                  onChange={(e) => setFromLocation(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={handleGetCurrentLocation}
-                  title="Use current location"
-                >
-                  <Locate className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label
-                htmlFor="to-location"
-                className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2"
-              >
-                <Navigation className="w-4 h-4 text-primary" />
-                To Location
-              </Label>
-              <Input
-                id="to-location"
-                type="text"
-                placeholder="Enter destination"
-                value={toLocation}
-                onChange={(e) => setToLocation(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Radius Control */}
+          {/* Radius slider */}
           <div className="p-4 border-b border-gray-200 bg-gray-50">
             <label className="text-sm font-medium text-gray-700 mb-2 block">
               Search Radius
@@ -465,39 +283,32 @@ const UserMap = ({ className = "", showSidebar = true }) => {
             </div>
           </div>
 
-          {/* Porter List */}
+          {/* Porter list */}
           <div className="flex-1 overflow-y-auto p-4">
-            {loadingLocation ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
-                <p className="text-sm text-gray-600">
-                  Getting your location...
-                </p>
-              </div>
-            ) : nearby.length > 0 ? (
+            {nearby.length > 0 ? (
               <div className="space-y-2">
                 {nearby.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => handleClickPorter(p)}
                     className={`w-full text-left rounded-xl border transition-all duration-200 p-3 ${
-                      selectedPorter?.id === p.id
+                      selectedPorterId === p.id
                         ? "border-primary bg-blue-50 shadow-sm"
                         : "border-gray-200 hover:border-primary/40 hover:bg-gray-50"
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-semibold text-gray-900 text-sm">
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="font-semibold text-gray-900 text-sm truncate max-w-[130px]">
                         {p.id}
                       </div>
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                         <Navigation className="w-3 h-3" />
                         <span className="text-xs font-medium">
-                          {p.distance.toFixed(1)}km
+                          {p.distance.toFixed(1)} km
                         </span>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-500">
                       Team: {p.teamId || "Unassigned"}
                     </div>
                   </button>
@@ -512,9 +323,9 @@ const UserMap = ({ className = "", showSidebar = true }) => {
                   No porters nearby
                 </p>
                 <p className="text-xs text-gray-500">
-                  {userPos
-                    ? `Try increasing the search radius`
-                    : "Waiting for location..."}
+                  {socketConnected
+                    ? "Try increasing the search radius"
+                    : "Connecting to live tracker…"}
                 </p>
               </div>
             )}
@@ -524,22 +335,23 @@ const UserMap = ({ className = "", showSidebar = true }) => {
 
       {/* Map Container */}
       <div className="relative overflow-hidden border border-gray-200 shadow-sm h-full min-h-[400px]">
-        {/* Map Expansion Toggle */}
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            size="icon"
-            variant="secondary"
-            onClick={() => setIsMapExpanded(!isMapExpanded)}
-            className="shadow-lg bg-white hover:bg-gray-100"
-            title={isMapExpanded ? "Show sidebar" : "Expand map"}
-          >
-            {isMapExpanded ? (
-              <Minimize2 className="w-4 h-4" />
-            ) : (
-              <Maximize2 className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
+        {showSidebar && (
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() => setIsMapExpanded(!isMapExpanded)}
+              className="shadow-lg bg-white hover:bg-gray-100"
+              title={isMapExpanded ? "Show sidebar" : "Expand map"}
+            >
+              {isMapExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+        )}
 
         <MapContainer
           center={userPos}
@@ -552,42 +364,61 @@ const UserMap = ({ className = "", showSidebar = true }) => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {userPos && (
-            <Marker position={userPos} icon={userIcon}>
+          {/* Map click handler (used in booking form) */}
+          {onMapClick && <MapEvents onMapClick={onMapClick} />}
+
+          {/* Pickup marker (green) */}
+          {pickupLocation?.lat && pickupLocation?.lng && (
+            <Marker
+              position={[pickupLocation.lat, pickupLocation.lng]}
+              icon={PICKUP_ICON}
+            >
               <Popup>
-                <div className="font-medium">Your Location</div>
-                <div className="text-sm text-gray-600">
-                  Lat: {userPos[0].toFixed(4)}
-                  <br />
-                  Lng: {userPos[1].toFixed(4)}
+                <div className="font-medium">📍 Pickup</div>
+                <div className="text-xs text-gray-600 mt-0.5">
+                  {pickupLocation.address || ""}
                 </div>
               </Popup>
             </Marker>
           )}
 
+          {/* Dropoff marker (red) */}
+          {dropoffLocation?.lat && dropoffLocation?.lng && (
+            <Marker
+              position={[dropoffLocation.lat, dropoffLocation.lng]}
+              icon={DROPOFF_ICON}
+            >
+              <Popup>
+                <div className="font-medium">🏁 Dropoff</div>
+                <div className="text-xs text-gray-600 mt-0.5">
+                  {dropoffLocation.address || ""}
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+          {/* Nearby porter markers (from live socket) */}
           {nearby.map((p) => (
             <Marker
               key={p.id}
               position={[p.lat, p.lng]}
-              icon={porterIcon}
-              eventHandlers={{
-                click: () => {
-                  handleClickPorter(p);
-                },
-              }}
+              icon={PORTER_ICON}
+              eventHandlers={{ click: () => handleClickPorter(p) }}
             >
               <Popup>
-                <div className="min-w-[200px]">
-                  <div className="font-bold text-gray-900 mb-1">{p.id}</div>
-                  <div className="text-sm text-gray-600 mb-2">
-                    Distance: {p.distance.toFixed(2)} km
+                <div className="min-w-[180px]">
+                  <div className="font-bold text-gray-900 mb-1 text-sm">
+                    {p.id}
                   </div>
-                  <div className="text-xs text-gray-500 mb-3">
+                  <div className="text-sm text-gray-600 mb-1">
+                    {p.distance.toFixed(2)} km away
+                  </div>
+                  <div className="text-xs text-gray-400 mb-3">
                     Team: {p.teamId || "Unassigned"}
                   </div>
                   <button
                     onClick={() => handleClickPorter(p)}
-                    className="w-full rounded-md lg bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition cursor-pointer"
+                    className="w-full rounded-md bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary/90 transition cursor-pointer"
                   >
                     Show Route
                   </button>
@@ -596,14 +427,26 @@ const UserMap = ({ className = "", showSidebar = true }) => {
             </Marker>
           ))}
 
+          {/* Live Override Porter Marker (from parent tracking) */}
+          {porterLocationOverride?.lat && porterLocationOverride?.lng && (
+            <Marker
+              position={[
+                porterLocationOverride.lat,
+                porterLocationOverride.lng,
+              ]}
+              icon={LIVE_PORTER_ICON}
+            >
+              <Popup>
+                <div className="font-medium text-violet-700">Live Porter</div>
+              </Popup>
+            </Marker>
+          )}
+
+          {/* Route polyline from user to selected porter */}
           <RouteLayer positions={routeCoords} />
-          <Recenter
-            pos={
-              selectedPorter
-                ? [selectedPorter.lat, selectedPorter.lng]
-                : userPos
-            }
-          />
+
+          {/* Auto-pan camera */}
+          <Recenter pos={recenterPos} />
         </MapContainer>
       </div>
     </div>

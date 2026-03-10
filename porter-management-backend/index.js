@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import app from "./app.js";
 import Porters from "./src/models/porter/Porters.js";
 import LocationLog from "./src/models/LocationLogs.js";
+import { setIO } from "./src/utils/socketInstance.js";
 dotenv.config({
   path: new URL("./.env", import.meta.url),
 });
@@ -19,12 +20,21 @@ const io = new Server(server, {
   },
 });
 
+// Make io accessible to controllers via singleton
+setIO(io);
+
 // In-memory store for porter locations
 let porterLocations = {};
 
 // Socket handlers
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
+
+  // Porter joins their own room so we can send targeted booking-request events
+  socket.on("join-porter-room", (porterId) => {
+    socket.join(`porter:${porterId}`);
+    console.log(`Porter ${porterId} joined room porter:${porterId}`);
+  });
 
   socket.on("porter-location", async (data) => {
     const { lat, lng, porterId } = data;
@@ -33,7 +43,7 @@ io.on("connection", (socket) => {
     try {
       // Get porter details to find teamId
       const porter = await Porters.findById(porterId);
-      
+
       if (!porter) {
         return;
       }
@@ -48,7 +58,7 @@ io.on("connection", (socket) => {
           },
           lastLocationUpdatedAt: new Date(),
         },
-        { new: true }
+        { new: true },
       );
 
       // Save location log to LocationLogs collection
@@ -65,15 +75,28 @@ io.on("connection", (socket) => {
         porterId,
         lat,
         lng,
+        teamId: porter.teamId || null,
         updatedAt: new Date(),
       };
 
-      // Broadcast to all connected clients
+      // Broadcast full snapshot to all connected clients
       io.emit("all-porter-locations", porterLocations);
+      // Also emit a targeted incremental update so clients can merge efficiently
+      io.emit("porter-location-update", {
+        porterId,
+        lat,
+        lng,
+        teamId: porter.teamId || null,
+        updatedAt: new Date(),
+      });
       console.log("✅ Location saved and broadcasted");
     } catch (error) {
       console.error("Error saving location:", error);
     }
+  });
+
+  socket.on("get-porter-locations", () => {
+    socket.emit("all-porter-locations", porterLocations);
   });
 
   socket.on("disconnect", () => {

@@ -1,20 +1,26 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { io } from "socket.io-client";
-
 import {
   Navigation,
   Package,
   Clock,
   Truck,
   Filter,
-  Star,
   CheckCircle,
-  XCircle,
   RefreshCw,
+  Loader2,
+  Bell,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
-
+import {
+  useGetPorterBookings,
+  useAcceptPorterBooking,
+  useRejectPorterBooking,
+} from "../../../apis/hooks/porterBookingsHooks";
+import socket from "../../../utils/socket";
+import { createSSEConnection } from "../../../utils/sse";
+import { useAuthStore } from "@/store/auth.store";
+import { AddressLine } from "../../../components/common/AddressLine";
 import {
   Card,
   CardContent,
@@ -33,7 +39,6 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
 import { Badge } from "../../../components/ui/badge";
-import { Avatar, AvatarFallback } from "../../../components/ui/avatar";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import {
   Select,
@@ -43,106 +48,51 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 
-// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-// const socket = io(SOCKET_URL);
-
-// Mock data for booking requests
-const mockBookingRequests = [
-  {
-    id: "REQ001",
-    userId: "USR245",
-    userName: "John Smith",
-    pickup: { lat: 27.7172, lng: 85.324, address: "New Road, Kathmandu" },
-    drop: { lat: 27.69, lng: 85.342, address: "Kalimati, Kathmandu" },
-    weight: 15,
-    vehicleType: "BIKE",
-    distance: 2.5,
-    fare: 450,
-    status: "PENDING",
-    createdAt: "2024-01-15T10:30:00",
-    expiresIn: 300,
-    priority: "HIGH",
-    acceptedBy: null,
-  },
-  {
-    id: "REQ002",
-    userId: "USR312",
-    userName: "Sarah Johnson",
-    pickup: { lat: 27.71, lng: 85.31, address: "Thamel, Kathmandu" },
-    drop: { lat: 27.72, lng: 85.35, address: "Boudha, Kathmandu" },
-    weight: 8,
-    vehicleType: "BIKE",
-    distance: 4.2,
-    fare: 380,
-    status: "PENDING",
-    createdAt: "2024-01-15T10:32:00",
-    expiresIn: 240,
-    priority: "MEDIUM",
-    acceptedBy: null,
-  },
-  {
-    id: "REQ003",
-    userId: "USR489",
-    userName: "Robert Chen",
-    pickup: { lat: 27.6905, lng: 85.335, address: "Patan Durbar Square" },
-    drop: { lat: 27.7, lng: 85.32, address: "Kupondole, Kathmandu" },
-    weight: 25,
-    vehicleType: "CAR",
-    distance: 3.1,
-    fare: 620,
-    status: "ACCEPTED",
-    createdAt: "2024-01-15T10:25:00",
-    expiresIn: 180,
-    priority: "LOW",
-    acceptedBy: "PORTER002",
-  },
-  {
-    id: "REQ004",
-    userId: "USR567",
-    userName: "Maria Garcia",
-    pickup: { lat: 27.705, lng: 85.315, address: "Durbarmarg, Kathmandu" },
-    drop: { lat: 27.695, lng: 85.305, address: "Lazimpat, Kathmandu" },
-    weight: 5,
-    vehicleType: "BIKE",
-    distance: 1.8,
-    fare: 320,
-    status: "PENDING",
-    createdAt: "2024-01-15T10:35:00",
-    expiresIn: 280,
-    priority: "HIGH",
-    acceptedBy: null,
-  },
-];
-
-const priorityColors = {
-  HIGH: "bg-red-100 text-red-800 border-red-200",
-  MEDIUM: "bg-amber-100 text-amber-800 border-amber-200",
-  LOW: "bg-green-100 text-green-800 border-green-200",
-};
-
 export default function PorterDashboard() {
-  const { porter, isLoading } = usePorter();
-  const [bookingRequests, setBookingRequests] = useState(mockBookingRequests);
-  const [selectedRequest, setSelectedRequest] = useState(
-    mockBookingRequests[0],
-  );
-  const [newRequestsCount, setNewRequestsCount] = useState(0);
+  const { porter, isLoading: porterLoading } = usePorter();
+  const token = useAuthStore((s) => s.access_token);
+  const navigate = useNavigate();
+
+  // Live socket-pushed requests (merged on top of API data)
+  const [liveRequests, setLiveRequests] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("distance");
 
-  // WebSocket connection
   const intervalRef = useRef(null);
+  const sseRef = useRef(null);
+  const [porterLocation, setPorterLocation] = useState(null);
 
-  useEffect(() => {
-    if (porter?._id) {
-      startAutoLocation(porter._id);
-    }
+  // Real API data
+  const {
+    data: apiData,
+    isLoading: bookingsLoading,
+    refetch,
+  } = useGetPorterBookings();
 
-    return () => stopAutoLocation();
-  }, [porter?._id]);
+  const { mutateAsync: acceptBooking, isPending: accepting } =
+    useAcceptPorterBooking();
+  const { mutateAsync: rejectBooking, isPending: rejecting } =
+    useRejectPorterBooking();
 
-  const startAutoLocation = (id) => {
+  // Derive request list = pending requests from API + live socket requests merged
+  const apiRequests = apiData?.pendingRequests || [];
+
+  // Merge live socket requests with the API ones (avoid duplicates by bookingId)
+  const allRequests = [
+    ...liveRequests.filter(
+      (lr) => !apiRequests.some((ar) => ar.bookingId?._id === lr.bookingId),
+    ),
+    ...apiRequests,
+  ];
+
+  // ── Auto location for porter-location socket
+  const stopAutoLocation = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  const startAutoLocation = useCallback((id) => {
     if (!id) return;
+    stopAutoLocation();
     intervalRef.current = setInterval(() => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -150,80 +100,128 @@ export default function PorterDashboard() {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             setPorterLocation([lat, lng]);
-
-            console.log("📍 Sending location:", { porterId: id, lat, lng });
-            socket.emit("porter-location", {
-              porterId: id,
-              lat,
-              lng,
-            });
+            socket.emit("porter-location", { porterId: id, lat, lng });
           },
-          (err) => console.error("Error getting location:", err),
+          (err) => console.error("Location error:", err),
           { enableHighAccuracy: true },
         );
       }
-    }, 5000); // every 5 seconds
-  };
+    }, 5000);
+  }, []);
 
-  const stopAutoLocation = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-  };
+  useEffect(() => {
+    if (porter?._id) {
+      startAutoLocation(porter._id);
+      // Join porter's own room to receive targeted booking-request events
+      socket.emit("join-porter-room", porter._id);
+    }
+    return () => stopAutoLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [porter?._id, startAutoLocation]);
 
-  const handleAcceptRequest = (requestId) => {
-    console.log("Accepting request:", requestId);
-    const request = bookingRequests.find((req) => req.id === requestId);
-
-    if (request) {
-      // Optimistically update local state
-      setBookingRequests(
-        bookingRequests.map((req) =>
-          req.id === requestId
-            ? { ...req, acceptedBy: "PORTER001", status: "ACCEPTED" }
-            : req,
-        ),
-      );
-      // Navigate to details page
-      navigate("/dashboard/porters/accepted-booking", {
-        state: { booking: request },
+  // ── Listen for live booking requests via socket
+  useEffect(() => {
+    const onBookingRequest = (data) => {
+      setLiveRequests((prev) => {
+        const exists = prev.some(
+          (r) => r.bookingId === data.bookingId?.toString(),
+        );
+        if (exists) return prev;
+        return [{ ...data, _isLive: true }, ...prev];
       });
+      // Also refetch to sync with DB state
+      refetch();
+    };
+
+    socket.on("booking-request", onBookingRequest);
+
+    // SSE: also receive new booking requests server-pushed
+    sseRef.current = createSSEConnection(
+      "/bookings/sse/porter",
+      {
+        "new-booking-request": (data) => {
+          setLiveRequests((prev) => {
+            const exists = prev.some(
+              (r) => r.bookingId === String(data.bookingId),
+            );
+            if (exists) return prev;
+            return [{ ...data, _isLive: true, _sse: true }, ...prev];
+          });
+          refetch();
+        },
+      },
+      token,
+    );
+
+    return () => {
+      socket.off("booking-request", onBookingRequest);
+      sseRef.current?.close();
+    };
+  }, [refetch, token]);
+
+  // ── Accept handler
+  const handleAcceptRequest = async (bookingId, requestData) => {
+    try {
+      const res = await acceptBooking(bookingId);
+      const booking = res?.data?.booking || res?.booking;
+      navigate("/dashboard/porters/accepted-booking", {
+        state: {
+          booking: booking || {
+            _id: bookingId,
+            pickup: requestData.pickup,
+            drop: requestData.drop,
+            userName: requestData.userName || "Customer",
+            weightKg: requestData.weightKg,
+            vehicleType: requestData.vehicleType || "N/A",
+            distanceKm: requestData.distanceKm,
+            fare: requestData.fare || 0,
+          },
+        },
+      });
+    } catch (err) {
+      // error toasted by hook
     }
   };
 
-  const handleRejectRequest = (requestId) => {
-    console.log("Rejecting request:", requestId);
-    setBookingRequests(bookingRequests.filter((req) => req.id !== requestId));
+  // ── Reject handler
+  const handleRejectRequest = async (bookingId) => {
+    try {
+      await rejectBooking(bookingId);
+      setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
+    } catch (err) {
+      // handled by hook
+    }
   };
 
-  const filteredAndSortedRequests = bookingRequests
+  const filteredRequests = allRequests
     .filter((req) => {
       if (filter === "ALL") return true;
-      if (filter === "PENDING")
-        return req.status === "PENDING" && !req.acceptedBy;
-      if (filter === "ACCEPTED") return req.status === "ACCEPTED";
-      if (filter === "BIKE") return req.vehicleType === "BIKE";
-      if (filter === "CAR") return req.vehicleType === "CAR";
+      if (filter === "PENDING") return req.status === "PENDING";
+      if (filter === "BIKE")
+        return (
+          req.bookingId?.vehicleType === "BIKE" || req.vehicleType === "BIKE"
+        );
+      if (filter === "CAR")
+        return (
+          req.bookingId?.vehicleType === "CAR" || req.vehicleType === "CAR"
+        );
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === "distance") return a.distance - b.distance;
-      if (sortBy === "fare") return b.fare - a.fare;
-      if (sortBy === "priority") {
-        const priorityOrder = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      }
+      const distA = a.distanceKm ?? a.bookingId?.distanceKm ?? 999;
+      const distB = b.distanceKm ?? b.bookingId?.distanceKm ?? 999;
+      if (sortBy === "distance") return distA - distB;
       return 0;
     });
 
-  const pendingRequests = bookingRequests.filter(
-    (req) => req.status === "PENDING" && !req.acceptedBy,
-  ).length;
+  const pendingCount = filteredRequests.length;
 
-  if (isLoading) {
+  if (porterLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Porter Dashboard...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-gray-600">Loading Porter Dashboard…</p>
         </div>
       </div>
     );
@@ -231,56 +229,62 @@ export default function PorterDashboard() {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Right Column - Booking Requests */}
       <Card className="h-full">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center space-x-2">
               <Clock className="h-5 w-5" />
               <span>Booking Requests</span>
-              {newRequestsCount > 0 && (
+              {pendingCount > 0 && (
                 <Badge variant="destructive" className="animate-pulse">
-                  {newRequestsCount} new
+                  {pendingCount} pending
                 </Badge>
               )}
             </CardTitle>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setFilter("ALL")}>
-                  All Requests
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter("PENDING")}>
-                  Pending Only
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter("ACCEPTED")}>
-                  Accepted
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Vehicle Type</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setFilter("BIKE")}>
-                  Bike
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter("CAR")}>
-                  Car
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter("TRUCK")}>
-                  Truck
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => refetch()}
+                title="Refresh"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${bookingsLoading ? "animate-spin" : ""}`}
+                />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setFilter("ALL")}>
+                    All Requests
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilter("PENDING")}>
+                    Pending Only
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Vehicle Type</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setFilter("BIKE")}>
+                    Bike
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilter("CAR")}>
+                    Car
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           <CardDescription>
-            {pendingRequests} requests waiting • Updated just now
+            {pendingCount} requests waiting • Auto-refreshes every 15s
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -290,154 +294,157 @@ export default function PorterDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="distance">Nearest First</SelectItem>
-                  <SelectItem value="fare">Highest Fare</SelectItem>
-                  <SelectItem value="priority">Priority</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="ghost" size="icon">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
             </div>
 
             <ScrollArea className="h-[500px] pr-4">
-              <div className="space-y-4">
-                {filteredAndSortedRequests.map((request) => (
-                  <Card
-                    key={request.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedRequest?.id === request.id
-                        ? "border-primary ring-2 ring-primary/20"
-                        : ""
-                    } ${request.status === "ACCEPTED" ? "opacity-70" : ""}`}
-                    onClick={() => setSelectedRequest(request)}
-                  >
-                    <CardHeader className="p-4 pb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline">#{request.id}</Badge>
-                          <Badge className={priorityColors[request.priority]}>
-                            {request.priority}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center text-amber-600 text-sm">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {Math.floor(request.expiresIn / 60)}:
-                          {String(request.expiresIn % 60).padStart(2, "0")}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-2">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback>
-                                {request.userName.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-sm">
-                                {request.userName}
-                              </p>
-                              <div className="flex items-center">
-                                <Star className="h-3 w-3 text-amber-500 mr-1" />
-                                <span className="text-xs text-gray-500">
-                                  4.8
-                                </span>
+              {bookingsLoading && allRequests.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <p className="text-gray-500">Loading requests…</p>
+                </div>
+              ) : filteredRequests.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                    <Bell className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    No pending requests
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    New booking requests will appear here in real time.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredRequests.map((request) => {
+                    // Support both API (BookingPorterRequest populated) and live socket formats
+                    const isLive = request._isLive;
+                    const bookingId = isLive
+                      ? request.bookingId
+                      : request.bookingId?._id || request._id;
+                    const pickup = isLive
+                      ? request.pickup
+                      : request.bookingId?.pickup;
+                    const drop = isLive
+                      ? request.drop
+                      : request.bookingId?.drop;
+                    const weightKg = isLive
+                      ? request.weightKg
+                      : request.bookingId?.weightKg;
+                    const vehicleType = isLive
+                      ? request.vehicleType
+                      : request.bookingId?.vehicleType;
+                    const distanceKm = request.distanceKm;
+
+                    return (
+                      <Card
+                        key={bookingId || request._id}
+                        className={`transition-all hover:shadow-md border-l-4 ${
+                          isLive ? "border-l-primary" : "border-l-gray-200"
+                        }`}
+                      >
+                        <CardHeader className="p-4 pb-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              {isLive && (
+                                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                                  🔴 Live
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                #{String(bookingId).slice(-6).toUpperCase()}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-gray-500">
+                              <Navigation className="h-3 w-3" />
+                              <span>
+                                {distanceKm?.toFixed(1) || "?"} km away
+                              </span>
+                            </div>
+                          </div>
+                        </CardHeader>
+
+                        <CardContent className="p-4 pt-2">
+                          <div className="space-y-3">
+                            {/* Pickup / Drop — uses shared AddressLine */}
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Pickup
+                                </p>
+                                <AddressLine location={pickup} dot="green" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Drop
+                                </p>
+                                <AddressLine location={drop} dot="red" />
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-primary">
-                              Rs. {request.fare}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Estimated fare
-                            </p>
-                          </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <div className="flex items-start space-x-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
-                            <div>
-                              <p className="text-xs text-gray-500">Pickup</p>
-                              <p className="text-sm font-medium">
-                                {request.pickup.address}
-                              </p>
+                            {/* Details row */}
+                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <Package className="h-4 w-4 text-gray-400" />
+                                <span>{weightKg} kg</span>
+                              </div>
+                              {vehicleType && (
+                                <div className="flex items-center gap-1">
+                                  <Truck className="h-4 w-4 text-gray-400" />
+                                  <span>{vehicleType}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-start space-x-2">
-                            <div className="w-2 h-2 bg-primary rounded-full mt-1.5"></div>
-                            <div>
-                              <p className="text-xs text-gray-500">Drop</p>
-                              <p className="text-sm font-medium">
-                                {request.drop.address}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                        </CardContent>
 
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-1">
-                              <Package className="h-4 w-4 text-gray-400" />
-                              <span>{request.weight} kg</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Truck className="h-4 w-4 text-gray-400" />
-                              <span>{request.vehicleType}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Navigation className="h-4 w-4 text-gray-400" />
-                              <span>{request.distance} km</span>
-                            </div>
+                        <CardFooter className="p-4 pt-0">
+                          <div className="flex space-x-2 w-full justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-28"
+                              disabled={rejecting || accepting}
+                              onClick={() => handleRejectRequest(bookingId)}
+                            >
+                              {rejecting ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                "Decline"
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="w-28 bg-green-600 hover:bg-green-700"
+                              disabled={accepting || rejecting}
+                              onClick={() =>
+                                handleAcceptRequest(bookingId, {
+                                  pickup,
+                                  drop,
+                                  weightKg,
+                                  vehicleType,
+                                  distanceKm,
+                                })
+                              }
+                            >
+                              {accepting ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle className="mr-1 h-3 w-3" />
+                                  Accept
+                                </>
+                              )}
+                            </Button>
                           </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0">
-                      {request.status === "PENDING" && !request.acceptedBy ? (
-                        <div className="flex space-x-2 w-full justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-32 focus-visible:ring-0 focus-visible:ring-offset-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRejectRequest(request.id);
-                            }}
-                          >
-                            Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="w-32 bg-green-600 hover:bg-green-700 focus-visible:ring-0 focus-visible:ring-offset-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAcceptRequest(request.id);
-                            }}
-                          >
-                            Accept
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="w-full">
-                          <Badge
-                            variant="secondary"
-                            className="w-full justify-center"
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            {request.acceptedBy === "PORTER001"
-                              ? "Accepted by you"
-                              : "Accepted by another porter"}
-                          </Badge>
-                        </div>
-                      )}
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </ScrollArea>
           </div>
         </CardContent>

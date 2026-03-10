@@ -14,7 +14,7 @@ import teamRouter from "./src/routes/team/teamRoutes.js";
 import adminRouter from "./src/routes/admin/adminApproved.js";
 import bookingRouter from "./src/routes/bookingRoutes.js";
 import FareCalculatorRouter from "./src/routes/fare-calculator/farecalculator.routes.js";
-
+import sseRouter from "./src/routes/sseRoutes.js";
 dotenv.config({
   path: new URL("./.env", import.meta.url),
 });
@@ -47,6 +47,7 @@ app.use("/core-api/ask-questions", aiRouter);
 app.use("/core-api/team-porters", teamRouter);
 app.use("/core-api/admin", adminRouter);
 app.use("/core-api/bookings", bookingRouter);
+app.use("/core-api/bookings/sse", sseRouter);
 app.use("/core-api/fare-calculator", FareCalculatorRouter);
 
 app.get("/", (req, res) => {

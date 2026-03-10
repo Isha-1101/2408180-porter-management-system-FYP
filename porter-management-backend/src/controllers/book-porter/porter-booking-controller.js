@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import PorterBooking from "../../models/PorterBooking.js";
 import Porters from "../../models/porter/Porters.js";
 import BookintgPorterRequest from "../../models/BookintgPorterRequest.js";
+import sseService from "../../utils/sse-service.js";
 
 /**
  * Search porters as team and individual
@@ -589,6 +590,14 @@ export const cancelBooking = async (req, res) => {
           "BOOKING_CANCELLED",
           "The booking has been cancelled by the user",
         ).catch((err) => console.error("Notification error:", err));
+
+        // Also explicitly send SSE to the porter's connection
+        sseService.sendToPorter(booking.assignedPorterId, "booking-cancelled", {
+          bookingId: booking._id,
+          status: "CANCELLED",
+          bookingType: booking.bookingType,
+          message: "The booking has been cancelled by the user",
+        });
       }
     }
 

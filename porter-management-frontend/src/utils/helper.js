@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useMap } from "react-leaflet";
+// Note: Recenter map component has been moved to src/components/Map/Recenter.jsx
 
 export const convertToBase64 = async (fileUrl) => {
   const fullUrl = `https://res.cloudinary.com/${
@@ -22,14 +21,6 @@ export const getCloudinaryUrl = (fileUrl) => {
     import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
   }/image${fileUrl}`;
 };
-
-export function Recenter({ pos }) {
-  const map = useMap();
-  useEffect(() => {
-    if (pos) map.setView(pos, 14);
-  }, [pos, map]);
-  return null;
-}
 
 export const traverseInPorter = (porter) => {
   let data = {};

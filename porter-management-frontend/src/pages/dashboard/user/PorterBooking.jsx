@@ -43,10 +43,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import FareEstimateBreakdown from "../../../components/common/FareEstimate";
+import LocationAutocomplete from "@/components/common/LocationAutocomplete";
 
 const PorterBooking = () => {
-  const [pickup, setPickup] = useState("");
-  const [dropoff, setDropoff] = useState("");
+  const [pickup, setPickup] = useState({ address: "", lat: null, lng: null });
+  const [dropoff, setDropoff] = useState({ address: "", lat: null, lng: null });
+  const [selectingMapFor, setSelectingMapFor] = useState(null); // "pickup" | "dropoff" | null
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      );
+      const data = await res.json();
+      return data.display_name;
+    } catch (error) {
+      console.error(error);
+      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  };
+
+  const handleSetCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const address = await reverseGeocode(lat, lng);
+          setPickup({ address, lat, lng });
+        },
+        (error) => {
+          console.error("Error getting location", error);
+        },
+      );
+    }
+  };
+
+  const handleMapClick = async (latlng) => {
+    if (!selectingMapFor) return;
+    const address = await reverseGeocode(latlng.lat, latlng.lng);
+    if (selectingMapFor === "pickup") {
+      setPickup({ address, lat: latlng.lat, lng: latlng.lng });
+    } else {
+      setDropoff({ address, lat: latlng.lat, lng: latlng.lng });
+    }
+    setSelectingMapFor(null);
+  };
   const [weight, setWeight] = useState("");
   const [teamSize, setTeamSize] = useState("");
   const [requirements, setRequirements] = useState("");
@@ -63,39 +105,6 @@ const PorterBooking = () => {
   const [purpose, setPurpose] = useState("");
   const [hasLift, setHasLift] = useState(false);
   const [numberOfTrips, setNumberOfTrips] = useState("");
-
-  const fareEstimate = useMemo(() => {
-    const w = parseFloat(weight) || 0;
-    const floors = parseInt(numberOfFloors) || 0;
-    const trips = parseInt(numberOfTrips) || 0;
-    const extraKg = Math.max(0, w - 5);
-
-    const floorCharge = hasLift ? 0 : floors * 5;
-    const weightTravelCharge = extraKg * 2;
-    const weightFloorCarryCharge = hasLift ? 0 : extraKg * 3;
-    const vehicleCharge = hasVehicle ? extraKg * 5 : 0;
-    const tripCharge = trips > 0 ? trips * 5 : 0;
-    const basicCost = 80;
-
-    const total =
-      floorCharge +
-      weightTravelCharge +
-      weightFloorCarryCharge +
-      vehicleCharge +
-      tripCharge +
-      basicCost;
-
-    return {
-      floorCharge,
-      weightTravelCharge,
-      weightFloorCarryCharge,
-      vehicleCharge,
-      tripCharge,
-      basicCost,
-      total,
-      hasAnyInput: w > 0 || floors > 0 || trips > 0,
-    };
-  }, [weight, numberOfFloors, numberOfTrips, hasVehicle, hasLift]);
 
   //mutation function
   const {
@@ -115,12 +124,14 @@ const PorterBooking = () => {
       const res = await searchNearByPorter({
         bookingType: porterType,
         pickup: {
-          lat: pickup.lat || 27.66149059909361,
-          lng: pickup.lng || 85.40445148786628,
+          lat: pickup.lat,
+          lng: pickup.lng,
+          address: pickup.address || "",
         },
         dropoff: {
-          lat: dropoff.lat || 27.6614906,
-          lng: dropoff.lng || 85.40445148786628,
+          lat: dropoff.lat,
+          lng: dropoff.lng,
+          address: dropoff.address || "",
         },
         weightKg: weight,
         teamSize: porterType === "team" ? teamSize : null,
@@ -198,8 +209,27 @@ const PorterBooking = () => {
     <PageLayout className="">
       <div className="flex flex-col gap-1">
         {/* Map Section - Full Width */}
-        <div className="w-full h-[400px] md:h-[350px] not-only:overflow-hidden shadow-sm">
-          <UserMap showSidebar={false} />
+        <div className="relative w-full h-[400px] md:h-[350px] not-only:overflow-hidden shadow-sm">
+          {selectingMapFor && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-1000 bg-white px-4 py-2 rounded-full shadow-md font-medium text-sm text-primary flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Click on the map to set{" "}
+              {selectingMapFor === "pickup" ? "Pickup" : "Dropoff"} location
+              <button
+                onClick={() => setSelectingMapFor(null)}
+                className="ml-2 text-gray-400 hover:text-gray-600"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+          <UserMap
+            showSidebar={false}
+            onMapClick={handleMapClick}
+            pickupLocation={pickup}
+            dropoffLocation={dropoff}
+            className={selectingMapFor ? "cursor-crosshair" : ""}
+          />
         </div>
 
         {/* Search & Filter Section */}
@@ -245,24 +275,42 @@ const PorterBooking = () => {
                       From
                     </Label>
                     <div className="relative">
-                      <Input
+                      <LocationAutocomplete
                         id="from-location"
-                        type="text"
                         placeholder="Pickup location"
                         value={pickup}
-                        onChange={(e) => setPickup(e.target.value)}
-                        className="pl-9"
+                        onChange={(newVal) => setPickup(newVal)}
+                        icon={MapPin}
+                        className="pl-9 pr-16"
+                        inputRightButtons={
+                          <>
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectingMapFor(
+                                    selectingMapFor === "pickup"
+                                      ? null
+                                      : "pickup",
+                                  )
+                                }
+                                className={`p-1.5 rounded-full transition-colors ${selectingMapFor === "pickup" ? "bg-primary text-white" : "hover:bg-gray-100 text-gray-500"}`}
+                                title="Select from map"
+                              >
+                                <MapPin className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleSetCurrentLocation}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                              title="Use current location"
+                            >
+                              <Crosshair className="w-4 h-4" />
+                            </button>
+                          </>
+                        }
                       />
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <MapPin className="w-4 h-4" />
-                      </div>
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
-                        title="Use current location"
-                      >
-                        <Crosshair className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
 
@@ -276,17 +324,30 @@ const PorterBooking = () => {
                       To
                     </Label>
                     <div className="relative">
-                      <Input
+                      <LocationAutocomplete
                         id="to-location"
-                        type="text"
                         placeholder="Destination"
                         value={dropoff}
-                        onChange={(e) => setDropoff(e.target.value)}
-                        className="pl-9"
+                        onChange={(newVal) => setDropoff(newVal)}
+                        icon={Navigation}
+                        className="pl-9 pr-10"
+                        inputRightButtons={
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectingMapFor(
+                                selectingMapFor === "dropoff"
+                                  ? null
+                                  : "dropoff",
+                              )
+                            }
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${selectingMapFor === "dropoff" ? "bg-primary text-white" : "hover:bg-gray-100 text-gray-500"}`}
+                            title="Select from map"
+                          >
+                            <MapPin className="w-4 h-4" />
+                          </button>
+                        }
                       />
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                        <Navigation className="w-4 h-4" />
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -621,7 +682,7 @@ const PorterBooking = () => {
                 </div>
 
                 {/* ── Fare Estimate Breakdown ── */}
-                {fareEstimate.hasAnyInput && (
+                {hasSearched && (
                   <FareEstimateBreakdown
                     numberOfFloors={numberOfFloors}
                     hasLift={hasLift}

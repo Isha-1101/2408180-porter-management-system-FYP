@@ -45,11 +45,14 @@ import PorterRegisterGuard from "../guards/PorterRegisterGuard";
 import PorterPendingGuard from "../guards/PorterPendingGuard";
 import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
 import AcceptedBookingDetails from "../pages/dashboard/porter/AcceptedBookingDetails";
+import PorterProfile from "../pages/dashboard/porter/PorterProfile";
 import TeamCreation from "../pages/dashboard/team/TeamCreation";
 import PorterBooking from "../pages/dashboard/user/PorterBooking";
 import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
+import UserProfile from "../pages/dashboard/user/UserProfile";
 import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
+import BookingTracking from "../pages/dashboard/user/BookingTracking";
 import Payment from "../pages/dashboard/user/Payment";
 import BookingSuccess from "../pages/dashboard/user/BookingSuccess";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
@@ -78,10 +81,12 @@ const MainRoute = () => {
             <Route index element={<DashboardHome />} />
             <Route path="orders" element={<Orders />} />
             <Route path="booking" element={<PorterBooking />} />
+            <Route path="profile" element={<UserProfile />} />
             <Route
               path="booking/confirmation"
               element={<BookingConfirmation />}
             />
+            <Route path="booking/tracking" element={<BookingTracking />} />
             <Route path="booking/payment" element={<Payment />} />
             <Route path="booking/success" element={<BookingSuccess />} />
             <Route path="settings" element={<Settings />} />
@@ -119,6 +124,7 @@ const MainRoute = () => {
                   element={<AcceptedBookingDetails />}
                 />
                 <Route path="team" element={<TeamCreation />} />
+                <Route path="profile" element={<PorterProfile />} />
                 {/* </Route> */}
               </Route>
             </Route>
