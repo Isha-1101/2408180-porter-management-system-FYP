@@ -10,9 +10,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../../../components/ui/sidebar";
-import navItems from "./component/nav-items";
+import { useAuthStore } from "../../../store/auth.store";
+import getNavItems from "./component/nav-items";
 
 const AppSidebar = () => {
+  const user = useAuthStore((state) => state.user);
+  const role = user?.role;
+  const navItems = getNavItems(role);
+
   const isActive = (item) => {
     return item.to === window.location.pathname;
   };

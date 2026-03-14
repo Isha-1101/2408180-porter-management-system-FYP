@@ -58,6 +58,12 @@ import BookingSuccess from "../pages/dashboard/user/BookingSuccess";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
 import DashboardLayout from "../pages/dashboard/layout";
 
+// Admin pages
+import AdminDashboardOverview from "../pages/dashboard/admin/AdminDashboardOverview";
+import UserManagement from "../pages/dashboard/admin/UserManagement";
+import PorterRegistrations from "../pages/dashboard/admin/PorterRegistrations";
+import PorterManagement from "../pages/dashboard/admin/PorterManagement";
+
 // Import pages that should NOT use Layout
 
 const ScrollToTop = () => {
@@ -127,6 +133,14 @@ const MainRoute = () => {
                 <Route path="profile" element={<PorterProfile />} />
                 {/* </Route> */}
               </Route>
+            </Route>
+
+            {/* Admin routes */}
+            <Route path="admin">
+              <Route index element={<AdminDashboardOverview />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="registrations" element={<PorterRegistrations />} />
+              <Route path="porters" element={<PorterManagement />} />
             </Route>
           </Route>
         </Route>

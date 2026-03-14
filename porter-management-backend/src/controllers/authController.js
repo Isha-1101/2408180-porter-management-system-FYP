@@ -1,5 +1,8 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
+import Porters from "../models/porter/Porters.js";
+import PorterRegistration from "../models/porter/porter-registration.js";
+import PorterBooking from "../models/PorterBooking.js";
 import { generateToken } from "../utils/generateToken.js";
 export const register = async (req, res) => {
   if (
@@ -323,5 +326,32 @@ export const getUserById = async (req, res) => {
       success: false,
       message: "An error occurred while fetching the user.",
     });
+  }
+};
+
+export const getAdminStats = async (req, res) => {
+  try {
+    const [totalUsers, totalPorters, pendingRegistrations, activeBookings] =
+      await Promise.all([
+        User.countDocuments({ isDeleted: false }),
+        Porters.countDocuments({ status: "active" }),
+        PorterRegistration.countDocuments({ status: "submitted" }),
+        PorterBooking.countDocuments({
+          status: { $in: ["CONFIRMED", "IN_PROGRESS", "ASSIGNED"] },
+        }),
+      ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        totalPorters,
+        pendingRegistrations,
+        activeBookings,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching admin stats:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
