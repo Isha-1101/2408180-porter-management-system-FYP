@@ -21,12 +21,12 @@ export const getAllPorterRegistrations = (params) => {
 };
 
 export const approveRegistration = (registrationId) => {
-  return axiosInstance.post(`/porter-registrations/${registrationId}/approve`);
+  return axiosInstance.post(`/porter-registration/${registrationId}/approve`);
 };
 
 export const rejectRegistration = (registrationId, data) => {
   return axiosInstance.post(
-    `/porter-registrations/${registrationId}/reject`,
+    `/porter-registration/${registrationId}/reject`,
     data,
   );
 };

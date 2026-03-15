@@ -18,7 +18,7 @@ export const porterService = {
       porterType = "",
     } = parameters;
     const response = axiosInstance.get(
-      `/porters?searchText=${searchText}&page=${page}&limit=${limit}&porterType=${porterType}`
+      `/porters?searchText=${searchText}&page=${page}&limit=${limit}&porterType=${porterType}`,
     );
     return response;
   },
@@ -27,7 +27,7 @@ export const porterService = {
     const response = axiosInstance.get(`/porters/${id}`);
     return response;
   },
-// this service is used to get porter by user
+  // this service is used to get porter by user
   getPorterByUser: async () => {
     const response = axiosInstance.get(`/porters/by-user`);
     return response;
@@ -40,7 +40,7 @@ export const porterService = {
         vehicleNumber: payload.vehicleNumber,
         vehicleCategory: payload.vehicleCategory,
         capacity: payload.capacity,
-      }
+      },
     );
     return response;
   },
@@ -59,13 +59,18 @@ export const porterService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response;
   },
 
   getSavedDocumentsOfPorter: async (id) => {
     const response = axiosInstance.get(`/porters/document/get/${id}`);
+    return response;
+  },
+
+  togglePorterStatus: async () => {
+    const response = axiosInstance.put(`/porters/status`);
     return response;
   },
 };

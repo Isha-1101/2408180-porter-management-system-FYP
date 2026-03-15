@@ -9,6 +9,7 @@ import {
   // SavePorterDocuments,
   // SaveVehicleDetails,
   getPorterDetailsByUserId,
+  togglePorterStatus,
 } from "../controllers/porterController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
@@ -67,7 +68,7 @@ PorterRouter.post(
   authenticate,
   authorizeRole("porter"),
   upload.single("porterPhoto"),
-  createPorter
+  createPorter,
 );
 
 /**
@@ -112,20 +113,25 @@ PorterRouter.post(
  */
 PorterRouter.get("/", authenticate, getAllPortersDetails);
 
-PorterRouter.get("/by-user", authenticate, authorizeRole("porter"), getPorterDetailsByUserId);
+PorterRouter.get(
+  "/by-user",
+  authenticate,
+  authorizeRole("porter"),
+  getPorterDetailsByUserId,
+);
 //get porter by userId
 PorterRouter.get(
   "/by-user",
   authenticate,
   authorizeRole("porter"),
-  getPorterByUserId
+  getPorterByUserId,
 );
 //get porter by id
 PorterRouter.get(
   "by-id/:id",
   authenticate,
   authorizeRole("porter"),
-  getPorterDetailsById
+  getPorterDetailsById,
 );
 
 // ##### PORTER BOOKINGS ####
@@ -135,7 +141,13 @@ PorterRouter.post(
   authorizeRole("user"),
   createBookingAndNotifyPorters,
 );
-  
+
+PorterRouter.put(
+  "/status",
+  authenticate,
+  authorizeRole("porter"),
+  togglePorterStatus,
+);
 
 // /**
 //  * @swagger

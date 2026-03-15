@@ -20,6 +20,8 @@ import "./sidebar.css";
 import Logo from "@components/common/Logo";
 import { useAuthStore } from "@/store/auth.store";
 import useSSENotifications from "@/hooks/useSSENotifications";
+import { useGetPorterByUser, useTogglePorterStatus } from "@/apis/hooks/portersHooks";
+import { Switch } from "@/components/ui/switch";
 
 const NOTIF_ICONS = {
   "booking-confirmed": <CheckCircle2 className="w-4 h-4 text-green-500" />,
@@ -42,6 +44,9 @@ const DashboardLayout = () => {
   const { notifications, unseenCount, markSeen, clearNotification } =
     useSSENotifications();
 
+  const { data: porterData, refetch: refetchPorter } = useGetPorterByUser();
+  const { mutate: toggleStatus, isPending: isToggling } = useTogglePorterStatus();
+
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
 
@@ -59,6 +64,14 @@ const DashboardLayout = () => {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleToggleStatus = () => {
+    toggleStatus(undefined, {
+      onSuccess: () => {
+        refetchPorter();
+      }
+    });
   };
 
   const handleBellClick = () => {
@@ -176,9 +189,23 @@ const DashboardLayout = () => {
                     <div className="text-sm font-medium text-gray-900 capitalize">
                       {user?.name || "User"}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {user?.role || "User"}
-                    </div>
+                    {user?.role === "porter" ? (
+                      <div className="flex items-center justify-end gap-2 mt-1">
+                        <span className={`text-[10px] font-semibold tracking-wide uppercase ${porterData?.data?.porter?.currentStatus === "online" ? "text-green-600" : "text-gray-500"}`}>
+                          {porterData?.data?.porter?.currentStatus === "online" ? "Online" : "Offline"}
+                        </span>
+                        <Switch
+                          checked={porterData?.data?.porter?.currentStatus === "online"}
+                          onCheckedChange={handleToggleStatus}
+                          disabled={isToggling}
+                          size="sm"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500">
+                        {user?.role || "User"}
+                      </div>
+                    )}
                   </div>
 
                   <div className="relative group">

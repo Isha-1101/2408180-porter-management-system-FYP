@@ -490,3 +490,33 @@ export const getPorterAccountsById = async (req, res) => {
 //     });
 //   }
 // };
+
+export const togglePorterStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const porter = await Porters.findOne({ userId });
+
+    if (!porter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Porter not found." });
+    }
+
+    // Toggle currentStatus between online and offline
+    const newStatus = porter.currentStatus === "online" ? "offline" : "online";
+    porter.currentStatus = newStatus;
+    await porter.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Porter status updated to ${newStatus}`,
+      currentStatus: newStatus,
+    });
+  } catch (error) {
+    console.error("Error toggling porter status:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating the porter status.",
+    });
+  }
+};

@@ -72,3 +72,12 @@ export const useGetDocuments = () => {
     queryFn: () => porterService.getSavedDocumentsOfPorter(),
   });
 };
+
+export const useTogglePorterStatus = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await porterService.togglePorterStatus();
+      return response;
+    },
+  });
+};
