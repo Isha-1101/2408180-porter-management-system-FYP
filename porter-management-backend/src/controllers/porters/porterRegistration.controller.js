@@ -8,34 +8,6 @@ import { uploadToCloudinary } from "../uploadToCloudinary.js";
 import porterTeam from "../../models/porter/porterTeam.js";
 import User from "../../models/User.js";
 import registeredAsPorterMailController from "../../utils/nodeMailer/controller/registerdAsPorterController.js";
-// export const startRegistration = async (req, res) => {
-//   try {
-//     const registrationId = `DKN-${Date.now()}`;
-
-//     const registration = await PorterRegistration.findOneAndUpdate(
-//       { userId: req.user.id },
-//       {
-//         $setOnInsert: {
-//           registrationId,
-//           userId: req.user.id,
-//           status: "draft",
-//         },
-//       },
-//       { upsert: true, new: true },
-//     );
-
-//     res.status(200).json({
-//       success: true,
-//       registrationId: registration.registrationId,
-//     });
-//   } catch (error) {
-//     console.error("Error starting registration:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to start registration",
-//     });
-//   }
-// };
 
 export const startRegistration = async (req, res) => {
   try {

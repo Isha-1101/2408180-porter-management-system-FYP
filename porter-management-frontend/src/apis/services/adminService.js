@@ -21,11 +21,14 @@ export const getAllPorterRegistrations = (params) => {
 };
 
 export const approveRegistration = (registrationId) => {
-  return axiosInstance.post(`/admin/approve-porter-registration/${registrationId}`);
+  return axiosInstance.post(`/porter-registrations/${registrationId}/approve`);
 };
 
 export const rejectRegistration = (registrationId, data) => {
-  return axiosInstance.post(`/admin/registrations/${registrationId}/reject`, data);
+  return axiosInstance.post(
+    `/porter-registrations/${registrationId}/reject`,
+    data,
+  );
 };
 
 export const getAllPorters = (params) => {

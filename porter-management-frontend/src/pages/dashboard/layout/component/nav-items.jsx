@@ -1,51 +1,84 @@
-import { MapPinned, Users, LayoutDashboard, UserCheck, ClipboardCheck, Truck } from "lucide-react";
+import {
+  MapPinned,
+  LayoutDashboard,
+  UserCheck,
+  ClipboardCheck,
+  Truck,
+  History,
+  Home,
+  Users,
+  UserCog,
+} from "lucide-react";
 
 const getNavItems = (role) => {
+  // Items for regular users (booking, orders)
   const userItems = [
     {
-      label: "Dashboard",
+      label: "Book a Porter",
       to: "/dashboard/booking",
       icon: <MapPinned className="w-5 h-5" />,
+      end: false,
     },
     {
-      label: "Porter Dashboard",
-      to: "/dashboard/porters",
-      icon: <Users className="w-5 h-5" />,
-    },
-    {
-      label: "Team Creation",
-      to: "/dashboard/porters/team",
-      icon: <Users className="w-5 h-5" />,
+      label: "My Orders",
+      to: "/dashboard/orders",
+      icon: <History className="w-5 h-5" />,
+      end: true,
     },
   ];
 
+  // Items for porters (their own dashboard)
+  const porterItems = [
+    {
+      label: "Dashboard",
+      to: "/dashboard/porters",
+      icon: <Home className="w-5 h-5" />,
+      end: true,
+    },
+    {
+      label: "My Profile",
+      to: "/dashboard/porters/profile",
+      icon: <UserCog className="w-5 h-5" />,
+      end: true,
+    },
+    {
+      label: "My Team",
+      to: "/dashboard/porters/team",
+      icon: <Users className="w-5 h-5" />,
+      end: true,
+    },
+  ];
+
+  // Items for admins only
   const adminItems = [
     {
-      label: "Admin Dashboard",
+      label: "Overview",
       to: "/dashboard/admin",
       icon: <LayoutDashboard className="w-5 h-5" />,
+      end: true,
     },
     {
       label: "User Management",
       to: "/dashboard/admin/users",
       icon: <UserCheck className="w-5 h-5" />,
+      end: true,
     },
     {
       label: "Porter Registrations",
       to: "/dashboard/admin/registrations",
       icon: <ClipboardCheck className="w-5 h-5" />,
+      end: true,
     },
     {
       label: "Porter Management",
       to: "/dashboard/admin/porters",
       icon: <Truck className="w-5 h-5" />,
+      end: true,
     },
   ];
 
-  if (role === "admin") {
-    return [...adminItems, ...userItems];
-  }
-
+  if (role === "admin") return adminItems;
+  if (role === "porter") return porterItems;
   return userItems;
 };
 

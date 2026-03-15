@@ -10,7 +10,6 @@ import { authenticate } from "../../middlewares/authMiddleware.js";
 import { authorizeRole } from "../../middlewares/roleMiddleware.js";
 const adminRouter = express.Router();
 
-// Porter Registration Approval (Team requested)
 adminRouter.post(
   "/approve-porter-registration/:id",
   authenticate,
@@ -18,7 +17,7 @@ adminRouter.post(
   approvePorterRegisterRequest,
 );
 
-// Porter Registrations (Self-registered)
+// Porter Registrations
 adminRouter.get(
   "/registrations",
   authenticate,

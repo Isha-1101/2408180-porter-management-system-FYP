@@ -263,9 +263,11 @@ const TeamCreation = () => {
                     </TableCell>
                     <TableCell className="captialize">{member.email}</TableCell>
                     <TableCell className="captialize">{member.phone}</TableCell>
-                    <TableCell className="captialize"><span className="bg-orange-500 pl-2 pr-2 p-1 rounded-xl text-primary-foreground ">
-                      {member.status}
-                      </span></TableCell>
+                    <TableCell className="captialize">
+                      <span className="bg-orange-500 pl-2 pr-2 p-1 rounded-xl text-primary-foreground ">
+                        {member.status}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"

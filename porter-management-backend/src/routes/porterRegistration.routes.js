@@ -27,7 +27,7 @@ porterRegistrationRouter.post(
 );
 
 /**
- * STEP 1: Basic Info + Photo
+ * STEP: Basic Info + Photo
  */
 porterRegistrationRouter.put(
   "/:registrationId/basic-info",
@@ -42,7 +42,7 @@ porterRegistrationRouter.put(
 );
 
 /**
- * STEP 2: Vehicle Info
+ * STEP: Vehicle Info
  */
 porterRegistrationRouter.put(
   "/:registrationId/vehicle",
@@ -52,7 +52,7 @@ porterRegistrationRouter.put(
 );
 
 /**
- * STEP 3: Documents (License)
+ * STEP: Documents (License)
  */
 porterRegistrationRouter.put(
   "/:registrationId/documents",
@@ -88,7 +88,6 @@ porterRegistrationRouter.post(
   submitRegistration,
 );
 
-//admin
 /**
  * Approve registration
  */

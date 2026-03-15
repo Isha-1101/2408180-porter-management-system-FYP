@@ -63,6 +63,7 @@ import AdminDashboardOverview from "../pages/dashboard/admin/AdminDashboardOverv
 import UserManagement from "../pages/dashboard/admin/UserManagement";
 import PorterRegistrations from "../pages/dashboard/admin/PorterRegistrations";
 import PorterManagement from "../pages/dashboard/admin/PorterManagement";
+import AdminGuard from "../guards/AdminGuard";
 
 // Import pages that should NOT use Layout
 
@@ -135,8 +136,8 @@ const MainRoute = () => {
               </Route>
             </Route>
 
-            {/* Admin routes */}
-            <Route path="admin">
+            {/* Admin routes - protected by AdminGuard */}
+            <Route path="admin" element={<AdminGuard />}>
               <Route index element={<AdminDashboardOverview />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="registrations" element={<PorterRegistrations />} />

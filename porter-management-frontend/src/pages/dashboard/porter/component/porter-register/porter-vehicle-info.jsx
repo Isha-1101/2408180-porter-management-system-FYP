@@ -12,10 +12,10 @@ import {
 
 const VehicleInfo = ({ data, onChange }) => {
   const vehicleCategories = [
-    { value: "bike", label: "Motorcycle" },
-    { value: "truck", label: "Pickup Truck" },
+    { value: "bike", label: "Bike" },
+    { value: "truck", label: "Truck" },
     { value: "van", label: "Van" },
-    { value: "mini-truck", label: "Truck" },
+    { value: "mini-truck", label: "Mini Truck" },
   ];
 
   const handleHasVehicleChange = (value) => {

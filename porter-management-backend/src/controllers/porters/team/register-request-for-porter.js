@@ -1,4 +1,3 @@
-// team will request register to the admin
 /**
  * @access team
  * @accept application/json
@@ -18,19 +17,8 @@ import registerApproveMailController from "../../../utils/nodeMailer/controller/
  * @returns {Object} - The response object with the fetched porter details
  * @throws {Error} - If an error occurred while fetching the porter
  * request auth for porter that are registered by team
- * @example
- * // Request body
- * {
- *   "userName": "Ram Bahadur",
- *   "email": "ram@example.com",
- *   "phone": "9800000000"
- * }
- * @example
- * // Response
- * {
- *   "message": "Request submitted successfully and is awaiting admin approval"
- * }
  */
+
 export const registerRequestForPorter = async (req, res) => {
   const { userName, email, phone } = req.body;
   try {
@@ -61,7 +49,6 @@ export const registerRequestForPorter = async (req, res) => {
 };
 
 /**
- *
  * @param {*} req
  * @param {*} res
  * @returns all porter that are request by the team owner
@@ -101,7 +88,7 @@ export const approvePorterRegisterRequest = async (req, res) => {
     }
 
     const { email, phone } = request;
-    const password = Math.random().toString(36).slice(-8); // Generate a random 8-character password
+    const password = Math.random().toString(36).slice(-8);
     const user = await User.create({
       email,
       phone,
