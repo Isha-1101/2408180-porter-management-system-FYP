@@ -20,7 +20,10 @@ import "./sidebar.css";
 import Logo from "@components/common/Logo";
 import { useAuthStore } from "@/store/auth.store";
 import useSSENotifications from "@/hooks/useSSENotifications";
-import { useGetPorterByUser, useTogglePorterStatus } from "@/apis/hooks/portersHooks";
+import {
+  useGetPorterByUser,
+  useTogglePorterStatus,
+} from "@/apis/hooks/portersHooks";
 import { Switch } from "@/components/ui/switch";
 
 const NOTIF_ICONS = {
@@ -44,8 +47,11 @@ const DashboardLayout = () => {
   const { notifications, unseenCount, markSeen, clearNotification } =
     useSSENotifications();
 
-  const { data: porterData, refetch: refetchPorter } = useGetPorterByUser();
-  const { mutate: toggleStatus, isPending: isToggling } = useTogglePorterStatus();
+  const { data: porterInfo, refetch: refetchPorter } = useGetPorterByUser();
+  const porterData = porterInfo?.data?.porter[0];
+
+  const { mutate: toggleStatus, isPending: isToggling } =
+    useTogglePorterStatus();
 
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
@@ -70,7 +76,7 @@ const DashboardLayout = () => {
     toggleStatus(undefined, {
       onSuccess: () => {
         refetchPorter();
-      }
+      },
     });
   };
 
@@ -191,11 +197,15 @@ const DashboardLayout = () => {
                     </div>
                     {user?.role === "porter" ? (
                       <div className="flex items-center justify-end gap-2 mt-1">
-                        <span className={`text-[10px] font-semibold tracking-wide uppercase ${porterData?.data?.porter?.currentStatus === "online" ? "text-green-600" : "text-gray-500"}`}>
-                          {porterData?.data?.porter?.currentStatus === "online" ? "Online" : "Offline"}
+                        <span
+                          className={`text-[10px] font-semibold tracking-wide uppercase ${porterData?.currentStatus === "online" ? "text-green-600" : "text-gray-500"}`}
+                        >
+                          {porterData?.currentStatus === "online"
+                            ? "Online"
+                            : "Offline"}
                         </span>
                         <Switch
-                          checked={porterData?.data?.porter?.currentStatus === "online"}
+                          checked={porterData?.currentStatus === "online"}
                           onCheckedChange={handleToggleStatus}
                           disabled={isToggling}
                           size="sm"

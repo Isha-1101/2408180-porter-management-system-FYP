@@ -14,7 +14,6 @@ const PorterSchema = new mongoose.Schema(
       ref: "PorterRegistration",
       unique: true,
     },
-
     porterType: {
       type: String,
       enum: ["individual", "team"],

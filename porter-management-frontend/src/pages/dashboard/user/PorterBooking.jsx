@@ -98,13 +98,13 @@ const PorterBooking = () => {
   const [porterType, setPorterType] = useState("individual"); // "individual" or "team"
   const [hasVehicle, setHasVehicle] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [calculatedPriceMultiplier, setCalculatedPriceMultiplier] = useState(1);
   const [porters, setPorters] = useState();
   const [numberOfFloors, setNumberOfFloors] = useState("");
   const [showFareBreakdown, setShowFareBreakdown] = useState(true);
   const [purpose, setPurpose] = useState("");
   const [hasLift, setHasLift] = useState(false);
   const [numberOfTrips, setNumberOfTrips] = useState("");
+  const [totalPrice, setTotalPrice] = useState("");
 
   //mutation function
   const {
@@ -147,47 +147,14 @@ const PorterBooking = () => {
         trip: numberOfTrips,
       });
       const actualPorter = traverseInPorter(res?.data?.data);
-      console.log("actualPorter", actualPorter);
       setPorters(actualPorter);
       setHasSearched(true);
     } catch (error) {
       console.log(error);
     }
   };
-  console.log(porters);
-  // const handleSearch = () => {
-  //   // Mock price calculation logic
-  //   // In a real app, this would use distance from the map/API
-  //   if (pickup && dropoff) {
-  //     setHasSearched(true);
-  //     // random multiplier between 1.1 and 1.5 to simulate "calculated price"
-  //     setCalculatedPriceMultiplier(1.1 + Math.random() * 0.4);
-  //   } else {
-  //     // Just show them anyway if fields are empty, or validation could go here
-  //     setHasSearched(true);
-  //     setCalculatedPriceMultiplier(1);
-  //   }
-  // };
 
   const handleBookPorter = async (porter) => {
-    // try {
-    //   const res = await createPorterBooking({
-    //     bookingType: porterType,
-    //     porterId: porter.id,
-    //     pickup,
-    //     dropoff,
-    //     weight,
-    //     teamSize: porterType === "team" ? teamSize : null,
-    //     requirements: porterType === "team" ? requirements : null,
-    //     numberOfVehicles: porterType === "team" ? numberOfVehicles : null,
-    //     bookingDate,
-    //     bookingTime,
-    //     vehicleType: hasVehicle ? vehicleType : null,
-    //   });
-    //   console.log(res?.data);
-    // } catch (error) {
-    //   console.log(error);
-    // }
     navigate("/dashboard/booking/confirmation", {
       state: {
         porterId: porter.id,
@@ -202,6 +169,12 @@ const PorterBooking = () => {
         vehicleType: hasVehicle ? vehicleType : null,
         numberOfVehicles:
           porterType === "team" && hasVehicle ? numberOfVehicles : null,
+        purpose: purpose,
+        numberOfFloors: numberOfFloors,
+        has_lift: hasLift,
+        hasVehicle: hasVehicle,
+        trip: numberOfTrips,
+        totalPrice,
       },
     });
   };
@@ -693,6 +666,7 @@ const PorterBooking = () => {
                     weight={weight}
                     showFareBreakdown={showFareBreakdown}
                     setShowFareBreakdown={setShowFareBreakdown}
+                    setTotalPrice={setTotalPrice}
                   />
                 )}
 

@@ -15,11 +15,11 @@ import { BackButton } from "../../../components/common/BackButton";
 import { AddressLine } from "../../../components/common/AddressLine";
 import { getCloudinaryUrl } from "../../../utils/helper";
 import { useCreateIndividualBooking } from "../../../apis/hooks/porterBookingsHooks";
-
+import dayjs from "dayjs";
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { porter, pickup, dropoff, weight } = location.state || {};
+  const { porter, pickup, dropoff, weight, totalPrice } = location.state || {};
 
   const { mutateAsync: confirmBooking, isPending } =
     useCreateIndividualBooking();
@@ -28,15 +28,6 @@ const BookingConfirmation = () => {
     navigate("/dashboard/booking");
     return null;
   }
-
-  // Pricing
-  const basePrice = porter.price || 200;
-  const weightVal = parseFloat(weight) || 0;
-  const extraWeight = Math.max(0, weightVal - 10);
-  const pricePerKg = 15;
-  const weightCharge = extraWeight * pricePerKg;
-  const serviceFee = 40;
-  const totalPrice = Math.round(basePrice + weightCharge + serviceFee);
 
   const handleConfirm = async () => {
     try {
@@ -51,11 +42,15 @@ const BookingConfirmation = () => {
           lng: dropoff?.lng,
           address: dropoff?.address || "",
         },
-        weightKg: weightVal,
+        weightKg: weight || 200,
         hasVehicle: porter.hasVehicle || false,
         vehicleType: porter.vehicleCategory || null,
         radiusKm: 5,
+        totalPrice,
+        bookingDate: dayjs().format("YYYY-MM-DD"),
+        bookingTime: dayjs().format("HH:mm:ss"),
       });
+
       navigate("/dashboard/booking/tracking", {
         state: { bookingId: res?.data?.bookingId, pickup, dropoff, porter },
       });
@@ -65,20 +60,13 @@ const BookingConfirmation = () => {
   };
 
   return (
-    <PageLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <BackButton />
-
-        <Card className="border-t-4 border-t-primary shadow-lg">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold">
-              Booking Summary
-            </CardTitle>
-            <CardDescription>
-              Review your shipment details and confirm
-            </CardDescription>
-          </CardHeader>
-
+    <PageLayout
+      className="max-w-full p-4"
+      title="Booking Confirmation"
+      description="Confirm your booking details"
+    >
+      <div className="flex flex-col  items-center">
+        <Card className="w-3xl mt-2">
           <CardContent className="space-y-6">
             {/* Route */}
             <div className="bg-muted/30 p-4 rounded-lg">
@@ -131,9 +119,7 @@ const BookingConfirmation = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-bold text-xl text-primary">
-                  NPR {basePrice}
-                </p>
+                <p className="font-bold text-xl text-primary">NPR 50</p>
                 <p className="text-xs text-muted-foreground">Base Rate</p>
               </div>
             </div>
@@ -144,7 +130,7 @@ const BookingConfirmation = () => {
                 <Weight className="w-5 h-5" />
                 <span className="font-medium">Total Weight</span>
               </div>
-              <span className="font-bold">{weightVal} kg</span>
+              <span className="font-bold">{weight || 0} kg</span>
             </div>
 
             <Separator />
@@ -170,15 +156,15 @@ const BookingConfirmation = () => {
 
             {/* Price */}
             <div className="space-y-2">
-              <h3 className="font-semibold flex items-center gap-2">
+              {/* <h3 className="font-semibold flex items-center gap-2">
                 <Calculator className="w-4 h-4" /> Payment Breakdown
-              </h3>
-              <div className="space-y-1 text-sm">
+              </h3> */}
+              {/* <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     Porter Base Fare
                   </span>
-                  <span>NPR {basePrice}</span>
+                  <span>NPR {50}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
@@ -194,7 +180,7 @@ const BookingConfirmation = () => {
                   <span className="text-muted-foreground">Platform Fee</span>
                   <span>NPR {serviceFee}</span>
                 </div>
-              </div>
+              </div> */}
               <Separator className="my-2" />
               <div className="flex justify-between items-center text-lg font-bold">
                 <span>Total Amount</span>

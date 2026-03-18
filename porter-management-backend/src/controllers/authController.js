@@ -4,6 +4,7 @@ import Porters from "../models/porter/Porters.js";
 import PorterRegistration from "../models/porter/porter-registration.js";
 import PorterBooking from "../models/PorterBooking.js";
 import { generateToken } from "../utils/generateToken.js";
+
 export const register = async (req, res) => {
   if (
     !req.body.name ||
@@ -20,7 +21,7 @@ export const register = async (req, res) => {
 
     const GRACE_PERIOD_DAYS = 30;
     const graceDate = new Date(
-      Date.now() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+      Date.now() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
     );
 
     // Check existing user (active or deleted)
@@ -119,8 +120,6 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid Credentials" });
     }
 
-   
-
     //check user is deleted or not
     if (user.isDeleted) {
       return res.status(403).json({
@@ -143,7 +142,7 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid Credentials" });
     }
 
-     if(user.isTempPassword){
+    if (user.isTempPassword) {
       return res.status(200).json({
         success: true,
         message: "Login successful, please change your temporary password",
@@ -151,7 +150,7 @@ export const login = async (req, res) => {
         access_token: generateToken(user),
       });
     }
-    
+
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -178,7 +177,7 @@ export const deleteUserAccounts = async (req, res) => {
     const deletedUser = await User.findByIdAndUpdate(
       userId,
       { isDeleted: isDeleted, deletedAt: currentDate },
-      { new: true }
+      { new: true },
     );
     if (!deletedUser) {
       return res
@@ -207,7 +206,7 @@ export const banneduser = async (req, res) => {
     const bannedUser = await User.findByIdAndUpdate(
       userId,
       { isBanned: userStatus, remarks: remarks },
-      { new: true }
+      { new: true },
     );
     if (!bannedUser) {
       return res
@@ -236,7 +235,7 @@ export const unbanneduser = async (req, res) => {
     const unbannedUser = await User.findByIdAndUpdate(
       userId,
       { isBanned: false, remarks: remarks },
-      { new: true }
+      { new: true },
     );
     if (!unbannedUser) {
       return res

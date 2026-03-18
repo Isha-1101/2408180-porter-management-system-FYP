@@ -52,7 +52,6 @@ const BookingTracking = () => {
   const { mutateAsync: cancelBooking, isPending: cancelling } =
     useCancelBooking();
 
-  // ── Socket: live porter location updates after confirmation
   useEffect(() => {
     if (!bookingId) {
       navigate("/dashboard/booking");
@@ -145,7 +144,7 @@ const BookingTracking = () => {
       : "Calculating…";
 
   return (
-    <PageLayout title="Booking Status">
+    <PageLayout title="Booking Status" description="Track your booking status">
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
         <div className="flex items-center gap-3">
           <BackButton to="/dashboard/booking" label="Back to Booking" />
@@ -157,7 +156,7 @@ const BookingTracking = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Map — shows pickup/dropoff route, plus porter if confirmed */}
+          {/* left panel */}
           <div className="lg:col-span-2 h-[320px] rounded-xl overflow-hidden border border-gray-200 shadow-sm">
             <UserMap
               showSidebar={false}

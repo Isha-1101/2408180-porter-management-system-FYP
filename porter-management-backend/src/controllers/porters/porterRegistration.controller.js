@@ -13,16 +13,11 @@ export const startRegistration = async (req, res) => {
   try {
     const { registrationType } = req.body;
 
-    // if (!registrationType) {
-    //   return res.status(400).json({ message: "registrationType is required" });
-    // }
-
     const targetUserId = req.user.id;
 
     // Check existing registration
     const existingRegistration = await PorterRegistration.findOne({
       userId: targetUserId,
-      // registrationType,
       status: { $ne: "submitted" },
     });
 
@@ -427,7 +422,7 @@ export const approveRegistration = async (req, res) => {
         teamId = registration?.teamId;
       }
 
-      const porter = await Porters.create(
+      await Porters.create(
         [
           {
             userId: userId,
@@ -438,10 +433,12 @@ export const approveRegistration = async (req, res) => {
             status: "active",
             isVerified: true,
             registrationId: registration._id,
+            porterRegistrationId: registrationId,
           },
         ],
         { session },
       );
+
       const user = await User.findById(userId);
       registration.status = "approved";
       await registeredAsPorterMailController(user.email, user.name);

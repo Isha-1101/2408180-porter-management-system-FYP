@@ -4,6 +4,18 @@ import { usePorter } from "../hooks/porter/use-porter";
 import { memo } from "react";
 import UiLoader from "../components/common/UiLoader";
 
+/**
+ * PorterGuards - Main guard for porter dashboard routes
+ * 
+ * Flow:
+ * 1. User must be authenticated and have role "porter"
+ * 2. Check if porter has completed registration:
+ *    - No registration data → redirect to /dashboard/porters/register
+ *    - Registration status "draft" or "in_progress" → redirect to register
+ *    - Registration status "submitted" → redirect to /dashboard/porters/pending
+ *    - Registration status "approved" AND porter profile exists → allow access
+ * 3. Approved porters can access dashboard and related routes
+ */
 const PorterGuards = memo(() => {
   const {
     porter,
@@ -13,46 +25,61 @@ const PorterGuards = memo(() => {
     isError,
     isRegistrationError,
   } = usePorter();
-  
+
   const { user } = useAuthStore();
 
-  // No user logged in
+  // Not authenticated
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
-  // Not switched to porter
+  // Not a porter role
   if (user.role !== "porter") {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Show loader only when queries are enabled AND loading
-  // When user.role === "porter", queries are enabled, so we check loading states
+  // Show loader while checking registration status
   if (isLoading || isRegistrationLoading) {
     return <UiLoader />;
   }
 
-  // If there's an error fetching porter data or registration data, redirect to register
-  // This handles the case where the API fails or returns an error
-  if (isError && isRegistrationError) {
+  // Determine registration status
+  const registration = porterRegistrationData;
+  const registrationStatus = registration?.status;
+  const hasPorterProfile = !!porter;
+
+  // Case 1: No registration at all → must register first
+  if (!registration || isRegistrationError) {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 
-  // Not registered - check if porter is null/undefined AND registration data is empty
-  if (
-    !porter &&
-    (!porterRegistrationData || porterRegistrationData?.length === 0)
-  ) {
+  // Case 2: Registration in progress but not submitted → continue registration
+  if (registrationStatus === "draft" || registrationStatus === "in_progress") {
     return <Navigate to="/dashboard/porters/register" replace />;
   }
 
-  // Registered but not approved
-  if (porterRegistrationData?.[0]?.status === "submitted") {
+  // Case 3: Registration submitted, waiting for admin approval → show pending
+  if (registrationStatus === "submitted") {
     return <Navigate to="/dashboard/porters/pending" replace />;
   }
 
-  // Approved porter
-  return <Outlet />;
+  // Case 4: Registration approved but no porter profile yet (rare edge case)
+  // This could happen if admin approved but profile creation is pending
+  if (registrationStatus === "approved" && !hasPorterProfile) {
+    return <Navigate to="/dashboard/porters/pending" replace />;
+  }
+
+  // Case 5: Fully approved porter with profile → allow access to dashboard
+  if (registrationStatus === "approved" && hasPorterProfile) {
+    // Check if porter account is active
+    if (porter.status === "banned" || porter.status === "inactive") {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return <Outlet />;
+  }
+
+  // Default: unknown state → redirect to register
+  return <Navigate to="/dashboard/porters/register" replace />;
 });
 
 PorterGuards.displayName = "PorterGuards";

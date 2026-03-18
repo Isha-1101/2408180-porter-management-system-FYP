@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getUserBookingsService } from "@/apis/services/porterBookingsService";
-import {
-  submitRating,
-  getBookingRating,
-} from "@/apis/services/ratingService";
+import { submitRating, getBookingRating } from "@/apis/services/ratingService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import PageLayout from "../../../components/common/PageLayout";
 
 // ────────────────────────────────────
 // Star Rating Component
@@ -127,9 +125,7 @@ const BookingCard = ({ booking, onRate }) => {
           <div className="flex-1 min-w-0">
             {/* Top row */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <Badge
-                className={`flex items-center gap-1 text-xs ${sc.cls}`}
-              >
+              <Badge className={`flex items-center gap-1 text-xs ${sc.cls}`}>
                 {sc.icon}
                 {sc.label}
               </Badge>
@@ -175,8 +171,7 @@ const BookingCard = ({ booking, onRate }) => {
               {booking.completedAt && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  Completed{" "}
-                  {new Date(booking.completedAt).toLocaleDateString()}
+                  Completed {new Date(booking.completedAt).toLocaleDateString()}
                 </span>
               )}
             </div>
@@ -187,7 +182,9 @@ const BookingCard = ({ booking, onRate }) => {
             {isCompleted && booking.assignedPorterId && (
               <RateButton
                 bookingId={booking._id}
-                porterId={booking.assignedPorterId?._id || booking.assignedPorterId}
+                porterId={
+                  booking.assignedPorterId?._id || booking.assignedPorterId
+                }
                 onRate={onRate}
               />
             )}
@@ -269,7 +266,7 @@ const RatingModal = ({ open, onClose, target, onSubmitSuccess }) => {
       setComment("");
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to submit rating. Try again."
+        err.response?.data?.message || "Failed to submit rating. Try again.",
       );
     } finally {
       setLoading(false);
@@ -382,7 +379,7 @@ const Orders = () => {
           }
           setBookings(data);
           setPagination(
-            response.data.data.pagination || { total: 0, pages: 1 }
+            response.data.data.pagination || { total: 0, pages: 1 },
           );
         }
       } catch (err) {
@@ -392,7 +389,7 @@ const Orders = () => {
         setLoading(false);
       }
     },
-    [activeTab]
+    [activeTab],
   );
 
   useEffect(() => {
@@ -406,31 +403,22 @@ const Orders = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            My Orders
-          </h1>
-          <p className="text-gray-500 mt-1">
-            View your booking history and rate your porters.
-          </p>
-        </div>
+    <PageLayout
+      className="p-6 md:p-8 space-y-6 min-w-full mx-auto"
+      title="My Orders"
+      description="View your booking history and rate your porters."
+      headerExtraChildren={
         <Button
-          variant="outline"
           size="sm"
           onClick={() => fetchBookings(page)}
           disabled={loading}
           className="flex items-center gap-2 self-start sm:self-auto"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
-      </div>
-
+      }
+    >
       {/* Error */}
       {error && (
         <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -526,7 +514,7 @@ const Orders = () => {
         target={ratingTarget}
         onSubmitSuccess={() => fetchBookings(page)}
       />
-    </div>
+    </PageLayout>
   );
 };
 

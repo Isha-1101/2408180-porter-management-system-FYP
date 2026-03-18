@@ -3,7 +3,7 @@ import PageHeader from "./PageHeader";
 
 const PageLayout = ({ children, ...props }) => {
   return (
-    <div className={`${props.className}`}>
+    <div className={`${props.className} max-w-full mt-0 mx-2 p-4`}>
       <PageHeader title={props.title} description={props.description}>
         {props.headerExtraChildren}
       </PageHeader>

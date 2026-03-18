@@ -40,7 +40,7 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
 
       <Card className="w-full md:w-80 h-full md:h-auto fixed md:sticky top-0 md:top-6 left-0 md:left-auto z-50 md:z-auto transform md:transform-none transition-transform duration-300 ease-in-out md:shadow-sm border-r-0 md:border-r">
         <CardHeader className="border-b pb-3">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
             <Button
               size="icon"
               variant="ghost"

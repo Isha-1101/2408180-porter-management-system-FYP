@@ -49,6 +49,7 @@ const FareEstimateBreakdown = ({
   vehicleType,
   showFareBreakdown,
   setShowFareBreakdown,
+  setTotalPrice,
 }) => {
   const payload = useMemo(
     () => ({
@@ -64,8 +65,6 @@ const FareEstimateBreakdown = ({
 
   const debouncedPayload = useDebounce(payload, 500);
 
-  console.log("Fare Payload:", debouncedPayload);
-
   const shouldCallApi = true; // Always call API if rendered (parent decides when to render)
 
   const { data: fareEstimate, isFetching } = useFareCalculator(
@@ -76,6 +75,8 @@ const FareEstimateBreakdown = ({
   );
 
   if (!fareEstimate) return null;
+
+  setTotalPrice(fareEstimate?.totalCost);
 
   return (
     <div className="rounded-xl border border-orange-200 overflow-hidden shadow-sm">

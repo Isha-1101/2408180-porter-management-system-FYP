@@ -70,7 +70,7 @@ const PersonalInfo = ({ data, onChange }) => {
                     <Camera className="h-5 w-5 text-white" />
                   </div>
                 </Label>
-                {(data?.porterPhoto instanceof File) ? null : (
+                {/* {(data?.porterPhoto instanceof File) ? null : ( */}
                   <Input
                     id="photo-upload"
                     type="file"
@@ -78,7 +78,7 @@ const PersonalInfo = ({ data, onChange }) => {
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                )}
+                {/* )} */}
               </div>
             </div>
           </div>

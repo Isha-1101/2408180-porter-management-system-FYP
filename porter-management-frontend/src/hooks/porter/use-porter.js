@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useGetPorterByUser } from "../../apis/hooks/portersHooks";
 import { usePorterStore } from "../../store/porter.store";
 import {porterRetgistrationHooks} from "../../apis/hooks/porterRegistratioHooks";
+
 export const usePorter = () => {
   const setPorter = usePorterStore((state) => state.setPorter);
   const porter = usePorterStore((state) => state.porter);
@@ -20,6 +21,7 @@ export const usePorter = () => {
     isFetching: isRegistrationFetching,
     isError: isRegistrationError,
     error: registrationError,
+    refetch: refetchRegistration,
   } = porterRetgistrationHooks.usegetPorterRegistrationByUser();
 
   useEffect(() => {
@@ -40,5 +42,6 @@ export const usePorter = () => {
     isRegistrationFetching,
     isRegistrationError,
     registrationError,
+    refetchRegistration
   };
 };

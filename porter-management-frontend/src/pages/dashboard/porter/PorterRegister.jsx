@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { usePorterRegistration } from "./providers/PorterRegistrationProvider.jsx";
 import RegistrationTypeSelection from "./component/porter-register/registration-type-selection.jsx";
+import { usePorter } from "../../../hooks/porter/use-porter.js";
 
 const PorterRegister = () => {
   const navigate = useNavigate();
@@ -24,7 +25,6 @@ const PorterRegister = () => {
     registrationSteps,
     setRegistrationSteps,
   } = usePorterRegistration();
-console.log("🚀 ~ file: PorterRegister.jsx:24 ~ PorterRegister ~ formData:", formData)
   const [step, setStep] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -42,6 +42,7 @@ console.log("🚀 ~ file: PorterRegister.jsx:24 ~ PorterRegister ~ formData:", f
   const { mutateAsync: startRegistration } =
     porterRetgistrationHooks.useRegstrationStartMutation();
 
+  const { refetchRegistration } = usePorter();
   const startRegistrations = async () => {
     try {
       const res = await startRegistration(formData?.registrationType);
@@ -98,6 +99,7 @@ console.log("🚀 ~ file: PorterRegister.jsx:24 ~ PorterRegister ~ formData:", f
     );
 
     await savePersonalInfo({ registrationId, data: payload });
+    refetchRegistration();
     setRegistrationSteps((prev) => ({
       ...prev,
       basicInfo: { ...prev.basicInfo, isCompleted: true },
@@ -145,7 +147,7 @@ console.log("🚀 ~ file: PorterRegister.jsx:24 ~ PorterRegister ~ formData:", f
   const handleFinalSavePorterInformation = async () => {
     try {
       await submitPorterRegistration(registrationId);
-      navigate("/dashboard/porter");
+      navigate("/dashboard/porter/pending");
     } catch (error) {
       console.error("Final save porter information failed", error);
     }
