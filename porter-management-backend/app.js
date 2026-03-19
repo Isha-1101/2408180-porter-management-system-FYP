@@ -16,6 +16,8 @@ import bookingRouter from "./src/routes/bookingRoutes.js";
 import FareCalculatorRouter from "./src/routes/fare-calculator/farecalculator.routes.js";
 import sseRouter from "./src/routes/sseRoutes.js";
 import ratingRouter from "./src/routes/rating.routes.js";
+import helmet from "helmet";
+import morgan from "morgan";
 dotenv.config({
   path: new URL("./.env", import.meta.url),
 });
@@ -24,6 +26,8 @@ connectDB();
 const app = express();
 
 // Middleware
+app.use(helmet
+  ());
 app.use(
   cors({
     origin: [
@@ -34,7 +38,7 @@ app.use(
     credentials: true,
   }),
 );
-
+app.use(morgan("dev"))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(multerErrorHandler);

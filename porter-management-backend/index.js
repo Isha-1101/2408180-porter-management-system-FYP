@@ -58,6 +58,7 @@ io.on("connection", (socket) => {
           },
           lastLocationUpdatedAt: new Date(),
         },
+
         { new: true },
       );
 
