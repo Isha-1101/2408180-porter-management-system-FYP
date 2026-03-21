@@ -34,6 +34,7 @@ import {
   usecreatePorterBooking,
   useSearchNearByPorter,
 } from "../../../apis/hooks/porterBookingsHooks";
+import { useCreateTeamBooking } from "../../../apis/hooks/porterTeamHooks";
 import { traverseInPorter } from "../../../utils/helper";
 import {
   Select,
@@ -106,7 +107,8 @@ const PorterBooking = () => {
   const [numberOfTrips, setNumberOfTrips] = useState("");
   const [totalPrice, setTotalPrice] = useState("");
 
-  //mutation function
+  // ── Mutation hooks ────────────────────────────────────────────────────────
+  // Individual porter: search nearby, then book
   const {
     mutateAsync: searchNearByPorter,
     isPending: searchNearByPorterPending,
@@ -115,11 +117,59 @@ const PorterBooking = () => {
     mutateAsync: createPorterBooking,
     isPending: createPorterBookingPending,
   } = usecreatePorterBooking();
+
+  // Team porter: creates booking directly (no search step)
+  const {
+    mutateAsync: createTeamBooking,
+    isPending: createTeamBookingPending,
+  } = useCreateTeamBooking();
+
   const [vehicleType, setVehicleType] = useState(""); // "bike", "van", "mini-truck", "truck"
 
   const navigate = useNavigate();
 
+  /**
+   * handleSearch:
+   *  - Individual: searches nearby porters and shows available list.
+   *  - Team: creates the booking directly and navigates to tracking page.
+   */
   const handleSearch = async () => {
+    // ── Team Porter: direct booking creation ──────────────────────────────
+    if (porterType === "team") {
+      try {
+        const res = await createTeamBooking({
+          pickup: {
+            lat: pickup.lat,
+            lng: pickup.lng,
+            address: pickup.address || "",
+          },
+          drop: {
+            lat: dropoff.lat,
+            lng: dropoff.lng,
+            address: dropoff.address || "",
+          },
+          weightKg: Number(weight),
+          teamSize: Number(teamSize),
+          requirements: requirements || null,
+          bookingDate: bookingDate || null,
+          bookingTime: bookingTime || null,
+          hasVehicle: hasVehicle,
+          vehicleType: hasVehicle ? vehicleType : null,
+          numberOfVehicles: hasVehicle ? Number(numberOfVehicles) : null,
+        });
+
+        // Navigate user to the real-time team booking tracking page
+        navigate("/dashboard/booking/team-tracking", {
+          state: { bookingId: res?.bookingId || res?.data?.bookingId },
+        });
+      } catch (error) {
+        // error toast handled in hook
+        console.error("Team booking error:", error);
+      }
+      return;
+    }
+
+    // ── Individual Porter: search nearby porters ───────────────────────────
     try {
       const res = await searchNearByPorter({
         bookingType: porterType,
@@ -134,9 +184,9 @@ const PorterBooking = () => {
           address: dropoff.address || "",
         },
         weightKg: weight,
-        teamSize: porterType === "team" ? teamSize : null,
-        requirements: porterType === "team" ? requirements : null,
-        numberOfVehicles: porterType === "team" ? numberOfVehicles : null,
+        teamSize: null,
+        requirements: null,
+        numberOfVehicles: null,
         bookingDate,
         bookingTime,
         vehicleType: hasVehicle ? vehicleType : null,
@@ -670,13 +720,22 @@ const PorterBooking = () => {
                   />
                 )}
 
-                {/* Search Button */}
+                {/* Search / Book Button */}
                 <div className="pt-4 flex justify-center">
                   <Button
                     className="w-full md:w-auto px-12 h-10 font-medium text-base shadow-sm hover:shadow active:scale-[0.98] transition-all bg-[#D35400] hover:bg-[#A04000] text-white"
                     onClick={handleSearch}
+                    disabled={
+                      porterType === "team"
+                        ? createTeamBookingPending
+                        : searchNearByPorterPending
+                    }
                   >
-                    Find Porters
+                    {/* Show spinner while team booking is being created */}
+                    {porterType === "team" && createTeamBookingPending && (
+                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    )}
+                    {porterType === "team" ? "Book Team Porter" : "Find Porters"}
                   </Button>
                 </div>
               </CardContent>

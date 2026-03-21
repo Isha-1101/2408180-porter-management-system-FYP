@@ -375,7 +375,7 @@ export const submitRegistration = async (req, res) => {
 };
 
 export const approveRegistration = async (req, res) => {
-  const { registrationId } = req.params;
+  const { registrationId } = req.params; // registration id == DKN-001
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {

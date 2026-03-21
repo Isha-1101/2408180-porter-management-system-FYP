@@ -6,6 +6,7 @@ import {
   getUserById,
   login,
   register,
+  changeTempPassword,
 } from "../controllers/authController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
@@ -77,6 +78,33 @@ authRouter.post("/register", register);
  *         description: Invalid Credentials
  */
 authRouter.post("/login", login);
+
+/**
+ * @swagger
+ * /core-api/auth/change-temp-password:
+ *   put:
+ *     summary: Change temporary password
+ *     description: Allows a porter to change their auto-generated temporary password
+ *     tags:
+ *       - Auth
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Bad request
+ */
+authRouter.put("/change-temp-password", authenticate, changeTempPassword);
 
 /**
  * @swagger

@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Loader2,
   Bell,
+  Users,
+  CalendarDays,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
 import {
@@ -17,6 +19,11 @@ import {
   useAcceptPorterBooking,
   useRejectPorterBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
+import {
+  useTeamLeadAcceptBooking,
+  useTeamLeadRejectBooking,
+  useTeamMemberRespond,
+} from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
 import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
@@ -69,10 +76,21 @@ export default function PorterDashboard() {
     refetch,
   } = useGetPorterBookings();
 
+  // ── Individual booking mutations ────────────────────────────────────────────
   const { mutateAsync: acceptBooking, isPending: accepting } =
     useAcceptPorterBooking();
   const { mutateAsync: rejectBooking, isPending: rejecting } =
     useRejectPorterBooking();
+
+  // ── Team booking mutations (team lead role) ──────────────────────────────────
+  const { mutateAsync: teamLeadAccept, isPending: teamLeadAccepting } =
+    useTeamLeadAcceptBooking();
+  const { mutateAsync: teamLeadReject, isPending: teamLeadRejecting } =
+    useTeamLeadRejectBooking();
+
+  // ── Team member respond mutation ─────────────────────────────────────────────
+  const { mutateAsync: teamMemberRespond, isPending: teamMemberResponding } =
+    useTeamMemberRespond();
 
   // Derive request list = pending requests from API + live socket requests merged
   const apiRequests = apiData?.pendingRequests || [];
@@ -159,7 +177,7 @@ export default function PorterDashboard() {
     };
   }, [refetch, token]);
 
-  // ── Accept handler
+  // ── Individual: Accept handler ──────────────────────────────────────────────
   const handleAcceptRequest = async (bookingId, requestData) => {
     try {
       const res = await acceptBooking(bookingId);
@@ -183,10 +201,48 @@ export default function PorterDashboard() {
     }
   };
 
-  // ── Reject handler
+  // ── Individual: Reject handler ──────────────────────────────────────────────
   const handleRejectRequest = async (bookingId) => {
     try {
       await rejectBooking(bookingId);
+      setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
+    } catch (err) {
+      // handled by hook
+    }
+  };
+
+  // ── Team Lead: Accept → navigate to select-porters ─────────────────────────
+  const handleTeamLeadAccept = async (bookingId) => {
+    try {
+      const res = await teamLeadAccept(bookingId);
+      // res.data = { booking, availableMembers, requiredMembers }
+      navigate("/dashboard/porters/team-lead/select-porters", {
+        state: {
+          booking: res?.data?.booking,
+          availableMembers: res?.data?.availableMembers || [],
+          requiredMembers:
+            res?.data?.requiredMembers || res?.data?.booking?.teamSize || 1,
+        },
+      });
+    } catch (err) {
+      // error toasted by hook
+    }
+  };
+
+  // ── Team Lead: Reject booking ───────────────────────────────────────────────
+  const handleTeamLeadReject = async (bookingId) => {
+    try {
+      await teamLeadReject(bookingId);
+      setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
+    } catch (err) {
+      // handled by hook
+    }
+  };
+
+  // ── Team Member: Respond to invitation ──────────────────────────────────────
+  const handleTeamMemberRespond = async (bookingId, porterId, accepted) => {
+    try {
+      await teamMemberRespond({ bookingId, porterId, accepted });
       setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
     } catch (err) {
       // handled by hook
@@ -319,7 +375,7 @@ export default function PorterDashboard() {
               ) : (
                 <div className="space-y-4">
                   {filteredRequests.map((request) => {
-                    // Support both API (BookingPorterRequest populated) and live socket formats
+                    // ── Normalise fields across API and live-socket formats ──────
                     const isLive = request._isLive;
                     const bookingId = isLive
                       ? request.bookingId
@@ -338,19 +394,63 @@ export default function PorterDashboard() {
                       : request.bookingId?.vehicleType;
                     const distanceKm = request.distanceKm;
 
+                    // ── Detect booking type & notification type ──────────────────
+                    const bookingType =
+                      request.bookingId?.bookingType ||
+                      request.bookingType;
+                    const notificationType = request.notificationType;
+                    const isTeamLeadRequest =
+                      bookingType === "team" &&
+                      (notificationType === "TEAM_LEAD" ||
+                        request.isTeamLead === true);
+                    const isTeamMemberRequest =
+                      bookingType === "team" && !isTeamLeadRequest;
+
+                    // Extra team fields
+                    const teamSize =
+                      request.bookingId?.teamSize || request.teamSize;
+                    const requirements =
+                      request.bookingId?.requirements || request.requirements;
+                    const bookingDate =
+                      request.bookingId?.bookingDate || request.bookingDate;
+
+                    // Porter's own porterId (for team member respond)
+                    const currentPorterId = porter?._id;
+
                     return (
                       <Card
                         key={bookingId || request._id}
                         className={`transition-all hover:shadow-md border-l-4 ${
-                          isLive ? "border-l-primary" : "border-l-gray-200"
+                          isTeamLeadRequest
+                            ? "border-l-purple-500"
+                            : isTeamMemberRequest
+                              ? "border-l-blue-500"
+                              : isLive
+                                ? "border-l-primary"
+                                : "border-l-gray-200"
                         }`}
                       >
                         <CardHeader className="p-4 pb-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 flex-wrap gap-1">
+                              {/* Live indicator */}
                               {isLive && (
                                 <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
                                   🔴 Live
+                                </Badge>
+                              )}
+                              {/* Team Lead badge */}
+                              {isTeamLeadRequest && (
+                                <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
+                                  <Users className="w-3 h-3 mr-1" />
+                                  Team Lead Request
+                                </Badge>
+                              )}
+                              {/* Team Member badge */}
+                              {isTeamMemberRequest && (
+                                <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
+                                  <Users className="w-3 h-3 mr-1" />
+                                  Team Member Invite
                                 </Badge>
                               )}
                               <Badge variant="outline" className="text-xs">
@@ -368,24 +468,20 @@ export default function PorterDashboard() {
 
                         <CardContent className="p-4 pt-2">
                           <div className="space-y-3">
-                            {/* Pickup / Drop — uses shared AddressLine */}
+                            {/* Pickup / Drop */}
                             <div className="space-y-2">
                               <div>
-                                <p className="text-xs text-gray-500 mb-1">
-                                  Pickup
-                                </p>
+                                <p className="text-xs text-gray-500 mb-1">Pickup</p>
                                 <AddressLine location={pickup} dot="green" />
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500 mb-1">
-                                  Drop
-                                </p>
+                                <p className="text-xs text-gray-500 mb-1">Drop</p>
                                 <AddressLine location={drop} dot="red" />
                               </div>
                             </div>
 
-                            {/* Details row */}
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                            {/* Common detail row */}
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                               <div className="flex items-center gap-1">
                                 <Package className="h-4 w-4 text-gray-400" />
                                 <span>{weightKg} kg</span>
@@ -396,48 +492,160 @@ export default function PorterDashboard() {
                                   <span>{vehicleType}</span>
                                 </div>
                               )}
+                              {/* Team-specific: team size */}
+                              {(isTeamLeadRequest || isTeamMemberRequest) &&
+                                teamSize && (
+                                  <div className="flex items-center gap-1">
+                                    <Users className="h-4 w-4 text-gray-400" />
+                                    <span>{teamSize} porters needed</span>
+                                  </div>
+                                )}
+                              {/* Team-specific: booking date */}
+                              {(isTeamLeadRequest || isTeamMemberRequest) &&
+                                bookingDate && (
+                                  <div className="flex items-center gap-1">
+                                    <CalendarDays className="h-4 w-4 text-gray-400" />
+                                    <span>
+                                      {new Date(bookingDate).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                )}
                             </div>
+
+                            {/* Team requirements note */}
+                            {requirements && (
+                              <p className="text-xs text-gray-500 bg-gray-50 rounded p-2 mt-1">
+                                <span className="font-medium">Requirements: </span>
+                                {requirements}
+                              </p>
+                            )}
                           </div>
                         </CardContent>
 
+                        {/* ── Action buttons (differ by request type) ─── */}
                         <CardFooter className="p-4 pt-0">
                           <div className="flex space-x-2 w-full justify-end">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-28"
-                              disabled={rejecting || accepting}
-                              onClick={() => handleRejectRequest(bookingId)}
-                            >
-                              {rejecting ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                "Decline"
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="w-28 bg-green-600 hover:bg-green-700"
-                              disabled={accepting || rejecting}
-                              onClick={() =>
-                                handleAcceptRequest(bookingId, {
-                                  pickup,
-                                  drop,
-                                  weightKg,
-                                  vehicleType,
-                                  distanceKm,
-                                })
-                              }
-                            >
-                              {accepting ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <>
-                                  <CheckCircle className="mr-1 h-3 w-3" />
-                                  Accept
-                                </>
-                              )}
-                            </Button>
+                            {/* ── Team Lead actions ── */}
+                            {isTeamLeadRequest && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-28"
+                                  disabled={teamLeadRejecting || teamLeadAccepting}
+                                  onClick={() => handleTeamLeadReject(bookingId)}
+                                >
+                                  {teamLeadRejecting ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    "Decline"
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="w-32 bg-purple-600 hover:bg-purple-700"
+                                  disabled={teamLeadAccepting || teamLeadRejecting}
+                                  onClick={() => handleTeamLeadAccept(bookingId)}
+                                >
+                                  {teamLeadAccepting ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="mr-1 h-3 w-3" />
+                                      Accept & Select
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            )}
+
+                            {/* ── Team Member actions ── */}
+                            {isTeamMemberRequest && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-28"
+                                  disabled={teamMemberResponding}
+                                  onClick={() =>
+                                    handleTeamMemberRespond(
+                                      bookingId,
+                                      currentPorterId,
+                                      false,
+                                    )
+                                  }
+                                >
+                                  {teamMemberResponding ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    "Decline"
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="w-28 bg-blue-600 hover:bg-blue-700"
+                                  disabled={teamMemberResponding}
+                                  onClick={() =>
+                                    handleTeamMemberRespond(
+                                      bookingId,
+                                      currentPorterId,
+                                      true,
+                                    )
+                                  }
+                                >
+                                  {teamMemberResponding ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="mr-1 h-3 w-3" />
+                                      Accept
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            )}
+
+                            {/* ── Individual porter actions (default) ── */}
+                            {!isTeamLeadRequest && !isTeamMemberRequest && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-28"
+                                  disabled={rejecting || accepting}
+                                  onClick={() => handleRejectRequest(bookingId)}
+                                >
+                                  {rejecting ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    "Decline"
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="w-28 bg-green-600 hover:bg-green-700"
+                                  disabled={accepting || rejecting}
+                                  onClick={() =>
+                                    handleAcceptRequest(bookingId, {
+                                      pickup,
+                                      drop,
+                                      weightKg,
+                                      vehicleType,
+                                      distanceKm,
+                                    })
+                                  }
+                                >
+                                  {accepting ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="mr-1 h-3 w-3" />
+                                      Accept
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </CardFooter>
                       </Card>

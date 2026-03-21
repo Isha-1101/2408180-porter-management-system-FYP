@@ -41,8 +41,12 @@ export default function Login() {
     }
 
     try {
-      await login(formData);
-      navigate("/dashboard");
+      const response = await login(formData);
+      if (response?.data?.redirectUrl) {
+        navigate(response.data.redirectUrl);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.log(error);
     }
@@ -67,7 +71,6 @@ export default function Login() {
               DOKO Namlo
             </h1>
           </div>
-
         </motion.div>
 
         {/* Right Side - Login Form */}
@@ -85,7 +88,11 @@ export default function Login() {
                 animate={{ y: 0 }}
                 className="mb-2 flex flex-col items-center"
               >
-                <img src="/images/doko_namlo.svg" alt="App Logo" className="w-24 h-24 mb-1" />
+                <img
+                  src="/images/doko_namlo.svg"
+                  alt="App Logo"
+                  className="w-24 h-24 mb-1"
+                />
                 <h2 className="text-3xl font-bold text-primary">
                   Welcome Back
                 </h2>

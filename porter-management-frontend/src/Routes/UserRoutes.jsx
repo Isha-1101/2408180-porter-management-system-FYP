@@ -5,6 +5,7 @@ import Settings from "../pages/dashboard/user/Settings";
 import UserProfile from "../pages/dashboard/user/UserProfile";
 import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
 import BookingTracking from "../pages/dashboard/user/BookingTracking";
+import TeamBookingTracking from "../pages/dashboard/user/TeamBookingTracking";
 import Payment from "../pages/dashboard/user/Payment";
 import BookingSuccess from "../pages/dashboard/user/BookingSuccess";
 
@@ -29,6 +30,11 @@ const userRoutes = [
   {
     path: "booking/tracking",
     element: <BookingTracking />,
+  },
+  // Team porter booking status tracker — live stage stepper + SSE updates
+  {
+    path: "booking/team-tracking",
+    element: <TeamBookingTracking />,
   },
   {
     path: "booking/payment",

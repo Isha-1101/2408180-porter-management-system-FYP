@@ -255,6 +255,54 @@ export const unbanneduser = async (req, res) => {
   }
 };
 
+export const changeTempPassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.isTempPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "User does not have a temporary password.",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.isTempPassword = false;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully. Please log in again.",
+    });
+  } catch (error) {
+    console.error("Change temp password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while changing password.",
+    });
+  }
+};
+
 export const getAllUsersDetails = async (req, res) => {
   try {
     const {

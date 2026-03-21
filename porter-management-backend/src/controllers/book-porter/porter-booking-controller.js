@@ -34,15 +34,6 @@ export const searchNearbyPorters = async (req, res) => {
       currentStatus: "online",
       maxWeightKg: { $gte: wghtInNum },
     };
-    console.log("matchQuery", matchQuery);
-    console.log({
-      pickup,
-      weightKg,
-      hasVehicle,
-      vehicleType,
-      requiredTeamSize,
-      radiusKm,
-    });
     if (bookingType === "team") {
       matchQuery.teamSize = { $gte: requiredTeamSize };
     }
