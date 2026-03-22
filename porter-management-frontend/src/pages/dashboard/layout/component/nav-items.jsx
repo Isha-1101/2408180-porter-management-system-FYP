@@ -9,9 +9,12 @@ import {
   Users,
   UserCog,
 } from "lucide-react";
+import { usePorter } from "../../../../hooks/porter/use-porter";
 
 const getNavItems = (role) => {
-  // Items for regular users (booking, orders)
+  const { porterData } = usePorter();
+  const isPorterATeamOwner = porterData?.data?.porter[0]?.porterType === "team";
+
   const userItems = [
     {
       label: "Book a Porter",
@@ -41,7 +44,7 @@ const getNavItems = (role) => {
       icon: <UserCog className="w-5 h-5" />,
       end: true,
     },
-    {
+    isPorterATeamOwner && {
       label: "My Team",
       to: "/dashboard/porters/team",
       icon: <Users className="w-5 h-5" />,

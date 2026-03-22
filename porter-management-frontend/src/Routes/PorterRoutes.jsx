@@ -11,6 +11,7 @@ import TeamCreation from "../pages/dashboard/team/TeamCreation";
 import TeamLeadSelectPorters from "../pages/dashboard/porter/TeamLeadSelectPorters";
 import TeamLeadConfirmBooking from "../pages/dashboard/porter/TeamLeadConfirmBooking";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
+import PorterTeamGuard from "../guards/PorterTeamGuard";
 
 // Wrapper component with provider
 const PorterProviderWrapper = () => (
@@ -19,7 +20,6 @@ const PorterProviderWrapper = () => (
   </PorterRegistrationProvider>
 );
 
-// Porter routes configuration array for useRoutes
 const porterRoutes = [
   {
     path: "porters",
@@ -28,17 +28,17 @@ const porterRoutes = [
       {
         path: "register",
         element: (
-          <PorterRegisterGuard>
-            <PorterRegister />
-          </PorterRegisterGuard>
+          // <PorterRegisterGuard>
+          <PorterRegister />
+          // </PorterRegisterGuard>
         ),
       },
       {
         path: "pending",
         element: (
-          <PorterPendingGuard>
-            <PorterPending />
-          </PorterPendingGuard>
+          // <PorterPendingGuard>
+          <PorterPending />
+          // </PorterPendingGuard>
         ),
       },
       {
@@ -54,12 +54,17 @@ const porterRoutes = [
           },
           {
             path: "team",
-            element: <TeamCreation />,
+            element: (
+              <PorterTeamGuard>
+                <TeamCreation />
+              </PorterTeamGuard>
+            ),
           },
           {
             path: "profile",
             element: <PorterProfile />,
           },
+
           // ── Team lead flow ──────────────────────────────────────────────
           // Step 1: select porters after accepting a team booking
           {

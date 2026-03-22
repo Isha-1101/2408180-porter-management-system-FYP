@@ -6,11 +6,11 @@ import UiLoader from "../components/common/UiLoader";
 
 /**
  * PorterPendingGuard - Guards the pending/waiting page
- * 
+ *
  * Shows pending page when:
  * - Registration status is "submitted" (waiting for admin approval)
  * - Registration approved but porter profile not yet created (edge case)
- * 
+ *
  * Redirects away if:
  * - Not authenticated → login
  * - Not porter role → dashboard
@@ -65,8 +65,8 @@ const PorterPendingGuard = memo(({ children }) => {
   // Show pending for:
   // - "submitted" status (waiting approval)
   // - "approved" but no profile yet (admin approved, profile creation pending)
-  const canAccessPending = 
-    registrationStatus === "submitted" || 
+  const canAccessPending =
+    registrationStatus === "submitted" ||
     (registrationStatus === "approved" && !hasPorterProfile);
 
   if (!canAccessPending) {

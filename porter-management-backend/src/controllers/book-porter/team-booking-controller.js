@@ -92,6 +92,7 @@ export const createTeamBooking = async (req, res) => {
         $match: {
           "members.status": "active",
           "members.isVerified": true,
+          "members.currentStatus": "online",
         },
       },
       {

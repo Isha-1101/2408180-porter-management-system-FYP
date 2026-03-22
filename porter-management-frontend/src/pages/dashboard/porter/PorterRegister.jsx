@@ -42,7 +42,6 @@ const PorterRegister = () => {
   const { mutateAsync: startRegistration } =
     porterRetgistrationHooks.useRegstrationStartMutation();
 
-  const { refetchRegistration } = usePorter();
   const startRegistrations = async () => {
     try {
       const res = await startRegistration(formData?.registrationType);
@@ -99,7 +98,6 @@ const PorterRegister = () => {
     );
 
     await savePersonalInfo({ registrationId, data: payload });
-    refetchRegistration();
     setRegistrationSteps((prev) => ({
       ...prev,
       basicInfo: { ...prev.basicInfo, isCompleted: true },

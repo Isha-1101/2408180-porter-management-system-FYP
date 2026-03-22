@@ -6,12 +6,12 @@ import UiLoader from "../components/common/UiLoader";
 
 /**
  * PorterRegisterGuard - Guards the registration page
- * 
+ *
  * Only allows access if:
  * - User is authenticated with "porter" role
  * - No registration exists yet, OR
  * - Registration is in "draft" or "in_progress" status
- * 
+ *
  * Redirects away if:
  * - Not authenticated → login
  * - Not porter role → dashboard
@@ -46,7 +46,7 @@ const PorterRegisterGuard = memo(({ children }) => {
   const registration = porterRegistrationData;
   const registrationStatus = registration[0]?.status;
   const hasPorterProfile = !!porter;
-  console.log("registrationStatus", { registration, registrationStatus, hasPorterProfile });
+
   // Registration submitted → go to pending
   if (registrationStatus === "submitted") {
     return <Navigate to="/dashboard/porters/pending" replace />;
@@ -64,8 +64,9 @@ const PorterRegisterGuard = memo(({ children }) => {
   // Allow access if:
   // - No registration yet (!registration)
   // - Registration in draft/in_progress (can continue filling)
-  const canAccessRegister = !registration || 
-    registrationStatus === "draft" || 
+  const canAccessRegister =
+    !registration ||
+    registrationStatus === "draft" ||
     registrationStatus === "in_progress";
 
   if (!canAccessRegister) {
