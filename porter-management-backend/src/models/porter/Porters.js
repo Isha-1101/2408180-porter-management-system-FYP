@@ -85,7 +85,7 @@ const PorterSchema = new mongoose.Schema(
     maxDistance: {
       type: Number,
       required: true,
-      default: 5000,
+      default: 10000,
     },
   },
   { timestamps: true },

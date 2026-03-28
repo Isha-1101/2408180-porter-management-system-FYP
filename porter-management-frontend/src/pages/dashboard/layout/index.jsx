@@ -48,7 +48,7 @@ const DashboardLayout = () => {
     useSSENotifications();
 
   const { data: porterInfo, refetch: refetchPorter } = useGetPorterByUser();
-  const porterData = porterInfo?.data?.porter[0];
+  const porterData = porterInfo?.data?.porter;
 
   const { mutate: toggleStatus, isPending: isToggling } =
     useTogglePorterStatus();

@@ -24,6 +24,8 @@ import {
   completeTeamBookingService,
   // Team booking — team member side
   teamMemberRespondService,
+  // Team booking — selection status
+  getTeamBookingSelectionService,
 } from "../services/teamBookingService";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,10 +131,10 @@ export const useTeamLeadAcceptBooking = () => {
   return useMutation({
     mutationFn: async (bookingId) => {
       const response = await teamLeadAcceptBookingService(bookingId);
-      return response?.data;
+      return response?.data;  // { success, data: { booking, selection, workersNotified, requiredMembers } }
     },
     onSuccess: () => {
-      toast.success("Booking accepted. Please select your team members.");
+      toast.success("Booking accepted! Workers have been automatically notified.");
       queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
     },
     onError: (error) => {
@@ -279,3 +281,26 @@ export const useTeamMemberRespond = () => {
     },
   });
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEAM BOOKING — SELECTION STATUS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Hook for the team lead to poll live selection status.
+ * Returns accepted/rejected/pending counts and each porter's status.
+ *
+ * @param {string|undefined} bookingId
+ * @param {object} options   Extra useQuery options (e.g. { enabled, refetchInterval })
+ */
+export const useGetTeamBookingSelection = (bookingId, options = {}) =>
+  useQuery({
+    queryKey: ["team-selection", bookingId],
+    queryFn: async () => {
+      const response = await getTeamBookingSelectionService(bookingId);
+      return response?.data?.data;
+    },
+    enabled: !!bookingId,
+    refetchInterval: 8000, // poll every 8 seconds
+    ...options,
+  });

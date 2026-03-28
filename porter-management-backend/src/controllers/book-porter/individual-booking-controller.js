@@ -15,7 +15,6 @@ import {
 export const createIndividualBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  console.log(req.body);
   try {
     const {
       pickup,

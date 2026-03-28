@@ -115,7 +115,7 @@ const PorterProfile = () => {
   const [editPhone, setEditPhone] = useState("");
   const [editAddress, setEditAddress] = useState("");
 
-  const porter = data?.data?.porter[0] || null;
+  const porter = data?.data?.porter || null;
 
   if (isLoading) {
     return (

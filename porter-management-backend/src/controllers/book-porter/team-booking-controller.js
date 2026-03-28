@@ -5,16 +5,32 @@ import PorterTeam from "../../models/porter/porterTeam.js";
 import BookingPorterRequest from "../../models/BookintgPorterRequest.js";
 import TeamBookingSelection from "../../models/TeamBookingSelection.js";
 import User from "../../models/User.js";
-import {
-  notifyTeamLead,
-  notifyUser,
-  notifyTeamMembers,
-  notifyTeamLeadAboutResponse,
-} from "../../utils/notification-service.js";
+import sseService from "../../utils/sse-service.js";
+import { notifyUser } from "../../utils/notification-service.js";
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Create team porter booking
+ * Create team porter booking (pre-booking)
  * POST /api/bookings/team
+ *
+ * No radius / online-status filter — this is a pre-booking for a future date.
+ * Notifies ALL active team owners whose teams have enough members.
  */
 export const createTeamBooking = async (req, res) => {
   const session = await mongoose.startSession();
@@ -32,24 +48,21 @@ export const createTeamBooking = async (req, res) => {
       hasVehicle,
       vehicleType,
       numberOfVehicles,
-      radiusKm = 5,
     } = req.body;
 
     const userId = req.user.id;
 
-    // Validate required fields
-    if (!pickup || !drop || !weightKg || !teamSize) {
+    if (!pickup || !drop || !teamSize) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
         success: false,
-        message:
-          "Pickup location, drop location, weight, and team size are required",
+        message: "Pickup location, drop location, and team size are required",
       });
     }
 
     // Create booking
-    const booking = await PorterBooking.create(
+    const [bookingDoc] = await PorterBooking.create(
       [
         {
           userId,
@@ -64,77 +77,40 @@ export const createTeamBooking = async (req, res) => {
           hasVehicle: hasVehicle || false,
           vehicleType: hasVehicle ? vehicleType : null,
           numberOfVehicles: hasVehicle ? numberOfVehicles : null,
-          radiusKm,
           status: "SEARCHING",
         },
       ],
       { session },
     );
 
-    const bookingDoc = booking[0];
+    // Find ALL active teams that have enough members (no radius filter for pre-bookings)
+    const activeTeams = await PorterTeam.find({ isActive: true }).session(
+      session,
+    );
 
-    // Find teams with enough members and team leads
-    const teams = await PorterTeam.aggregate([
-      {
-        $match: {
-          isActive: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "porters",
-          localField: "_id",
-          foreignField: "teamId",
-          as: "members",
-        },
-      },
-      {
-        $match: {
-          "members.status": "active",
-          "members.isVerified": true,
-          "members.currentStatus": "online",
-        },
-      },
-      {
-        $addFields: {
-          activeMembers: {
-            $filter: {
-              input: "$members",
-              as: "member",
-              cond: {
-                $and: [
-                  { $eq: ["$$member.status", "active"] },
-                  { $eq: ["$$member.isVerified", true] },
-                  { $eq: ["$$member.currentStatus", "online"] },
-                  { $gte: ["$$member.maxWeightKg", weightKg / teamSize] },
-                ],
-              },
-            },
-          },
-        },
-      },
-      {
-        $match: {
-          $expr: { $gte: [{ $size: "$activeMembers" }, teamSize] },
-        },
-      },
-    ]);
-
-    if (!teams.length) {
+    if (!activeTeams.length) {
       await session.abortTransaction();
       session.endSession();
-
       return res.status(404).json({
         success: false,
-        message: `No teams with ${teamSize} available members found`,
+        message: "No active teams found in the system",
       });
     }
 
-    // Find team leads and calculate distances
     const teamLeadsToNotify = [];
 
-    for (const team of teams) {
-      // Find team lead (owner)
+    for (const team of activeTeams) {
+      // Count active verified workers in this team
+      const memberCount = await Porters.countDocuments({
+        teamId: team._id,
+        role: "worker",
+        status: "active",
+        isVerified: true,
+      }).session(session);
+
+      if (memberCount < teamSize) continue;
+
+      // Find the team lead (owner)
       const teamLead = await Porters.findOne({
         teamId: team._id,
         role: "owner",
@@ -146,39 +122,34 @@ export const createTeamBooking = async (req, res) => {
 
       if (!teamLead || !teamLead.userId) continue;
 
-      // Calculate distance from team lead location to pickup
-      const distance = calculateDistance(
-        teamLead.location.coordinates[1],
-        teamLead.location.coordinates[0],
-        pickup.lat,
-        pickup.lng,
-      );
-
-      if (distance <= radiusKm) {
-        teamLeadsToNotify.push({
-          teamLead,
-          teamId: team._id,
-          distance,
-        });
+      // Calculate distance (informational only, not a filter)
+      let distance = 0;
+      if (
+        teamLead.location?.coordinates?.[0] !== 0 ||
+        teamLead.location?.coordinates?.[1] !== 0
+      ) {
+        distance = calculateDistance(
+          teamLead.location.coordinates[1],
+          teamLead.location.coordinates[0],
+          pickup.lat,
+          pickup.lng,
+        );
       }
+
+      teamLeadsToNotify.push({ teamLead, teamId: team._id, distance });
     }
 
     if (!teamLeadsToNotify.length) {
       await session.abortTransaction();
       session.endSession();
-
       return res.status(404).json({
         success: false,
-        message: `No team leads available within ${radiusKm} km`,
+        message: `No teams found with at least ${teamSize} active verified members`,
       });
     }
 
-    // Sort by distance and limit to top 5
-    teamLeadsToNotify.sort((a, b) => a.distance - b.distance);
-    const topTeamLeads = teamLeadsToNotify.slice(0, 5);
-
-    // Create porter requests for team leads
-    const porterRequests = topTeamLeads.map((item) => ({
+    // Create porter requests for all matching team leads
+    const porterRequests = teamLeadsToNotify.map((item) => ({
       bookingId: bookingDoc._id,
       porterId: item.teamLead._id,
       distanceKm: Number(item.distance.toFixed(2)),
@@ -189,17 +160,34 @@ export const createTeamBooking = async (req, res) => {
 
     await BookingPorterRequest.insertMany(porterRequests, { session });
 
-    // Update booking status
     bookingDoc.status = "WAITING_TEAM_LEAD";
     await bookingDoc.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
-    // Send notifications to team leads (async)
-    for (const item of topTeamLeads) {
-      notifyTeamLead(item.teamLead.userId._id, bookingDoc, item.distance).catch(
-        (err) => console.error("Notification error:", err),
+    // Fire SSE notifications to each team lead (async, non-blocking)
+    for (const item of teamLeadsToNotify) {
+      const { teamLead } = item;
+      const notificationPayload = {
+        bookingId: bookingDoc._id,
+        bookingType: "team",
+        weight: bookingDoc.weightKg,
+        teamSize: bookingDoc.teamSize,
+        pickup: bookingDoc.pickup,
+        drop: bookingDoc.drop,
+        requirements: bookingDoc.requirements,
+        bookingDate: bookingDoc.bookingDate,
+        bookingTime: bookingDoc.bookingTime,
+        distance: item.distance,
+        notificationType: "TEAM_LEAD",
+        isTeamLead: true,
+      };
+      // SSE to porter stream (keyed by porter._id)
+      sseService.sendToPorter(
+        teamLead._id,
+        "new-booking-request",
+        notificationPayload,
       );
     }
 
@@ -210,17 +198,14 @@ export const createTeamBooking = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Team booking created, notifying team leads",
+      message: "Team pre-booking created, notifying team owners",
       bookingId: bookingDoc._id,
-      teamLeadsNotified: topTeamLeads.length,
-      data: {
-        booking: bookingDoc,
-      },
+      teamLeadsNotified: teamLeadsToNotify.length,
+      data: { booking: bookingDoc },
     });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-
     console.error("Error creating team booking:", error);
     return res.status(500).json({
       success: false,
@@ -231,82 +216,76 @@ export const createTeamBooking = async (req, res) => {
 };
 
 /**
- * Team lead accepts booking and gets list of team members
+ * Team owner accepts booking — auto-selects ALL linked workers and notifies them
  * POST /api/bookings/team/:id/team-lead/accept
  */
 export const teamLeadAcceptBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const bookingId = req.params.id;
     const porterId = req.user.porterId;
 
     if (!porterId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(403)
+        .json({ success: false, message: "Porter not found for this user" });
+    }
+
+    // Verify this is a team owner
+    const teamLead = await Porters.findById(porterId)
+      .populate("userId")
+      .session(session);
+    if (!teamLead || teamLead.role !== "owner") {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(403).json({
         success: false,
-        message: "Only team leads can accept team bookings",
+        message: "Only team owners can accept team bookings",
       });
     }
 
-    // Verify this is a team lead
-    const porter = await Porters.findById(porterId);
-    if (!porter || porter.role !== "owner") {
-      return res.status(403).json({
-        success: false,
-        message: "Only team leads can accept team bookings",
-      });
-    }
-
-    // Find booking
-    const booking = await PorterBooking.findById(bookingId);
-
+    const booking = await PorterBooking.findById(bookingId).session(session);
     if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
     }
 
-    // Check if booking is still available
     if (booking.status !== "WAITING_TEAM_LEAD") {
-      return res.status(400).json({
-        success: false,
-        message: "Booking is no longer available",
-      });
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ success: false, message: "Booking is no longer available" });
     }
 
-    // Find the porter request
+    // Verify this team lead has a pending request for this booking
     const porterRequest = await BookingPorterRequest.findOne({
       bookingId,
       porterId,
       isTeamLead: true,
-    });
+      status: "PENDING",
+    }).session(session);
 
     if (!porterRequest) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({
         success: false,
-        message: "Team lead request not found",
+        message: "No pending request found for this booking",
       });
     }
 
-    // Update porter request
+    // Accept this team lead's request
     porterRequest.status = "ACCEPTED";
     porterRequest.respondedAt = new Date();
-    await porterRequest.save();
-
-    // Update booking status
-    booking.status = "TEAM_LEAD_SELECTING";
-    booking.assignedTeamId = porter.teamId;
-    await booking.save();
-
-    // Get available team members
-    const teamMembers = await Porters.find({
-      teamId: porter.teamId,
-      role: "worker",
-      status: "active",
-      isVerified: true,
-      currentStatus: "online",
-    })
-      .populate("userId", "name email phone")
-      .select("_id userId maxWeightKg location");
+    await porterRequest.save({ session });
 
     // Expire other team lead requests
     await BookingPorterRequest.updateMany(
@@ -316,22 +295,84 @@ export const teamLeadAcceptBooking = async (req, res) => {
         isTeamLead: true,
         status: "PENDING",
       },
-      {
-        status: "EXPIRED",
-        respondedAt: new Date(),
-      },
+      { status: "EXPIRED", respondedAt: new Date() },
+      { session },
     );
+
+    // Get ALL active+verified workers in this team
+    const teamWorkers = await Porters.find({
+      teamId: teamLead.teamId,
+      role: "worker",
+      status: "active",
+      isVerified: true,
+    })
+      .populate("userId", "name email phone")
+      .session(session);
+
+    if (!teamWorkers.length) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "No active workers found in your team",
+      });
+    }
+
+    // Create TeamBookingSelection with all workers set to PENDING
+    const [selection] = await TeamBookingSelection.create(
+      [
+        {
+          bookingId,
+          teamId: teamLead.teamId,
+          teamLeadId: teamLead.userId._id,
+          selectedPorters: teamWorkers.map((w) => ({
+            porterId: w._id,
+            status: "PENDING",
+          })),
+        },
+      ],
+      { session },
+    );
+
+    // Update booking status
+    booking.status = "WAITING_PORTER_RESPONSE";
+    booking.assignedTeamId = teamLead.teamId;
+    await booking.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // Fire SSE + in-app notification to each worker (async)
+    for (const worker of teamWorkers) {
+      const payload = {
+        bookingId: booking._id,
+        notificationType: "PORTERS_SELECTED",
+        bookingType: "team",
+        weight: booking.weightKg,
+        teamSize: booking.teamSize,
+        pickup: booking.pickup,
+        drop: booking.drop,
+        requirements: booking.requirements,
+        bookingDate: booking.bookingDate,
+        bookingTime: booking.bookingTime,
+        teamLeadName: teamLead.userId.name,
+      };
+      sseService.sendToPorter(worker._id, "new-booking-request", payload);
+    }
 
     return res.status(200).json({
       success: true,
-      message: "Booking accepted. Please select team members.",
+      message: "Booking accepted. All team workers have been notified.",
       data: {
         booking,
-        availableMembers: teamMembers,
+        selection,
+        workersNotified: teamWorkers.length,
         requiredMembers: booking.teamSize,
       },
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     console.error("Error in team lead accept:", error);
     return res.status(500).json({
       success: false,
@@ -342,115 +383,7 @@ export const teamLeadAcceptBooking = async (req, res) => {
 };
 
 /**
- * Team lead selects specific porters for the booking
- * POST /api/bookings/team/:id/team-lead/select-porters
- */
-export const teamLeadSelectPorters = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const bookingId = req.params.id;
-    const { selectedPorterIds } = req.body;
-    const teamLeadPorterId = req.user.porterId;
-
-    if (!selectedPorterIds || !Array.isArray(selectedPorterIds)) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        success: false,
-        message: "Selected porter IDs array is required",
-      });
-    }
-
-    // Find booking
-    const booking = await PorterBooking.findById(bookingId).session(session);
-
-    if (!booking) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
-    }
-
-    // Verify status
-    if (booking.status !== "TEAM_LEAD_SELECTING") {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        success: false,
-        message: "Booking is not in selection phase",
-      });
-    }
-
-    // Verify number of selected porters
-    if (selectedPorterIds.length < booking.teamSize) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        success: false,
-        message: `Please select at least ${booking.teamSize} porters`,
-      });
-    }
-
-    // Get team lead info
-    const teamLead = await Porters.findById(teamLeadPorterId)
-      .populate("userId")
-      .session(session);
-
-    // Create team booking selection
-    const selection = await TeamBookingSelection.create(
-      [
-        {
-          bookingId,
-          teamId: booking.assignedTeamId,
-          teamLeadId: teamLead.userId._id,
-          selectedPorters: selectedPorterIds.map((porterId) => ({
-            porterId,
-            status: "PENDING",
-          })),
-        },
-      ],
-      { session },
-    );
-
-    // Update booking status
-    booking.status = "WAITING_PORTER_RESPONSE";
-    await booking.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    // Notify selected porters (async)
-    notifyTeamMembers(selectedPorterIds, booking, teamLead.userId.name).catch(
-      (err) => console.error("Notification error:", err),
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Porters selected. Waiting for their responses.",
-      data: {
-        booking,
-        selection: selection[0],
-      },
-    });
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
-    console.error("Error selecting porters:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to select porters",
-      error: error.message,
-    });
-  }
-};
-
-/**
- * Team member responds to selection
+ * Team member responds to their auto-selection
  * POST /api/bookings/team/:id/porter/:porterId/respond
  */
 export const teamMemberRespond = async (req, res) => {
@@ -460,25 +393,19 @@ export const teamMemberRespond = async (req, res) => {
     const { accepted } = req.body;
     const currentPorterId = req.user.porterId;
 
-    // Verify porter is responding for themselves
     if (porterId !== currentPorterId.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only respond for yourself",
-      });
+      return res
+        .status(403)
+        .json({ success: false, message: "You can only respond for yourself" });
     }
 
-    // Find selection
     const selection = await TeamBookingSelection.findOne({ bookingId });
-
     if (!selection) {
-      return res.status(404).json({
-        success: false,
-        message: "Team booking selection not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Team booking selection not found" });
     }
 
-    // Find the porter in selections
     const porterSelection = selection.selectedPorters.find(
       (p) => p.porterId.toString() === porterId,
     );
@@ -490,29 +417,39 @@ export const teamMemberRespond = async (req, res) => {
       });
     }
 
-    // Update porter response
+    if (porterSelection.status !== "PENDING") {
+      return res.status(400).json({
+        success: false,
+        message: "You have already responded to this booking",
+      });
+    }
+
     porterSelection.status = accepted ? "ACCEPTED" : "REJECTED";
     porterSelection.respondedAt = new Date();
     await selection.save();
 
-    // Get porter info
+    // Notify team lead via SSE
     const porter = await Porters.findById(porterId).populate("userId");
-
-    // Notify team lead
     const teamLead = await User.findById(selection.teamLeadId);
-    if (teamLead) {
-      notifyTeamLeadAboutResponse(
-        teamLead._id,
-        await PorterBooking.findById(bookingId),
-        porter.userId.name,
+    const teamLeadPorter = await Porters.findOne({
+      userId: selection.teamLeadId,
+    });
+
+    if (teamLeadPorter) {
+      sseService.sendToPorter(teamLeadPorter._id, "porter-responded", {
+        bookingId,
+        porterName: porter?.userId?.name || "A porter",
         accepted,
-      ).catch((err) => console.error("Notification error:", err));
+      });
     }
 
-    // Check if all selected porters have responded
     const allResponded = selection.selectedPorters.every(
       (p) => p.status !== "PENDING",
     );
+    const acceptedCount = selection.selectedPorters.filter(
+      (p) => p.status === "ACCEPTED",
+    ).length;
+    const booking = await PorterBooking.findById(bookingId);
 
     return res.status(200).json({
       success: true,
@@ -520,6 +457,8 @@ export const teamMemberRespond = async (req, res) => {
       data: {
         selection,
         allResponded,
+        acceptedCount,
+        requiredMembers: booking?.teamSize,
       },
     });
   } catch (error) {
@@ -533,7 +472,7 @@ export const teamMemberRespond = async (req, res) => {
 };
 
 /**
- * Team lead confirms booking after porter responses
+ * Team lead confirms booking after enough workers accepted
  * POST /api/bookings/team/:id/team-lead/confirm
  */
 export const teamLeadConfirm = async (req, res) => {
@@ -544,33 +483,35 @@ export const teamLeadConfirm = async (req, res) => {
     const bookingId = req.params.id;
     const teamLeadPorterId = req.user.porterId;
 
-    // Find booking
     const booking = await PorterBooking.findById(bookingId).session(session);
-
     if (!booking) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
+    }
+
+    if (booking.status !== "WAITING_PORTER_RESPONSE") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
         success: false,
-        message: "Booking not found",
+        message: "Booking is not awaiting porter responses",
       });
     }
 
-    // Find selection
-    const selection = await TeamBookingSelection.findOne({
-      bookingId,
-    }).session(session);
-
+    const selection = await TeamBookingSelection.findOne({ bookingId }).session(
+      session,
+    );
     if (!selection) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({
-        success: false,
-        message: "Team booking selection not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Team booking selection not found" });
     }
 
-    // Count accepted porters
     const acceptedPorters = selection.selectedPorters.filter(
       (p) => p.status === "ACCEPTED",
     );
@@ -584,12 +525,10 @@ export const teamLeadConfirm = async (req, res) => {
       });
     }
 
-    // Update selection
     selection.teamLeadConfirmed = true;
     selection.confirmedAt = new Date();
     await selection.save({ session });
 
-    // Update booking
     booking.status = "CONFIRMED";
     booking.assignedPorters = acceptedPorters.map((p) => ({
       porterId: p.porterId,
@@ -600,7 +539,7 @@ export const teamLeadConfirm = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Notify user
+    // Notify user via SSE + in-app
     notifyUser(booking.userId, booking, "BOOKING_CONFIRMED").catch((err) =>
       console.error("User notification error:", err),
     );
@@ -608,15 +547,11 @@ export const teamLeadConfirm = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Booking confirmed successfully",
-      data: {
-        booking,
-        assignedPorters: acceptedPorters.length,
-      },
+      data: { booking, assignedPorters: acceptedPorters.length },
     });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-
     console.error("Error confirming team booking:", error);
     return res.status(500).json({
       success: false,
@@ -635,7 +570,6 @@ export const teamLeadRejectBooking = async (req, res) => {
     const bookingId = req.params.id;
     const porterId = req.user.porterId;
 
-    // Find the porter request
     const porterRequest = await BookingPorterRequest.findOne({
       bookingId,
       porterId,
@@ -643,47 +577,39 @@ export const teamLeadRejectBooking = async (req, res) => {
     });
 
     if (!porterRequest) {
-      return res.status(404).json({
-        success: false,
-        message: "Team lead request not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Team lead request not found" });
     }
 
-    // Update porter request
     porterRequest.status = "REJECTED";
     porterRequest.respondedAt = new Date();
     await porterRequest.save();
 
-    // Check if there are any other pending team lead requests
     const pendingRequests = await BookingPorterRequest.countDocuments({
       bookingId,
       isTeamLead: true,
       status: "PENDING",
     });
 
-    // If no pending requests, cancel booking
     if (pendingRequests === 0) {
       const booking = await PorterBooking.findById(bookingId);
       if (booking && booking.status === "WAITING_TEAM_LEAD") {
         booking.status = "CANCELLED";
-        booking.cancellationReason = "No team leads accepted";
+        booking.cancellationReason = "No team owners accepted";
         await booking.save();
-
-        // Notify user
         notifyUser(
           booking.userId,
           booking,
           "BOOKING_CANCELLED",
-          "No team leads accepted your booking. Please try again.",
+          "No teams accepted your booking.",
         ).catch((err) => console.error("User notification error:", err));
       }
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Booking rejected",
-      pendingRequests,
-    });
+    return res
+      .status(200)
+      .json({ success: true, message: "Booking rejected", pendingRequests });
   } catch (error) {
     console.error("Error rejecting team booking:", error);
     return res.status(500).json({
@@ -703,39 +629,32 @@ export const completeTeamBooking = async (req, res) => {
     const bookingId = req.params.id;
     const teamLeadPorterId = req.user.porterId;
 
-    // Verify this is a team lead
     const teamLead = await Porters.findById(teamLeadPorterId);
     if (!teamLead || teamLead.role !== "owner") {
       return res.status(403).json({
         success: false,
-        message: "Only team leads can complete team bookings",
+        message: "Only team owners can complete team bookings",
       });
     }
 
-    // Find booking
     const booking = await PorterBooking.findById(bookingId);
-
     if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
     }
 
-    // Verify team is assigned to this booking
-    if (booking.assignedTeamId.toString() !== teamLead.teamId.toString()) {
+    if (booking.assignedTeamId?.toString() !== teamLead.teamId?.toString()) {
       return res.status(403).json({
         success: false,
         message: "Your team is not assigned to this booking",
       });
     }
 
-    // Update booking
     booking.status = "COMPLETED";
     booking.completedAt = new Date();
     await booking.save();
 
-    // Notify user
     notifyUser(booking.userId, booking, "BOOKING_COMPLETED").catch((err) =>
       console.error("User notification error:", err),
     );
@@ -755,18 +674,54 @@ export const completeTeamBooking = async (req, res) => {
   }
 };
 
-// Helper function to calculate distance between two points (Haversine formula)
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of the Earth in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  return distance;
-}
+/**
+ * Get team booking selection status (for team lead polling)
+ * GET /api/bookings/team/:id/selection
+ */
+export const getTeamBookingSelection = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+
+    const selection = await TeamBookingSelection.findOne({ bookingId })
+      .populate("selectedPorters.porterId", "userId maxWeightKg")
+      .populate({
+        path: "selectedPorters.porterId",
+        populate: { path: "userId", select: "name email phone" },
+      });
+
+    if (!selection) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Selection not found" });
+    }
+
+    const booking = await PorterBooking.findById(bookingId);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        selection,
+        acceptedCount: selection.selectedPorters.filter(
+          (p) => p.status === "ACCEPTED",
+        ).length,
+        rejectedCount: selection.selectedPorters.filter(
+          (p) => p.status === "REJECTED",
+        ).length,
+        pendingCount: selection.selectedPorters.filter(
+          (p) => p.status === "PENDING",
+        ).length,
+        requiredMembers: booking?.teamSize || 0,
+        canConfirm:
+          selection.selectedPorters.filter((p) => p.status === "ACCEPTED")
+            .length >= (booking?.teamSize || 0),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching selection:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch selection",
+      error: error.message,
+    });
+  }
+};

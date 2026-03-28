@@ -140,3 +140,12 @@ export const teamMemberRespondService = (bookingId, porterId, accepted) =>
   axiosInstance.post(`/bookings/team/${bookingId}/porter/${porterId}/respond`, {
     accepted,
   });
+
+/**
+ * Get the current team booking selection (member accept/reject statuses).
+ * GET /api/bookings/team/:id/selection
+ *
+ * @param {string} bookingId
+ */
+export const getTeamBookingSelectionService = (bookingId) =>
+  axiosInstance.get(`/bookings/team/${bookingId}/selection`);

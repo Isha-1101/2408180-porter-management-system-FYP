@@ -38,7 +38,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("porter-location", async (data) => {
-    const { lat, lng, porterId } = data;
+    const { porterId, lat, lng } = data;
     console.log("Received location:", { porterId, lat, lng });
 
     try {
@@ -46,6 +46,7 @@ io.on("connection", (socket) => {
       const porter = await Porters.findById(porterId);
 
       if (!porter) {
+        console.error("❌ Porter not found:", porterId);
         return;
       }
 

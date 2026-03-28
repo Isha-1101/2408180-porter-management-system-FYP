@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   Navigation,
   Package,
@@ -60,6 +60,11 @@ export default function PorterDashboard() {
   const token = useAuthStore((s) => s.access_token);
   const navigate = useNavigate();
 
+  // If this porter is a team owner, redirect to team-owner dashboard
+  if (!porterLoading && porter?.role === "owner") {
+    return <Navigate to="/dashboard/porters/team-owner" replace />;
+  }
+
   // Live socket-pushed requests (merged on top of API data)
   const [liveRequests, setLiveRequests] = useState([]);
   const [filter, setFilter] = useState("ALL");
@@ -111,31 +116,89 @@ export default function PorterDashboard() {
   const startAutoLocation = useCallback((id) => {
     if (!id) return;
     stopAutoLocation();
-    intervalRef.current = setInterval(() => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            setPorterLocation([lat, lng]);
+
+    if (!navigator.geolocation) {
+      console.error("Geolocation is not supported by this browser");
+      alert("Your browser doesn't support location services");
+      return;
+    }
+
+    const requestLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setPorterLocation([lat, lng]);
+
+          if (socket.connected) {
+            console.log("Emitting porter-location:", {
+              porterId: id,
+              lat,
+              lng,
+            });
             socket.emit("porter-location", { porterId: id, lat, lng });
-          },
-          (err) => console.error("Location error:", err),
-          { enableHighAccuracy: true },
-        );
-      }
-    }, 5000);
+          } else {
+            console.warn("Socket not connected");
+          }
+
+          //Start interval only after permission is granted
+          intervalRef.current = setInterval(() => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                setPorterLocation([lat, lng]);
+
+                if (socket.connected) {
+                  socket.emit("porter-location", { porterId: id, lat, lng });
+                }
+              },
+              (err) => {
+                console.error("Location update error:", err);
+              },
+              {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+              },
+            );
+          }, 5000);
+        },
+        (err) => {
+          switch (err.code) {
+            case err.PERMISSION_DENIED:
+              alert(
+                "Location permission denied. Please enable location access in your browser settings.",
+              );
+              break;
+            case err.POSITION_UNAVAILABLE:
+              alert("Location information is unavailable.");
+              break;
+            case err.TIMEOUT:
+              alert("Location request timed out.");
+              break;
+            default:
+              alert("An unknown error occurred while getting location.");
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        },
+      );
+    };
+    requestLocation();
   }, []);
 
   useEffect(() => {
     if (porter?._id) {
-      startAutoLocation(porter._id);
+      startAutoLocation(porter?._id);
       // Join porter's own room to receive targeted booking-request events
-      socket.emit("join-porter-room", porter._id);
+      socket.emit("join-porter-room", porter?._id);
     }
     return () => stopAutoLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [porter?._id, startAutoLocation]);
+  }, [porter, startAutoLocation]);
 
   // ── Listen for live booking requests via socket
   useEffect(() => {
@@ -211,17 +274,19 @@ export default function PorterDashboard() {
     }
   };
 
-  // ── Team Lead: Accept → navigate to select-porters ─────────────────────────
+  // ── Team Lead: Accept → navigate directly to confirm-booking ──────────────
   const handleTeamLeadAccept = async (bookingId) => {
     try {
       const res = await teamLeadAccept(bookingId);
-      // res.data = { booking, availableMembers, requiredMembers }
-      navigate("/dashboard/porters/team-lead/select-porters", {
+      // res.data = { booking, selection, workersNotified, requiredMembers }
+      const bookingData = res?.data?.booking;
+      const requiredMembers =
+        res?.data?.requiredMembers || bookingData?.teamSize || 1;
+      navigate("/dashboard/porters/team-lead/confirm-booking", {
         state: {
-          booking: res?.data?.booking,
-          availableMembers: res?.data?.availableMembers || [],
-          requiredMembers:
-            res?.data?.requiredMembers || res?.data?.booking?.teamSize || 1,
+          bookingId: bookingData?._id || bookingId,
+          requiredMembers,
+          booking: bookingData,
         },
       });
     } catch (err) {
@@ -396,8 +461,7 @@ export default function PorterDashboard() {
 
                     // ── Detect booking type & notification type ──────────────────
                     const bookingType =
-                      request.bookingId?.bookingType ||
-                      request.bookingType;
+                      request.bookingId?.bookingType || request.bookingType;
                     const notificationType = request.notificationType;
                     const isTeamLeadRequest =
                       bookingType === "team" &&
@@ -471,11 +535,15 @@ export default function PorterDashboard() {
                             {/* Pickup / Drop */}
                             <div className="space-y-2">
                               <div>
-                                <p className="text-xs text-gray-500 mb-1">Pickup</p>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Pickup
+                                </p>
                                 <AddressLine location={pickup} dot="green" />
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500 mb-1">Drop</p>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Drop
+                                </p>
                                 <AddressLine location={drop} dot="red" />
                               </div>
                             </div>
@@ -506,7 +574,9 @@ export default function PorterDashboard() {
                                   <div className="flex items-center gap-1">
                                     <CalendarDays className="h-4 w-4 text-gray-400" />
                                     <span>
-                                      {new Date(bookingDate).toLocaleDateString()}
+                                      {new Date(
+                                        bookingDate,
+                                      ).toLocaleDateString()}
                                     </span>
                                   </div>
                                 )}
@@ -515,7 +585,9 @@ export default function PorterDashboard() {
                             {/* Team requirements note */}
                             {requirements && (
                               <p className="text-xs text-gray-500 bg-gray-50 rounded p-2 mt-1">
-                                <span className="font-medium">Requirements: </span>
+                                <span className="font-medium">
+                                  Requirements:{" "}
+                                </span>
                                 {requirements}
                               </p>
                             )}
@@ -532,8 +604,12 @@ export default function PorterDashboard() {
                                   variant="outline"
                                   size="sm"
                                   className="w-28"
-                                  disabled={teamLeadRejecting || teamLeadAccepting}
-                                  onClick={() => handleTeamLeadReject(bookingId)}
+                                  disabled={
+                                    teamLeadRejecting || teamLeadAccepting
+                                  }
+                                  onClick={() =>
+                                    handleTeamLeadReject(bookingId)
+                                  }
                                 >
                                   {teamLeadRejecting ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -544,8 +620,12 @@ export default function PorterDashboard() {
                                 <Button
                                   size="sm"
                                   className="w-32 bg-purple-600 hover:bg-purple-700"
-                                  disabled={teamLeadAccepting || teamLeadRejecting}
-                                  onClick={() => handleTeamLeadAccept(bookingId)}
+                                  disabled={
+                                    teamLeadAccepting || teamLeadRejecting
+                                  }
+                                  onClick={() =>
+                                    handleTeamLeadAccept(bookingId)
+                                  }
                                 >
                                   {teamLeadAccepting ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />

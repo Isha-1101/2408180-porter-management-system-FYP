@@ -117,7 +117,7 @@ export const getPorterDetailsByUserId = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Porter fetched successfully",
-      porter,
+      porter: porter[0],
     });
   } catch (error) {
     console.error("Error fetching porter:", error);
@@ -159,6 +159,7 @@ export const getPorterByUserId = async (req, res) => {
     const porter = await Porters.findOne({ userId }).select(
       "-createdAt -updatedAt -userId -teamId -__v",
     );
+    console.log(porter);
     if (!porter) {
       return res
         .status(404)

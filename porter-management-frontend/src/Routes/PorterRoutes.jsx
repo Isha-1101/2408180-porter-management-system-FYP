@@ -8,6 +8,7 @@ import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
 import AcceptedBookingDetails from "../pages/dashboard/porter/AcceptedBookingDetails";
 import PorterProfile from "../pages/dashboard/porter/PorterProfile";
 import TeamCreation from "../pages/dashboard/team/TeamCreation";
+import TeamOwnerDashboard from "../pages/dashboard/porter/TeamOwnerDashboard";
 import TeamLeadSelectPorters from "../pages/dashboard/porter/TeamLeadSelectPorters";
 import TeamLeadConfirmBooking from "../pages/dashboard/porter/TeamLeadConfirmBooking";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
@@ -65,13 +66,18 @@ const porterRoutes = [
             element: <PorterProfile />,
           },
 
+          // ── Team owner dashboard ────────────────────────────────────────
+          {
+            path: "team-owner",
+            element: <TeamOwnerDashboard />,
+          },
           // ── Team lead flow ──────────────────────────────────────────────
-          // Step 1: select porters after accepting a team booking
+          // Legacy: select-porters (kept for backward compat)
           {
             path: "team-lead/select-porters",
             element: <TeamLeadSelectPorters />,
           },
-          // Step 2: monitor member responses and confirm/complete the booking
+          // Monitor member responses and confirm/complete the booking
           {
             path: "team-lead/confirm-booking",
             element: <TeamLeadConfirmBooking />,

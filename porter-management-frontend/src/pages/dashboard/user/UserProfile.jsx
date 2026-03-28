@@ -14,7 +14,7 @@ const InfoRow = ({ icon, label, value }) => (
       <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
         {label}
       </p>
-      <p className="text-sm text-gray-900 font-medium mt-0.5 break-words">
+      <p className="text-sm text-gray-900 font-medium mt-0.5 wrap-break-word">
         {value || "—"}
       </p>
     </div>
@@ -51,7 +51,7 @@ const UserProfile = () => {
     <PageLayout>
       <div className="max-w-full mx-auto px-4 py-6 space-y-6">
         {/* ── Hero Banner ── */}
-        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#1A3C3B] to-[#2E6B5E] text-white p-6 shadow-md">
+        <div className="relative rounded-2xl overflow-hidden bg-linear-to-r from-[#1A3C3B] to-[#2E6B5E] text-white p-6 shadow-md">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_70%_50%,white,transparent)]" />
           <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
             {/* Avatar */}

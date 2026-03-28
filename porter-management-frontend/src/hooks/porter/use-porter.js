@@ -14,7 +14,6 @@ export const usePorter = () => {
     isError,
     error,
   } = useGetPorterByUser();
-
   const {
     data: porterRegistrationData,
     isLoading: isRegistrationLoading,

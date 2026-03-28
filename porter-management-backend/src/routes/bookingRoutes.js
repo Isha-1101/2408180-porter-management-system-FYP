@@ -9,11 +9,11 @@ import {
 import {
   createTeamBooking,
   teamLeadAcceptBooking,
-  teamLeadSelectPorters,
   teamMemberRespond,
   teamLeadConfirm,
   teamLeadRejectBooking,
   completeTeamBooking,
+  getTeamBookingSelection,
 } from "../controllers/book-porter/team-booking-controller.js";
 import {
   getUserBookings,
@@ -124,19 +124,15 @@ router.post("/team", ...userOnly, createTeamBooking);
 router.post("/team/:id/team-lead/accept", ...porterOnly, teamLeadAcceptBooking);
 
 /**
- * @route   POST /api/bookings/team/:id/team-lead/select-porters
- * @desc    Team lead selects porters for the booking
- * @access  Private (Team Lead Porter)
+ * @route   GET /api/bookings/team/:id/selection
+ * @desc    Get live selection status (who accepted/rejected)
+ * @access  Private (Porter)
  */
-router.post(
-  "/team/:id/team-lead/select-porters",
-  ...porterOnly,
-  teamLeadSelectPorters,
-);
+router.get("/team/:id/selection", ...porterOnly, getTeamBookingSelection);
 
 /**
  * @route   POST /api/bookings/team/:id/team-lead/confirm
- * @desc    Team lead confirms booking after porter responses
+ * @desc    Team lead confirms booking after enough porters responded
  * @access  Private (Team Lead Porter)
  */
 router.post("/team/:id/team-lead/confirm", ...porterOnly, teamLeadConfirm);
