@@ -28,7 +28,7 @@ export const useGetPorterById = (id) => {
 export const useGetPorterByUser = () => {
   const { user } = useAuthStore();
   return useQuery({
-    queryKey: ["porterByUser", user?.id],
+    queryKey: ["porterByUser"],
     queryFn: () => porterService.getPorterByUser(),
     enabled: user?.role === "porter",
   });
