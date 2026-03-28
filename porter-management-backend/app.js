@@ -16,6 +16,7 @@ import bookingRouter from "./src/routes/bookingRoutes.js";
 import FareCalculatorRouter from "./src/routes/fare-calculator/farecalculator.routes.js";
 import sseRouter from "./src/routes/sseRoutes.js";
 import ratingRouter from "./src/routes/rating.routes.js";
+import chatRouter from "./src/routes/chatRoutes.js";
 import helmet from "helmet";
 import morgan from "morgan";
 dotenv.config({
@@ -55,6 +56,7 @@ app.use("/core-api/bookings", bookingRouter);
 app.use("/core-api/bookings/sse", sseRouter);
 app.use("/core-api/fare-calculator", FareCalculatorRouter);
 app.use("/core-api/ratings", ratingRouter);
+app.use("/core-api/chat", chatRouter);
 
 app.get("/", (req, res) => {
   res.send("Porter Management Backend API (ISHA)");

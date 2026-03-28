@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import app from "./app.js";
 import Porters from "./src/models/porter/Porters.js";
 import LocationLog from "./src/models/LocationLogs.js";
+import Message from "./src/models/Message.js";
 import { setIO } from "./src/utils/socketInstance.js";
 dotenv.config({
   path: new URL("./.env", import.meta.url),
@@ -98,6 +99,42 @@ io.on("connection", (socket) => {
 
   socket.on("get-porter-locations", () => {
     socket.emit("all-porter-locations", porterLocations);
+  });
+
+  // --- Real-Time Chat for Bookings ---
+
+  // Client joins a specific chat room defined by the booking ID
+  socket.on("join-chat", (bookingId) => {
+    const roomName = `chat_${bookingId}`;
+    socket.join(roomName);
+    console.log(`Socket ${socket.id} joined room ${roomName}`);
+  });
+
+  // Client sends a message to the room
+  socket.on("send-message", async (data) => {
+    const { bookingId, senderId, senderModel, text } = data;
+
+    try {
+      // Create and save message to the database
+      const newMessage = await Message.create({
+        bookingId,
+        senderId,
+        senderModel,
+        text,
+      });
+
+      const roomName = `chat_${bookingId}`;
+
+      // Broadcast the message to all clients in the room
+      io.to(roomName).emit("receive-message", newMessage);
+      console.log(
+        `Message sent to room ${roomName} from ${senderModel} ${senderId}`,
+      );
+    } catch (error) {
+      console.error("Error saving/sending message:", error);
+      // Optional: Emit an error back to the sender
+      socket.emit("message-error", { error: "Failed to send message" });
+    }
   });
 
   socket.on("disconnect", () => {
