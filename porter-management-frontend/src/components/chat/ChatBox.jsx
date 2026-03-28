@@ -87,7 +87,12 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentUserId) return;
+    console.log("handleSendMessage triggered", { newMessage, currentUserId });
+    
+    if (!newMessage.trim() || !currentUserId) {
+      console.warn("Message not sent. Reason: ", !newMessage.trim() ? "Empty message" : "Missing currentUserId");
+      return;
+    }
 
     const strBookingId =
       typeof bookingId === "object"
@@ -162,7 +167,7 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
         <div ref={bottomRef} />
       </div>
 
-      <form className="flex items-center gap-2 p-3 bg-white border-t border-gray-100">
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2 p-3 bg-white border-t border-gray-100">
         <input
           type="text"
           value={newMessage}
@@ -171,7 +176,7 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
           className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
         />
         <button
-          onClick={handleSendMessage}
+          type="submit"
           disabled={!newMessage.trim()}
           className="p-2 rounded-full bg-primary text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shrink-0"
         >
