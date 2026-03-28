@@ -28,6 +28,7 @@ import {
   XCircle,
   CalendarDays,
   Truck,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ import {
 } from "../../../apis/hooks/porterBookingsHooks";
 import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
+import ChatBox from "@/components/chat/ChatBox";
 
 // ─── Status step definitions (order matters) ─────────────────────────────────
 const TEAM_BOOKING_STEPS = [
@@ -115,6 +117,7 @@ const TeamBookingTracking = () => {
 
   // Local status override (updated via SSE before next poll)
   const [liveStatus, setLiveStatus] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const sseRef = useRef(null);
 
@@ -261,7 +264,7 @@ const TeamBookingTracking = () => {
                       <li key={step.key} className="flex items-start gap-3">
                         {/* Step icon */}
                         <div
-                          className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
+                          className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
                             done
                               ? "bg-primary border-primary text-white"
                               : active
@@ -373,9 +376,17 @@ const TeamBookingTracking = () => {
             booking.assignedPorters?.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    Assigned Team ({booking.assignedPorters.length} porters)
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      Assigned Team ({booking.assignedPorters.length} porters)
+                    </div>
+                    <button
+                      onClick={() => setIsChatOpen(!isChatOpen)}
+                      className="p-2 rounded-full bg-primary text-white shadow-sm hover:bg-primary/90 flex items-center justify-center transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -427,6 +438,17 @@ const TeamBookingTracking = () => {
           )}
         </div>
       </div>
+
+      {/* Floating Chat Box */}
+      {isChatOpen && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <ChatBox 
+            bookingId={bookingId} 
+            currentUserModel="User"
+            onClose={() => setIsChatOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

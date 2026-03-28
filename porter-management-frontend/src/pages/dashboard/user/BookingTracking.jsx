@@ -22,6 +22,8 @@ import socket from "../../../utils/socket";
 import { useCancelBooking } from "../../../apis/hooks/porterBookingsHooks";
 import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
+import { MessageSquare } from "lucide-react";
+import ChatBox from "@/components/chat/ChatBox";
 
 const STATUS_STEPS = [
   { key: "WAITING_PORTER", label: "Searching for porter", icon: Clock },
@@ -48,6 +50,8 @@ const BookingTracking = () => {
   const [porterLocation, setPorterLocation] = useState(null);
   const [acceptedPorter, setAcceptedPorter] = useState(porter || null);
   const sseRef = useRef(null);
+
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { mutateAsync: cancelBooking, isPending: cancelling } =
     useCancelBooking();
@@ -262,6 +266,12 @@ const BookingTracking = () => {
                       <button className="p-2 rounded-full bg-white border border-gray-200 shadow-sm">
                         <PhoneCall className="w-4 h-4 text-primary" />
                       </button>
+                      <button
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                        className="p-2 rounded-full bg-primary text-white border border-primary shadow-sm hover:bg-primary/90"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
                     </div>
                   </>
                 )}
@@ -330,6 +340,17 @@ const BookingTracking = () => {
           </p>
         )}
       </div>
+
+      {/* Floating Chat Box */}
+      {isChatOpen && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <ChatBox
+            bookingId={bookingId}
+            currentUserModel="User"
+            onClose={() => setIsChatOpen(false)}
+          />
+        </div>
+      )}
     </PageLayout>
   );
 };

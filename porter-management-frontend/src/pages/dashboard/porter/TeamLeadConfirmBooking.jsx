@@ -24,6 +24,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,7 @@ import {
 } from "../../../apis/hooks/porterTeamHooks";
 import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
+import ChatBox from "@/components/chat/ChatBox";
 
 // ─── Status badge helpers ─────────────────────────────────────────────────────
 
@@ -67,8 +69,6 @@ const PORTER_STATUS_DISPLAY = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 const TeamLeadConfirmBooking = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,14 +80,11 @@ const TeamLeadConfirmBooking = () => {
     requiredMembers = 1,
   } = location.state || {};
 
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const sseRef = useRef(null);
 
   // ── React Query ────────────────────────────────────────────────────────────
-  const {
-    data: booking,
-    isLoading,
-    refetch,
-  } = useGetBookingById(bookingId);
+  const { data: booking, isLoading, refetch } = useGetBookingById(bookingId);
 
   const { mutateAsync: confirmBooking, isPending: confirming } =
     useTeamLeadConfirmBooking();
@@ -171,9 +168,12 @@ const TeamLeadConfirmBooking = () => {
     return { porterId, status };
   });
 
-  const acceptedCount = porterRows.filter((p) => p.status === "ACCEPTED").length;
+  const acceptedCount = porterRows.filter(
+    (p) => p.status === "ACCEPTED",
+  ).length;
   const canConfirm =
-    currentStatus === "WAITING_PORTER_RESPONSE" && acceptedCount >= requiredMembers;
+    currentStatus === "WAITING_PORTER_RESPONSE" &&
+    acceptedCount >= requiredMembers;
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleConfirm = async () => {
@@ -252,7 +252,9 @@ const TeamLeadConfirmBooking = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Accepted So Far</span>
-                <span className={`font-semibold ${acceptedCount >= requiredMembers ? "text-green-600" : "text-orange-500"}`}>
+                <span
+                  className={`font-semibold ${acceptedCount >= requiredMembers ? "text-green-600" : "text-orange-500"}`}
+                >
                   {acceptedCount} / {requiredMembers}
                 </span>
               </div>
@@ -334,20 +336,28 @@ const TeamLeadConfirmBooking = () => {
                 </Button>
               )}
 
-              {/* CONFIRMED: show completion button */}
+              {/* CONFIRMED: show completion button and chat */}
               {currentStatus === "CONFIRMED" && (
-                <Button
-                  className="w-full h-11 font-semibold bg-green-600 hover:bg-green-700"
-                  disabled={completing}
-                  onClick={handleComplete}
-                >
-                  {completing ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                  )}
-                  {completing ? "Completing…" : "Mark as Completed"}
-                </Button>
+                <div className="flex gap-2 w-full">
+                  <Button
+                    className="flex-1 h-11 font-semibold bg-green-600 hover:bg-green-700"
+                    disabled={completing}
+                    onClick={handleComplete}
+                  >
+                    {completing ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    )}
+                    {completing ? "Completing…" : "Mark as Completed"}
+                  </Button>
+                  <Button
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className="h-11 w-11 px-0 shrink-0"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                  </Button>
+                </div>
               )}
 
               {/* COMPLETED state */}
@@ -371,6 +381,17 @@ const TeamLeadConfirmBooking = () => {
           </Card>
         </div>
       </div>
+
+      {/* Floating Chat Box */}
+      {isChatOpen && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <ChatBox
+            bookingId={bookingId}
+            currentUserModel="PorterTeam"
+            onClose={() => setIsChatOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

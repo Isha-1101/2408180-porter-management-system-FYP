@@ -32,6 +32,7 @@ import {
   useRejectPorterBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
 import socket from "../../../utils/socket";
+import ChatBox from "@/components/chat/ChatBox";
 
 const normalize = (b) => ({
   id: b._id || b.id || "N/A",
@@ -59,6 +60,7 @@ const AcceptedBookingDetails = () => {
 
   const [currentStatus, setCurrentStatus] = useState(booking.status);
   const [porterLocation, setPorterLocation] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { mutateAsync: completeBooking, isPending: completing } =
     useCompleteBooking();
@@ -185,10 +187,19 @@ const AcceptedBookingDetails = () => {
                   {booking.userPhone && (
                     <a
                       href={`tel:${booking.userPhone}`}
-                      className="p-2 rounded-full border border-gray-200 hover:bg-gray-50"
+                      className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 flex items-center justify-center"
                     >
                       <Phone className="h-4 w-4 text-primary" />
                     </a>
+                  )}
+                  {/* Chat Button */}
+                  {(currentStatus === "CONFIRMED" || currentStatus === "IN_PROGRESS") && (
+                    <button
+                      onClick={() => setIsChatOpen(!isChatOpen)}
+                      className="p-2 rounded-full bg-primary text-white border border-primary shadow-sm hover:bg-primary/90 flex items-center justify-center"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
               </div>
@@ -347,6 +358,17 @@ const AcceptedBookingDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Chat Box */}
+      {isChatOpen && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <ChatBox 
+            bookingId={booking.bookingId} 
+            currentUserModel="Porters"
+            onClose={() => setIsChatOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
