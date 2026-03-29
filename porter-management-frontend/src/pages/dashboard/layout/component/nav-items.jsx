@@ -12,8 +12,8 @@ import {
 import { usePorter } from "../../../../hooks/porter/use-porter";
 
 const getNavItems = (role) => {
-  const { porterData } = usePorter();
-  const isPorterATeamOwner = porterData?.data?.porter[0]?.porterType === "team";
+  const { porter } = usePorter();
+  const isPorterATeamOwner = porter?.porterType === "team";
 
   const userItems = [
     {

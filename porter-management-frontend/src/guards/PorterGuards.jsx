@@ -6,7 +6,7 @@ import UiLoader from "../components/common/UiLoader";
 
 /**
  * PorterGuards - Main guard for porter dashboard routes
- * 
+ *
  * Flow:
  * 1. User must be authenticated and have role "porter"
  * 2. Check if porter has completed registration:

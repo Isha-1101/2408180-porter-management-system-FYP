@@ -49,9 +49,9 @@ export const createTeamBooking = async (req, res) => {
       vehicleType,
       numberOfVehicles,
     } = req.body;
-
     const userId = req.user.id;
 
+    // ── Validation ──────────────────────────────────────────────────────────
     if (!pickup || !drop || !teamSize) {
       await session.abortTransaction();
       session.endSession();
@@ -61,7 +61,34 @@ export const createTeamBooking = async (req, res) => {
       });
     }
 
-    // Create booking
+    if (!pickup.lat || !pickup.lng) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Pickup latitude and longitude are required",
+      });
+    }
+
+    if (!drop.lat || !drop.lng) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Drop-off latitude and longitude are required",
+      });
+    }
+
+    if (teamSize < 1) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Team size must be at least 1",
+      });
+    }
+
+    // ── Create booking ──────────────────────────────────────────────────────
     const [bookingDoc] = await PorterBooking.create(
       [
         {
@@ -83,7 +110,7 @@ export const createTeamBooking = async (req, res) => {
       { session },
     );
 
-    // Find ALL active teams that have enough members (no radius filter for pre-bookings)
+    // ── Find ALL active teams with enough available members ──────────────
     const activeTeams = await PorterTeam.find({ isActive: true }).session(
       session,
     );
@@ -100,15 +127,19 @@ export const createTeamBooking = async (req, res) => {
     const teamLeadsToNotify = [];
 
     for (const team of activeTeams) {
-      // Count active verified workers in this team
+      // Count active verified workers in this team who can accept bookings
       const memberCount = await Porters.countDocuments({
         teamId: team._id,
         role: "worker",
         status: "active",
         isVerified: true,
+        canAcceptBooking: true,
       }).session(session);
 
-      if (memberCount < teamSize) continue;
+      // Skip teams that don't have enough available members
+      if (memberCount < teamSize) {
+        continue;
+      }
 
       // Find the team lead (owner)
       const teamLead = await Porters.findOne({
@@ -136,7 +167,12 @@ export const createTeamBooking = async (req, res) => {
         );
       }
 
-      teamLeadsToNotify.push({ teamLead, teamId: team._id, distance });
+      teamLeadsToNotify.push({
+        teamLead,
+        teamId: team._id,
+        distance,
+        memberCount,
+      });
     }
 
     if (!teamLeadsToNotify.length) {
@@ -148,10 +184,11 @@ export const createTeamBooking = async (req, res) => {
       });
     }
 
-    // Create porter requests for all matching team leads
+    // ── Create porter requests for ALL matching team leads ───────────────
     const porterRequests = teamLeadsToNotify.map((item) => ({
       bookingId: bookingDoc._id,
       porterId: item.teamLead._id,
+      teamId: item.teamId,
       distanceKm: Number(item.distance.toFixed(2)),
       notificationType: "TEAM_LEAD",
       isTeamLead: true,
@@ -166,7 +203,7 @@ export const createTeamBooking = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Fire SSE notifications to each team lead (async, non-blocking)
+    // ── Fire SSE notifications to EACH team lead (async, non-blocking) ──
     for (const item of teamLeadsToNotify) {
       const { teamLead } = item;
       const notificationPayload = {
@@ -180,6 +217,7 @@ export const createTeamBooking = async (req, res) => {
         bookingDate: bookingDoc.bookingDate,
         bookingTime: bookingDoc.bookingTime,
         distance: item.distance,
+        memberCount: item.memberCount,
         notificationType: "TEAM_LEAD",
         isTeamLead: true,
       };
@@ -305,6 +343,7 @@ export const teamLeadAcceptBooking = async (req, res) => {
       role: "worker",
       status: "active",
       isVerified: true,
+      canAcceptBooking: true,
     })
       .populate("userId", "name email phone")
       .session(session);

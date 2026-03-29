@@ -12,7 +12,6 @@ import {
 } from "../../../components/ui/sidebar";
 import { useAuthStore } from "../../../store/auth.store";
 import getNavItems from "./component/nav-items";
-import { usePorter } from "../../../hooks/porter/use-porter";
 
 const AppSidebar = () => {
   const user = useAuthStore((state) => state.user);

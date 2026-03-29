@@ -60,19 +60,14 @@ export default function PorterDashboard() {
   const token = useAuthStore((s) => s.access_token);
   const navigate = useNavigate();
 
-  // If this porter is a team owner, redirect to team-owner dashboard
-  if (!porterLoading && porter?.role === "owner") {
-    return <Navigate to="/dashboard/porters/team-owner" replace />;
-  }
-
   // Live socket-pushed requests (merged on top of API data)
   const [liveRequests, setLiveRequests] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("distance");
+  const [porterLocation, setPorterLocation] = useState(null);
 
   const intervalRef = useRef(null);
   const sseRef = useRef(null);
-  const [porterLocation, setPorterLocation] = useState(null);
 
   // Real API data
   const {
@@ -239,6 +234,21 @@ export default function PorterDashboard() {
       sseRef.current?.close();
     };
   }, [refetch, token]);
+
+  // ── Early returns (MUST be after all hooks) ─────────────────────────────────
+  if (porterLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-gray-600">Loading Porter Dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+  if (porter?.role === "owner") {
+    return <Navigate to="/dashboard/porters/team-owner" replace />;
+  }
 
   // ── Individual: Accept handler ──────────────────────────────────────────────
   const handleAcceptRequest = async (bookingId, requestData) => {

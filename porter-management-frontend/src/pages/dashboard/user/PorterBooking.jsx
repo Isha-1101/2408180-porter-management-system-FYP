@@ -184,11 +184,7 @@ const PorterBooking = () => {
           address: dropoff.address || "",
         },
         weightKg: weight,
-        teamSize: null,
-        requirements: null,
-        numberOfVehicles: null,
-        bookingDate,
-        bookingTime,
+        hasVehicle: hasVehicle,
         vehicleType: hasVehicle ? vehicleType : null,
         purpose: purpose,
         no_of_floors: numberOfFloors,
@@ -735,7 +731,9 @@ const PorterBooking = () => {
                     {porterType === "team" && createTeamBookingPending && (
                       <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     )}
-                    {porterType === "team" ? "Book Team Porter" : "Find Porters"}
+                    {porterType === "team"
+                      ? "Book Team Porter"
+                      : "Find Porters"}
                   </Button>
                 </div>
               </CardContent>

@@ -25,9 +25,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
-import {
-  useGetPorterBookings,
-} from "../../../apis/hooks/porterBookingsHooks";
+import { useGetPorterBookings } from "../../../apis/hooks/porterBookingsHooks";
 import {
   useTeamLeadAcceptBooking,
   useTeamLeadRejectBooking,
@@ -67,8 +65,10 @@ export default function TeamOwnerDashboard() {
   } = useGetPorterBookings();
 
   // ── Mutations ────────────────────────────────────────────────────────────────
-  const { mutateAsync: teamLeadAccept, isPending: accepting } = useTeamLeadAcceptBooking();
-  const { mutateAsync: teamLeadReject, isPending: rejecting } = useTeamLeadRejectBooking();
+  const { mutateAsync: teamLeadAccept, isPending: accepting } =
+    useTeamLeadAcceptBooking();
+  const { mutateAsync: teamLeadReject, isPending: rejecting } =
+    useTeamLeadRejectBooking();
 
   // Merge live socket requests with API pending requests
   const apiRequests = apiData?.pendingRequests || [];
@@ -93,7 +93,9 @@ export default function TeamOwnerDashboard() {
     const onBookingRequest = (data) => {
       if (data.notificationType !== "TEAM_LEAD" && !data.isTeamLead) return;
       setLiveRequests((prev) => {
-        const exists = prev.some((r) => r.bookingId === data.bookingId?.toString());
+        const exists = prev.some(
+          (r) => r.bookingId === data.bookingId?.toString(),
+        );
         if (exists) return prev;
         return [{ ...data, _isLive: true }, ...prev];
       });
@@ -108,7 +110,9 @@ export default function TeamOwnerDashboard() {
         "new-booking-request": (data) => {
           if (data.notificationType !== "TEAM_LEAD" && !data.isTeamLead) return;
           setLiveRequests((prev) => {
-            const exists = prev.some((r) => r.bookingId === String(data.bookingId));
+            const exists = prev.some(
+              (r) => r.bookingId === String(data.bookingId),
+            );
             if (exists) return prev;
             return [{ ...data, _isLive: true, _sse: true }, ...prev];
           });
@@ -129,7 +133,8 @@ export default function TeamOwnerDashboard() {
     try {
       const res = await teamLeadAccept(bookingId);
       const bookingData = res?.data?.booking;
-      const requiredMembers = res?.data?.requiredMembers || bookingData?.teamSize || 1;
+      const requiredMembers =
+        res?.data?.requiredMembers || bookingData?.teamSize || 1;
       navigate("/dashboard/porters/team-lead/confirm-booking", {
         state: {
           bookingId: bookingData?._id || bookingId,
@@ -179,7 +184,9 @@ export default function TeamOwnerDashboard() {
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${bookingsLoading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${bookingsLoading ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -190,17 +197,23 @@ export default function TeamOwnerDashboard() {
           <CardContent className="py-3 px-4 flex flex-wrap items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
-                {String(porter?.userId?.name || "T").charAt(0).toUpperCase()}
+                {String(porter?.user?.name || "T")
+                  .charAt(0)
+                  .toUpperCase()}
               </div>
               <div>
-                <p className="font-semibold text-gray-800">{porter?.userId?.name || "Team Owner"}</p>
+                <p className="font-semibold text-gray-800">
+                  {porter?.user?.name || "Team Owner"}
+                </p>
                 <p className="text-xs text-gray-500">Team Owner</p>
               </div>
             </div>
             <Separator orientation="vertical" className="h-8 hidden sm:block" />
             <div className="text-xs text-gray-600">
               <span className="font-medium">Team ID:</span>{" "}
-              <span className="font-mono">#{String(porter?.teamId).slice(-6).toUpperCase()}</span>
+              <span className="font-mono">
+                #{String(porter?.teamId).slice(-6).toUpperCase()}
+              </span>
             </div>
             <Badge className="bg-green-100 text-green-700 border-green-200 ml-auto">
               Online
@@ -240,9 +253,12 @@ export default function TeamOwnerDashboard() {
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
                   <Bell className="w-8 h-8 text-gray-400" />
                 </div>
-                <p className="text-sm font-medium text-gray-900">No pending requests</p>
+                <p className="text-sm font-medium text-gray-900">
+                  No pending requests
+                </p>
                 <p className="text-xs text-gray-500">
-                  New pre-booking requests for your team will appear here in real time.
+                  New pre-booking requests for your team will appear here in
+                  real time.
                 </p>
               </div>
             ) : (
@@ -252,13 +268,25 @@ export default function TeamOwnerDashboard() {
                   const bookingId = isLive
                     ? request.bookingId
                     : request.bookingId?._id || request._id;
-                  const pickup = isLive ? request.pickup : request.bookingId?.pickup;
+                  const pickup = isLive
+                    ? request.pickup
+                    : request.bookingId?.pickup;
                   const drop = isLive ? request.drop : request.bookingId?.drop;
-                  const weightKg = isLive ? request.weightKg : request.bookingId?.weightKg;
-                  const teamSize = isLive ? request.teamSize : request.bookingId?.teamSize;
-                  const requirements = isLive ? request.requirements : request.bookingId?.requirements;
-                  const bookingDate = isLive ? request.bookingDate : request.bookingId?.bookingDate;
-                  const bookingTime = isLive ? request.bookingTime : request.bookingId?.bookingTime;
+                  const weightKg = isLive
+                    ? request.weightKg
+                    : request.bookingId?.weightKg;
+                  const teamSize = isLive
+                    ? request.teamSize
+                    : request.bookingId?.teamSize;
+                  const requirements = isLive
+                    ? request.requirements
+                    : request.bookingId?.requirements;
+                  const bookingDate = isLive
+                    ? request.bookingDate
+                    : request.bookingId?.bookingDate;
+                  const bookingTime = isLive
+                    ? request.bookingTime
+                    : request.bookingId?.bookingTime;
                   const distanceKm = request.distanceKm;
 
                   return (
@@ -278,7 +306,10 @@ export default function TeamOwnerDashboard() {
                               <Users className="w-3 h-3 mr-1" />
                               Pre-Booking Request
                             </Badge>
-                            <Badge variant="outline" className="text-xs font-mono">
+                            <Badge
+                              variant="outline"
+                              className="text-xs font-mono"
+                            >
                               #{String(bookingId).slice(-6).toUpperCase()}
                             </Badge>
                           </div>
@@ -299,7 +330,9 @@ export default function TeamOwnerDashboard() {
                             <AddressLine location={pickup} dot="green" />
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">Drop-off</p>
+                            <p className="text-xs text-gray-500 mb-1">
+                              Drop-off
+                            </p>
                             <AddressLine location={drop} dot="red" />
                           </div>
                         </div>
@@ -321,7 +354,9 @@ export default function TeamOwnerDashboard() {
                           {bookingDate && (
                             <div className="flex items-center gap-1">
                               <CalendarDays className="h-4 w-4 text-gray-400" />
-                              <span>{new Date(bookingDate).toLocaleDateString()}</span>
+                              <span>
+                                {new Date(bookingDate).toLocaleDateString()}
+                              </span>
                             </div>
                           )}
                           {bookingTime && (

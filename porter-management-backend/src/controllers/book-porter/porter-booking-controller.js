@@ -23,8 +23,9 @@ export const searchNearbyPorters = async (req, res) => {
       requiredTeamSize = 1,
       radiusKm = 5,
     } = req.body;
-
+    console.log({ reqBody: req.body });
     const bookingType = req.params.bookingType;
+    console.log({ bookingType });
     const wghtInNum = Number(weightKg);
     const matchQuery = {
       porterType: bookingType,
@@ -37,57 +38,6 @@ export const searchNearbyPorters = async (req, res) => {
     if (bookingType === "team") {
       matchQuery.teamSize = { $gte: requiredTeamSize };
     }
-
-    // const pipeline = [
-    //   {
-    //     $geoNear: {
-    //       near: {
-    //         type: "Point",
-    //         coordinates: [pickup.lng, pickup.lat],
-    //       },
-    //       maxDistance: radiusKm * 10000,
-    //       distanceField: "distanceMeters",
-    //       spherical: true,
-    //       query: matchQuery,
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "portervehicles",
-    //       localField: "registrationId",
-    //       foreignField: "registrationId",
-    //       as: "vehicle",
-    //     },
-    //   },
-    //   {
-    //     $unwind: {
-    //       path: "$vehicle",
-    //       preserveNullAndEmptyArrays: true,
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "porterbasicinfos",
-    //       localField: "registrationId",
-    //       foreignField: "registrationId",
-    //       as: "basicInfo",
-    //     },
-    //   },
-    //   { $unwind: { path: "$basicInfo", preserveNullAndEmptyArrays: true } },
-
-    //   ...(hasVehicle
-    //     ? [
-    //         {
-    //           $match: {
-    //             "vehicle.hasVehicle": hasVehicle,
-    //             "vehicle.vehicleCategory": vehicleType,
-    //           },
-    //         },
-    //       ]
-    //     : []),
-    //   { $sort: { distanceMeters: 1 } },
-    //   { $limit: 5 },
-    // ];
 
     const pipeline = [
       {
