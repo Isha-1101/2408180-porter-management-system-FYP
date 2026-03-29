@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   CheckCircle2,
   Circle,
@@ -30,13 +30,9 @@ import {
   Truck,
   MessageSquare,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BackButton } from "../../../components/common/BackButton";
@@ -110,10 +106,11 @@ const STATUS_BADGE = {
 const TeamBookingTracking = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { bookingId: paramBookingId } = useParams();
   const token = useAuthStore((s) => s.access_token);
 
-  // bookingId is passed via navigation state after creating the booking
-  const bookingId = location.state?.bookingId;
+  // bookingId is passed via navigation state OR URL param (from Orders page)
+  const bookingId = location.state?.bookingId || paramBookingId;
 
   // Local status override (updated via SSE before next poll)
   const [liveStatus, setLiveStatus] = useState(null);
@@ -123,12 +120,13 @@ const TeamBookingTracking = () => {
 
   // ── Data fetching (polls every 10 s) ───────────────────────────────────────
   const {
-    data: booking,
+    data: bookingData,
     isLoading,
     isError,
     refetch,
   } = useGetBookingById(bookingId);
-
+  const booking = bookingData?.booking;
+  console.log(booking);
   const { mutateAsync: cancelBooking, isPending: cancelling } =
     useCancelBooking();
 
@@ -316,19 +314,23 @@ const TeamBookingTracking = () => {
                     <MapPin className="w-3 h-3 text-green-500" />
                     Pickup
                   </p>
-                  <AddressLine location={booking.pickup} dot="green" />
+                  <span className="text-sm font-medium line-clamp-2">
+                    {booking.pickup.address}
+                  </span>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                     <Navigation className="w-3 h-3 text-red-500" />
                     Drop-off
                   </p>
-                  <AddressLine location={booking.drop} dot="red" />
+                  <span className="text-sm font-medium line-clamp-2">
+                    {booking.drop.address}
+                  </span>
                 </div>
               </div>
               <Separator />
               {/* Booking meta */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-gray-500 text-xs">Team Size</p>
                   <p className="font-semibold flex items-center gap-1">
@@ -343,6 +345,15 @@ const TeamBookingTracking = () => {
                     {booking.weightKg} kg
                   </p>
                 </div>
+                {booking.purpose_of_booking && (
+                  <div>
+                    <p className="text-gray-500 text-xs">Purpose</p>
+                    <p className="font-semibold capitalize flex items-center gap-1">
+                      {booking.purpose_of_booking === "delivery" ? "📦" : "🚚"}{" "}
+                      {booking.purpose_of_booking}
+                    </p>
+                  </div>
+                )}
                 {booking.bookingDate && (
                   <div>
                     <p className="text-gray-500 text-xs">Date</p>
@@ -352,24 +363,55 @@ const TeamBookingTracking = () => {
                     </p>
                   </div>
                 )}
-                {booking.vehicleType && (
+                {booking.bookingTime && (
                   <div>
-                    <p className="text-gray-500 text-xs">Vehicle</p>
+                    <p className="text-gray-500 text-xs">Time</p>
                     <p className="font-semibold flex items-center gap-1">
-                      <Truck className="w-3 h-3 text-primary" />
-                      {booking.vehicleType}
+                      <Clock className="w-3 h-3 text-primary" />
+                      {booking.bookingTime}
                     </p>
                   </div>
                 )}
+                {booking.hasVehicle && booking.vehicleType && (
+                  <div>
+                    <p className="text-gray-500 text-xs">Vehicle</p>
+                    <p className="font-semibold flex items-center gap-1 capitalize">
+                      <Truck className="w-3 h-3 text-primary" />
+                      {booking.vehicleType}
+                      {booking.numberOfVehicles ? ` ×${booking.numberOfVehicles}` : ""}
+                    </p>
+                  </div>
+                )}
+                {booking.noOfFloors != null && booking.noOfFloors > 0 && (
+                  <div>
+                    <p className="text-gray-500 text-xs">Floors</p>
+                    <p className="font-semibold">{booking.noOfFloors} floor(s)</p>
+                  </div>
+                )}
+                {booking.no_of_trips != null && booking.no_of_trips > 0 && (
+                  <div>
+                    <p className="text-gray-500 text-xs">Trips</p>
+                    <p className="font-semibold">{booking.no_of_trips} trip(s)</p>
+                  </div>
+                )}
               </div>
+              {/* Has lift badge */}
+              {booking.hasLift && (
+                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+                  ✓ Elevator / Lift available at pickup
+                </div>
+              )}
               {booking.requirements && (
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Requirements</p>
-                  <p className="text-sm text-gray-700">{booking.requirements}</p>
+                  <p className="text-xs text-gray-500 mb-1">Special Requirements</p>
+                  <p className="text-sm text-gray-700">
+                    {booking.requirements}
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
+
 
           {/* Confirmed team info (shown once CONFIRMED) */}
           {currentStatus === "CONFIRMED" &&
@@ -442,8 +484,8 @@ const TeamBookingTracking = () => {
       {/* Floating Chat Box */}
       {isChatOpen && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
-          <ChatBox 
-            bookingId={bookingId} 
+          <ChatBox
+            bookingId={bookingId}
             currentUserModel="User"
             onClose={() => setIsChatOpen(false)}
           />

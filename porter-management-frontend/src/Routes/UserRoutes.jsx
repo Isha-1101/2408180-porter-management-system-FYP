@@ -36,6 +36,15 @@ const userRoutes = [
     path: "booking/team-tracking",
     element: <TeamBookingTracking />,
   },
+  // Support direct navigation from Orders with bookingId in URL
+  {
+    path: "booking/team-tracking/:bookingId",
+    element: <TeamBookingTracking />,
+  },
+  {
+    path: "booking/tracking/:bookingId",
+    element: <BookingTracking />,
+  },
   {
     path: "booking/payment",
     element: <Payment />,

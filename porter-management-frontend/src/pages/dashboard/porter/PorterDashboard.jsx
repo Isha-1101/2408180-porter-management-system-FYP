@@ -12,6 +12,7 @@ import {
   Bell,
   Users,
   CalendarDays,
+  Layers,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
 import {
@@ -559,14 +560,16 @@ export default function PorterDashboard() {
                             </div>
 
                             {/* Common detail row */}
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <Package className="h-4 w-4 text-gray-400" />
-                                <span>{weightKg} kg</span>
-                              </div>
-                              {vehicleType && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-gray-600">
+                              {weightKg && (
                                 <div className="flex items-center gap-1">
-                                  <Truck className="h-4 w-4 text-gray-400" />
+                                  <Package className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                  <span>{weightKg} kg</span>
+                                </div>
+                              )}
+                              {vehicleType && (
+                                <div className="flex items-center gap-1 capitalize">
+                                  <Truck className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                                   <span>{vehicleType}</span>
                                 </div>
                               )}
@@ -574,7 +577,7 @@ export default function PorterDashboard() {
                               {(isTeamLeadRequest || isTeamMemberRequest) &&
                                 teamSize && (
                                   <div className="flex items-center gap-1">
-                                    <Users className="h-4 w-4 text-gray-400" />
+                                    <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                                     <span>{teamSize} porters needed</span>
                                   </div>
                                 )}
@@ -582,7 +585,7 @@ export default function PorterDashboard() {
                               {(isTeamLeadRequest || isTeamMemberRequest) &&
                                 bookingDate && (
                                   <div className="flex items-center gap-1">
-                                    <CalendarDays className="h-4 w-4 text-gray-400" />
+                                    <CalendarDays className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                                     <span>
                                       {new Date(
                                         bookingDate,
@@ -590,7 +593,46 @@ export default function PorterDashboard() {
                                     </span>
                                   </div>
                                 )}
+                              {/* Team-specific: booking time */}
+                              {(isTeamLeadRequest || isTeamMemberRequest) &&
+                                (request.bookingId?.bookingTime || request.bookingTime) && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                    <span>
+                                      {request.bookingId?.bookingTime || request.bookingTime}
+                                    </span>
+                                  </div>
+                                )}
+                              {/* Purpose of booking */}
+                              {(isTeamLeadRequest || isTeamMemberRequest) &&
+                                (request.bookingId?.purpose_of_booking || request.purpose_of_booking) && (
+                                  <div className="flex items-center gap-1">
+                                    <span>
+                                      {(request.bookingId?.purpose_of_booking || request.purpose_of_booking) === "delivery"
+                                        ? "📦 Delivery"
+                                        : "🚚 Transportation"}
+                                    </span>
+                                  </div>
+                                )}
+                              {/* Floors */}
+                              {(isTeamLeadRequest || isTeamMemberRequest) &&
+                                (request.bookingId?.noOfFloors || request.noOfFloors) > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <Layers className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                    <span>
+                                      {request.bookingId?.noOfFloors || request.noOfFloors} floor(s)
+                                    </span>
+                                  </div>
+                                )}
                             </div>
+
+                            {/* Lift badge */}
+                            {(isTeamLeadRequest || isTeamMemberRequest) &&
+                              (request.bookingId?.hasLift || request.hasLift) && (
+                                <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded border border-green-100 inline-block">
+                                  ✓ Elevator / lift available
+                                </p>
+                              )}
 
                             {/* Team requirements note */}
                             {requirements && (
@@ -603,6 +645,7 @@ export default function PorterDashboard() {
                             )}
                           </div>
                         </CardContent>
+
 
                         {/* ── Action buttons (differ by request type) ─── */}
                         <CardFooter className="p-4 pt-0">
@@ -673,7 +716,7 @@ export default function PorterDashboard() {
                                 </Button>
                                 <Button
                                   size="sm"
-                                  className="w-28 bg-blue-600 hover:bg-blue-700"
+                                  className="w-28 bg-primary hover:bg-primary/80"
                                   disabled={teamMemberResponding}
                                   onClick={() =>
                                     handleTeamMemberRespond(

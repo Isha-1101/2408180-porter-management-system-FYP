@@ -39,7 +39,7 @@ io.on("connection", (socket) => {
 
   socket.on("porter-location", async (data) => {
     const { porterId, lat, lng } = data;
-    console.log("Received location:", { porterId, lat, lng });
+    // console.log("Received location:", { porterId, lat, lng });
 
     try {
       // Get porter details to find teamId

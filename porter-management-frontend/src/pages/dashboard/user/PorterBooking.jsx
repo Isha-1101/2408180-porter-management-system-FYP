@@ -106,6 +106,38 @@ const PorterBooking = () => {
   const [hasLift, setHasLift] = useState(false);
   const [numberOfTrips, setNumberOfTrips] = useState("");
   const [totalPrice, setTotalPrice] = useState("");
+  const [formError, setFormError] = useState("");
+
+  // ── Validation ───────────────────────────────────────────────────────────
+  const validateForm = () => {
+    if (!pickup.lat || !pickup.lng) return "Please select a pickup location.";
+    if (!dropoff.lat || !dropoff.lng) return "Please select a drop-off location.";
+
+    if (porterType === "individual") {
+      if (!purpose) return "Please select a purpose of booking.";
+      if (!weight || Number(weight) < 5) return "Weight must be at least 5 kg.";
+      if (hasVehicle && !vehicleType) return "Please select a vehicle type.";
+    }
+
+    if (porterType === "team") {
+      if (!teamSize || Number(teamSize) < 1) return "Number of porters must be at least 1.";
+      if (!weight || Number(weight) < 5) return "Weight must be at least 5 kg.";
+      if (!purpose) return "Please select a purpose of booking.";
+      if (hasVehicle && !vehicleType) return "Please select a vehicle type.";
+      if (hasVehicle && numberOfVehicles && Number(numberOfVehicles) < 1)
+        return "Number of vehicles must be at least 1.";
+      // booking date must be today or future
+      if (bookingDate) {
+        const selectedDate = new Date(bookingDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDate < today) return "Booking date must be today or a future date.";
+      }
+      if (bookingDate && !bookingTime) return "Please provide a booking time when a date is selected.";
+    }
+
+    return null;
+  };
 
   // ── Mutation hooks ────────────────────────────────────────────────────────
   // Individual porter: search nearby, then book
@@ -134,6 +166,13 @@ const PorterBooking = () => {
    *  - Team: creates the booking directly and navigates to tracking page.
    */
   const handleSearch = async () => {
+    const error = validateForm();
+    if (error) {
+      setFormError(error);
+      return;
+    }
+    setFormError("");
+
     // ── Team Porter: direct booking creation ──────────────────────────────
     if (porterType === "team") {
       try {
@@ -153,9 +192,13 @@ const PorterBooking = () => {
           requirements: requirements || null,
           bookingDate: bookingDate || null,
           bookingTime: bookingTime || null,
-          hasVehicle: hasVehicle,
+          hasVehicle,
           vehicleType: hasVehicle ? vehicleType : null,
           numberOfVehicles: hasVehicle ? Number(numberOfVehicles) : null,
+          purpose_of_booking: purpose || "transportation",
+          noOfFloors: numberOfFloors ? Number(numberOfFloors) : null,
+          hasLift: hasLift,
+          no_of_trips: numberOfTrips ? Number(numberOfTrips) : null,
         });
 
         // Navigate user to the real-time team booking tracking page
@@ -607,6 +650,7 @@ const PorterBooking = () => {
                   </div>
                 )}
 
+                {/* ── Team-specific fields ── */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                   {/* Team Size Input (Only for Team Porter) */}
                   {porterType === "team" && (
@@ -616,7 +660,7 @@ const PorterBooking = () => {
                         className="text-sm font-medium flex items-center gap-2 text-gray-700"
                       >
                         <UserPlus className="w-4 h-4 text-primary" />
-                        Number of Porters
+                        Number of Porters <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
                         <Input
@@ -640,6 +684,150 @@ const PorterBooking = () => {
                     </div>
                   )}
 
+                  {/* Weight — always visible for team, shown by purpose for individual */}
+                  {porterType === "team" && (
+                    <div className="md:col-span-6 space-y-2">
+                      <Label
+                        htmlFor="weight-team"
+                        className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                      >
+                        <Weight className="w-4 h-4 text-primary" />
+                        Weight (kg) <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="weight-team"
+                          type="number"
+                          placeholder="Min 5kg"
+                          value={weight}
+                          min="5"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || parseFloat(val) >= 0) {
+                              setWeight(val);
+                            }
+                          }}
+                          className="pl-9 pr-12"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                          <Weight className="w-4 h-4" />
+                        </div>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium pointer-events-none bg-gray-100 px-2 py-1 rounded">
+                          kg
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Purpose of Booking — always visible for team */}
+                  {porterType === "team" && (
+                    <div className="md:col-span-12 space-y-2">
+                      <Label
+                        htmlFor="purpose-team"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Purpose of Booking <span className="text-red-500">*</span>
+                      </Label>
+                      <Select
+                        id="purpose-team"
+                        value={purpose}
+                        onValueChange={(e) => setPurpose(e)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select purpose" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="transportation">
+                            🚚 Transportation (Moving / House Shift)
+                          </SelectItem>
+                          <SelectItem value="delivery">📦 Delivery</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Transportation extras for team — floors & lift */}
+                  {porterType === "team" && purpose === "transportation" && (
+                    <>
+                      <div className="md:col-span-6 space-y-2">
+                        <label
+                          htmlFor="floors-team"
+                          className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                        >
+                          <Layers className="w-4 h-4 text-primary" />
+                          Number of Floors
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="floors-team"
+                            type="number"
+                            placeholder="e.g. 4"
+                            value={numberOfFloors}
+                            min="0"
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || parseInt(val) >= 0)
+                                setNumberOfFloors(val);
+                            }}
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          />
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <Layers className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="md:col-span-6 space-y-2 h-[68px] flex flex-col justify-end">
+                        <div className="flex items-center justify-between p-2 lg:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm text-gray-700">
+                              Elevator / Lift available?
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setHasLift(!hasLift)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasLift ? "bg-primary" : "bg-gray-300"}`}
+                            type="button"
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasLift ? "translate-x-6" : "translate-x-1"}`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Number of trips for team */}
+                  {porterType === "team" && purpose && (
+                    <div className="md:col-span-6 space-y-2">
+                      <label
+                        htmlFor="numberOfTrips-team"
+                        className="text-sm font-medium flex items-center gap-2 text-gray-700"
+                      >
+                        <Route className="w-4 h-4 text-primary" />
+                        Number of Trips
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="numberOfTrips-team"
+                          type="number"
+                          placeholder="e.g. 1"
+                          value={numberOfTrips}
+                          min="1"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || parseInt(val) >= 1)
+                              setNumberOfTrips(val);
+                          }}
+                          className="flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                          <Route className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Requirements Input (Only for Team Porter) */}
                   {porterType === "team" && (
                     <div className="md:col-span-12 space-y-2">
@@ -648,7 +836,7 @@ const PorterBooking = () => {
                         className="text-sm font-medium flex items-center gap-2 text-gray-700"
                       >
                         <Search className="w-4 h-4 text-primary" />
-                        Requirements
+                        Special Requirements
                       </Label>
                       <textarea
                         id="requirements"
@@ -669,7 +857,7 @@ const PorterBooking = () => {
                           className="text-sm font-medium flex items-center gap-2 text-gray-700"
                         >
                           <CalendarDays className="w-4 h-4 text-primary" />
-                          Booking Date
+                          Booking Date <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="bookingDate"
@@ -716,8 +904,18 @@ const PorterBooking = () => {
                   />
                 )}
 
+                {/* Validation error banner */}
+                {formError && (
+                  <div className="flex items-start gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 012 0v4a1 1 0 01-2 0V7zm1 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    <span>{formError}</span>
+                  </div>
+                )}
+
                 {/* Search / Book Button */}
-                <div className="pt-4 flex justify-center">
+                <div className="pt-2 flex justify-center">
                   <Button
                     className="w-full md:w-auto px-12 h-10 font-medium text-base shadow-sm hover:shadow active:scale-[0.98] transition-all bg-[#D35400] hover:bg-[#A04000] text-white"
                     onClick={handleSearch}

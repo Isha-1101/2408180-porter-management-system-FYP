@@ -3,6 +3,7 @@ import PorterBooking from "../../models/PorterBooking.js";
 import Porters from "../../models/porter/Porters.js";
 import BookingPorterRequest from "../../models/BookintgPorterRequest.js";
 import { getIO } from "../../utils/socketInstance.js";
+import sseService from "../../utils/sse-service.js";
 import {
   notifyUser,
   notifyMultiplePorters,
@@ -214,7 +215,7 @@ export const porterAcceptBooking = async (req, res) => {
     //porter stauts
     await Porters.findByIdAndUpdate(
       porterId,
-      { currentStatus: "busy" },
+      { currentStatus: "busy", canAcceptBooking: false },
       { session },
     );
 
@@ -239,6 +240,13 @@ export const porterAcceptBooking = async (req, res) => {
     } catch (socketErr) {
       console.error("Socket emit error:", socketErr.message);
     }
+
+    // Notify user via SSE (real-time tracking page update)
+    sseService.sendToUser(booking.userId, "booking-status-update", {
+      bookingId: booking._id,
+      status: "CONFIRMED",
+      message: "A porter has accepted your booking!",
+    });
 
     notifyUser(booking.userId, booking, "BOOKING_ACCEPTED").catch((err) =>
       console.error("User notification error:", err),
@@ -360,9 +368,23 @@ export const completeBooking = async (req, res) => {
       console.error("User notification error:", err),
     );
 
+    // Reset porter status to available
+    await Porters.findByIdAndUpdate(porterId, {
+      currentStatus: "online",
+      canAcceptBooking: true,
+    });
+
     // Socket event
     try {
       const io = getIO();
+      // Notify user via SSE/Socket for live tracking update
+      const sseService = await import("../../utils/sse-service.js").then(m => m.default);
+      sseService.sendToUser(booking.userId, "booking-status-update", {
+        bookingId: booking._id,
+        status: "COMPLETED",
+        message: "Your booking has been completed!",
+      });
+
       io.emit("booking-completed", {
         bookingId: booking._id,
         status: "COMPLETED",
@@ -434,6 +456,13 @@ export const startBooking = async (req, res) => {
     } catch (socketErr) {
       console.error("Socket emit error:", socketErr.message);
     }
+
+    // Notify user via SSE (real-time tracking page update)
+    sseService.sendToUser(booking.userId, "booking-status-update", {
+      bookingId: booking._id,
+      status: "IN_PROGRESS",
+      message: "Your porter has started the journey!",
+    });
 
     return res.status(200).json({
       success: true,

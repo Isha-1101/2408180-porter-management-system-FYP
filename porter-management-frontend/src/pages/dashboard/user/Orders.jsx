@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { getUserBookingsService } from "@/apis/services/porterBookingsService";
 import { submitRating, getBookingRating } from "@/apis/services/ratingService";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,9 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  Navigation,
+  Users,
+  Eye,
 } from "lucide-react";
 import PageLayout from "../../../components/common/PageLayout";
 
@@ -79,7 +83,7 @@ const STATUS_CONFIG = {
   CONFIRMED: {
     label: "Confirmed",
     cls: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: <Clock className="w-3 h-3" />,
+    icon: <CheckCircle className="w-3 h-3" />,
   },
   IN_PROGRESS: {
     label: "In Progress",
@@ -96,6 +100,16 @@ const STATUS_CONFIG = {
     cls: "bg-yellow-100 text-yellow-800 border-yellow-200",
     icon: <Clock className="w-3 h-3" />,
   },
+  WAITING_TEAM_LEAD: {
+    label: "Finding Team",
+    cls: "bg-violet-100 text-violet-800 border-violet-200",
+    icon: <Clock className="w-3 h-3" />,
+  },
+  WAITING_PORTER_RESPONSE: {
+    label: "Team Responding",
+    cls: "bg-orange-100 text-orange-800 border-orange-200",
+    icon: <Clock className="w-3 h-3" />,
+  },
 };
 
 const getStatusConfig = (s) =>
@@ -106,11 +120,36 @@ const getStatusConfig = (s) =>
   };
 
 // ────────────────────────────────────
+// Trackable status sets
+// ────────────────────────────────────
+// Team booking statuses the user can track live
+const TRACKABLE_TEAM_STATUSES = [
+  "SEARCHING",
+  "WAITING_TEAM_LEAD",
+  "WAITING_PORTER_RESPONSE",
+  "CONFIRMED",
+  "IN_PROGRESS",
+];
+
+// Individual booking statuses the user can track live
+const TRACKABLE_INDIVIDUAL_STATUSES = [
+  "WAITING_PORTER",
+  "CONFIRMED",
+  "IN_PROGRESS",
+];
+
+// ────────────────────────────────────
 // Booking Card
 // ────────────────────────────────────
-const BookingCard = ({ booking, onRate }) => {
+const BookingCard = ({ booking, onRate, onTrack }) => {
   const sc = getStatusConfig(booking.status);
   const isCompleted = booking.status === "COMPLETED";
+  const isTeam = booking.bookingType === "team";
+
+  const canTrackTeam = isTeam && TRACKABLE_TEAM_STATUSES.includes(booking.status);
+  const canTrackIndividual =
+    !isTeam && TRACKABLE_INDIVIDUAL_STATUSES.includes(booking.status);
+  const canTrack = canTrackTeam || canTrackIndividual;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -118,7 +157,11 @@ const BookingCard = ({ booking, onRate }) => {
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
           {/* Left / Icon */}
           <div className="shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Package className="w-5 h-5 text-primary" />
+            {isTeam ? (
+              <Users className="w-5 h-5 text-primary" />
+            ) : (
+              <Package className="w-5 h-5 text-primary" />
+            )}
           </div>
 
           {/* Main Content */}
@@ -163,6 +206,18 @@ const BookingCard = ({ booking, onRate }) => {
                 <Package className="w-3.5 h-3.5" />
                 {booking.weightKg} kg
               </span>
+              {isTeam && booking.teamSize && (
+                <span className="flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5" />
+                  {booking.teamSize} porters
+                </span>
+              )}
+              {booking.bookingDate && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {new Date(booking.bookingDate).toLocaleDateString()}
+                </span>
+              )}
               {booking.totalPrice > 0 && (
                 <span className="font-semibold text-gray-800">
                   ₹{booking.totalPrice}
@@ -178,7 +233,33 @@ const BookingCard = ({ booking, onRate }) => {
           </div>
 
           {/* Right / Actions */}
-          <div className="shrink-0 self-center sm:self-start">
+          <div className="shrink-0 self-center sm:self-start flex flex-col gap-2">
+            {/* Track button for active bookings */}
+            {canTrack && (
+              <Button
+                size="sm"
+                className="flex items-center gap-1.5 min-w-[90px]"
+                onClick={() => onTrack(booking)}
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                Track
+              </Button>
+            )}
+
+            {/* View details for completed team bookings */}
+            {isCompleted && isTeam && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-1.5 min-w-[90px]"
+                onClick={() => onTrack(booking)}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                Details
+              </Button>
+            )}
+
+            {/* Rate button for completed individual bookings */}
             {isCompleted && booking.assignedPorterId && (
               <RateButton
                 bookingId={booking._id}
@@ -228,7 +309,7 @@ const RateButton = ({ bookingId, porterId, onRate }) => {
     <Button
       size="sm"
       variant="outline"
-      className="flex items-center gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
+      className="flex items-center gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 min-w-[90px]"
       onClick={() => onRate({ bookingId, porterId })}
     >
       <Star className="w-3.5 h-3.5" />
@@ -337,16 +418,30 @@ const RatingModal = ({ open, onClose, target, onSubmitSuccess }) => {
 };
 
 // ────────────────────────────────────
-// Main Orders Page
+// Tab definitions
 // ────────────────────────────────────
 const TABS = [
   { value: "", label: "All Orders" },
-  { value: "CONFIRMED,IN_PROGRESS,WAITING_PORTER,SEARCHING", label: "Active" },
+  { value: "active", label: "Active" },
   { value: "COMPLETED", label: "Completed" },
   { value: "CANCELLED", label: "Cancelled" },
 ];
 
+// Active statuses (multi-value filtering done client-side)
+const ACTIVE_STATUSES = [
+  "CONFIRMED",
+  "IN_PROGRESS",
+  "WAITING_PORTER",
+  "SEARCHING",
+  "WAITING_TEAM_LEAD",
+  "WAITING_PORTER_RESPONSE",
+];
+
+// ────────────────────────────────────
+// Main Orders Page
+// ────────────────────────────────────
 const Orders = () => {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -363,20 +458,21 @@ const Orders = () => {
       setLoading(true);
       setError(null);
       try {
-        const params = { page: currentPage, limit: 8 };
-        // Send individual status values (backend accepts single status param)
-        if (activeTab) {
-          // If multiple statuses, use first one (or send without for all)
-          params.status = activeTab.includes(",") ? undefined : activeTab;
+        // Build query params — active tab uses client-side filter
+        const params = { page: currentPage, limit: 10 };
+        if (activeTab && activeTab !== "active") {
+          params.status = activeTab;
         }
+
         const response = await getUserBookingsService(params);
         if (response.data.success) {
           let data = response.data.data.bookings || [];
-          // Client-side filter if multiple statuses (active tab)
-          if (activeTab && activeTab.includes(",")) {
-            const statuses = activeTab.split(",");
-            data = data.filter((b) => statuses.includes(b.status));
+
+          // Client-side filter for "active" tab (multiple statuses)
+          if (activeTab === "active") {
+            data = data.filter((b) => ACTIVE_STATUSES.includes(b.status));
           }
+
           setBookings(data);
           setPagination(
             response.data.data.pagination || { total: 0, pages: 1 },
@@ -397,16 +493,31 @@ const Orders = () => {
     fetchBookings(1);
   }, [activeTab]);
 
+  // ── Handlers ────────────────────────────────────────────────────────────────
   const handleRate = ({ bookingId, porterId }) => {
     setRatingTarget({ bookingId, porterId });
     setIsRatingOpen(true);
   };
 
+  /**
+   * Navigate to the correct tracking page based on booking type.
+   * Uses URL-param based routes so no router-state dependency.
+   */
+  const handleTrack = (booking) => {
+    const id = booking._id;
+    if (booking.bookingType === "team") {
+      navigate(`/dashboard/booking/team-tracking/${id}`);
+    } else {
+      navigate(`/dashboard/booking/tracking/${id}`);
+    }
+  };
+
+  // ────────────────────────────────────────────────────────────────────────────
   return (
     <PageLayout
       className="p-6 md:p-8 space-y-6 min-w-full mx-auto"
       title="My Orders"
-      description="View your booking history and rate your porters."
+      description="View your booking history and track active bookings."
       headerExtraChildren={
         <Button
           size="sm"
@@ -455,7 +566,9 @@ const Orders = () => {
               <p className="text-sm text-gray-400 mt-1">
                 {activeTab === "COMPLETED"
                   ? "You don't have any completed orders yet."
-                  : "Your orders will appear here once you book a porter."}
+                  : activeTab === "active"
+                    ? "No active bookings at the moment."
+                    : "Your orders will appear here once you book a porter."}
               </p>
             </div>
           ) : (
@@ -464,6 +577,7 @@ const Orders = () => {
                 key={booking._id}
                 booking={booking}
                 onRate={handleRate}
+                onTrack={handleTrack}
               />
             ))
           )}

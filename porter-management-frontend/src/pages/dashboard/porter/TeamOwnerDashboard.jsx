@@ -8,6 +8,7 @@
  * Team owner can:
  *   - Accept → auto-notifies ALL team workers, navigates to TeamLeadConfirmBooking.
  *   - Reject → marks their request as rejected.
+ *   - View "My Schedule" tab to see upcoming bookings already committed to.
  */
 
 import React, { useEffect, useRef, useCallback, useState } from "react";
@@ -23,6 +24,10 @@ import {
   RefreshCw,
   Loader2,
   MapPin,
+  Truck,
+  Route,
+  Layers,
+  Calendar,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
 import { useGetPorterBookings } from "../../../apis/hooks/porterBookingsHooks";
@@ -49,6 +54,19 @@ import { Separator } from "@/components/ui/separator";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const PURPOSE_LABEL = {
+  transportation: { emoji: "🚚", label: "Transportation" },
+  delivery: { emoji: "📦", label: "Delivery" },
+};
+
+const STATUS_BADGE = {
+  WAITING_PORTER_RESPONSE: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  CONFIRMED: "bg-green-100 text-green-700 border-green-200",
+  IN_PROGRESS: "bg-blue-100 text-blue-700 border-blue-200",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function TeamOwnerDashboard() {
   const { porter, isLoading: porterLoading } = usePorter();
   const token = useAuthStore((s) => s.access_token);
@@ -56,6 +74,7 @@ export default function TeamOwnerDashboard() {
   const sseRef = useRef(null);
 
   const [liveRequests, setLiveRequests] = useState([]);
+  const [activeTab, setActiveTab] = useState("requests"); // "requests" | "schedule"
 
   // ── API data ────────────────────────────────────────────────────────────────
   const {
@@ -72,6 +91,8 @@ export default function TeamOwnerDashboard() {
 
   // Merge live socket requests with API pending requests
   const apiRequests = apiData?.pendingRequests || [];
+  const upcomingTeamBookings = apiData?.upcomingTeamBookings || [];
+
   const teamLeadRequests = [
     ...liveRequests.filter(
       (lr) => !apiRequests.some((ar) => ar.bookingId?._id === lr.bookingId),
@@ -180,7 +201,7 @@ export default function TeamOwnerDashboard() {
             Team Owner Dashboard
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            You are viewing pre-booking requests for your team.
+            Manage pre-booking requests and your upcoming schedule.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -222,202 +243,447 @@ export default function TeamOwnerDashboard() {
         </Card>
       )}
 
-      {/* Booking requests */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Pre-Booking Requests
-              {teamLeadRequests.length > 0 && (
-                <Badge variant="destructive" className="animate-pulse">
-                  {teamLeadRequests.length} pending
-                </Badge>
-              )}
-            </CardTitle>
-          </div>
-          <CardDescription>
-            Accept a request to auto-notify all your team workers.
-          </CardDescription>
-        </CardHeader>
+      {/* Tab bar */}
+      <div className="flex bg-gray-100 p-1 rounded-lg w-full max-w-sm">
+        <button
+          onClick={() => setActiveTab("requests")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "requests"
+              ? "bg-white text-primary shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          Requests
+          {teamLeadRequests.length > 0 && (
+            <span className="ml-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+              {teamLeadRequests.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("schedule")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "schedule"
+              ? "bg-white text-primary shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          My Schedule
+          {upcomingTeamBookings.length > 0 && (
+            <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {upcomingTeamBookings.length}
+            </span>
+          )}
+        </button>
+      </div>
 
-        <CardContent>
-          <ScrollArea className="h-[calc(100vh-26rem)] min-h-[300px] pr-2">
-            {bookingsLoading && teamLeadRequests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-                <p className="text-gray-500">Loading requests…</p>
-              </div>
-            ) : teamLeadRequests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Bell className="w-8 h-8 text-gray-400" />
+      {/* ── REQUESTS TAB ── */}
+      {activeTab === "requests" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Pre-Booking Requests
+                {teamLeadRequests.length > 0 && (
+                  <Badge variant="destructive" className="animate-pulse">
+                    {teamLeadRequests.length} pending
+                  </Badge>
+                )}
+              </CardTitle>
+            </div>
+            <CardDescription>
+              Accept a request to auto-notify all your team workers.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-28rem)] min-h-[300px] pr-2">
+              {bookingsLoading && teamLeadRequests.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <p className="text-gray-500">Loading requests…</p>
                 </div>
-                <p className="text-sm font-medium text-gray-900">
-                  No pending requests
-                </p>
-                <p className="text-xs text-gray-500">
-                  New pre-booking requests for your team will appear here in
-                  real time.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {teamLeadRequests.map((request) => {
-                  const isLive = request._isLive;
-                  const bookingId = isLive
-                    ? request.bookingId
-                    : request.bookingId?._id || request._id;
-                  const pickup = isLive
-                    ? request.pickup
-                    : request.bookingId?.pickup;
-                  const drop = isLive ? request.drop : request.bookingId?.drop;
-                  const weightKg = isLive
-                    ? request.weightKg
-                    : request.bookingId?.weightKg;
-                  const teamSize = isLive
-                    ? request.teamSize
-                    : request.bookingId?.teamSize;
-                  const requirements = isLive
-                    ? request.requirements
-                    : request.bookingId?.requirements;
-                  const bookingDate = isLive
-                    ? request.bookingDate
-                    : request.bookingId?.bookingDate;
-                  const bookingTime = isLive
-                    ? request.bookingTime
-                    : request.bookingId?.bookingTime;
-                  const distanceKm = request.distanceKm;
+              ) : teamLeadRequests.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Bell className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">
+                    No pending requests
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    New pre-booking requests for your team will appear here in
+                    real time.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {teamLeadRequests.map((request) => {
+                    const isLive = request._isLive;
+                    const bookingId = isLive
+                      ? request.bookingId
+                      : request.bookingId?._id || request._id;
+                    const pickup = isLive
+                      ? request.pickup
+                      : request.bookingId?.pickup;
+                    const drop = isLive ? request.drop : request.bookingId?.drop;
+                    const weightKg = isLive
+                      ? request.weight ?? request.weightKg
+                      : request.bookingId?.weightKg;
+                    const teamSize = isLive
+                      ? request.teamSize
+                      : request.bookingId?.teamSize;
+                    const requirements = isLive
+                      ? request.requirements
+                      : request.bookingId?.requirements;
+                    const bookingDate = isLive
+                      ? request.bookingDate
+                      : request.bookingId?.bookingDate;
+                    const bookingTime = isLive
+                      ? request.bookingTime
+                      : request.bookingId?.bookingTime;
+                    const hasVehicle = isLive
+                      ? request.hasVehicle
+                      : request.bookingId?.hasVehicle;
+                    const vehicleType = isLive
+                      ? request.vehicleType
+                      : request.bookingId?.vehicleType;
+                    const numberOfVehicles = isLive
+                      ? request.numberOfVehicles
+                      : request.bookingId?.numberOfVehicles;
+                    const purpose = isLive
+                      ? request.purpose_of_booking
+                      : request.bookingId?.purpose_of_booking;
+                    const noOfFloors = isLive
+                      ? request.noOfFloors
+                      : request.bookingId?.noOfFloors;
+                    const hasLift = isLive
+                      ? request.hasLift
+                      : request.bookingId?.hasLift;
+                    const no_of_trips = isLive
+                      ? request.no_of_trips
+                      : request.bookingId?.no_of_trips;
+                    const distanceKm = request.distanceKm;
+                    const purposeInfo = PURPOSE_LABEL[purpose];
 
-                  return (
-                    <Card
-                      key={bookingId || request._id}
-                      className="border-l-4 border-l-purple-500 hover:shadow-md transition-all"
-                    >
-                      <CardHeader className="p-4 pb-2">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {isLive && (
+                    return (
+                      <Card
+                        key={bookingId || request._id}
+                        className="border-l-4 border-l-primary hover:shadow-md transition-all"
+                      >
+                        <CardHeader className="p-4 pb-2">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {isLive && (
+                                <Badge className="bg-red-100 text-red-700 border-red-200 text-xs animate-pulse">
+                                  🔴 Live
+                                </Badge>
+                              )}
                               <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
-                                🔴 Live
+                                <Users className="w-3 h-3 mr-1" />
+                                Pre-Booking
                               </Badge>
+                              {purposeInfo && (
+                                <Badge variant="outline" className="text-xs">
+                                  {purposeInfo.emoji} {purposeInfo.label}
+                                </Badge>
+                              )}
+                              <Badge
+                                variant="outline"
+                                className="text-xs font-mono"
+                              >
+                                #{String(bookingId).slice(-6).toUpperCase()}
+                              </Badge>
+                            </div>
+                            {distanceKm != null && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <MapPin className="h-3 w-3" />
+                                {Number(distanceKm).toFixed(1)} km away
+                              </div>
                             )}
-                            <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
-                              <Users className="w-3 h-3 mr-1" />
-                              Pre-Booking Request
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className="text-xs font-mono"
-                            >
-                              #{String(bookingId).slice(-6).toUpperCase()}
-                            </Badge>
                           </div>
-                          {distanceKm != null && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <MapPin className="h-3 w-3" />
-                              {Number(distanceKm).toFixed(1)} km away
-                            </div>
-                          )}
-                        </div>
-                      </CardHeader>
+                        </CardHeader>
 
-                      <CardContent className="p-4 pt-2 space-y-3">
-                        {/* Locations */}
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">Pickup</p>
-                            <AddressLine location={pickup} dot="green" />
+                        <CardContent className="p-4 pt-2 space-y-3">
+                          {/* Locations */}
+                          <div className="space-y-2">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Pickup</p>
+                              <AddressLine location={pickup} dot="green" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Drop-off
+                              </p>
+                              <AddressLine location={drop} dot="red" />
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">
-                              Drop-off
+
+                          {/* Details grid */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                            {weightKg && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Package className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span>{weightKg} kg</span>
+                              </div>
+                            )}
+                            {teamSize && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span>{teamSize} workers needed</span>
+                              </div>
+                            )}
+                            {bookingDate && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <CalendarDays className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span>
+                                  {new Date(bookingDate).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                            {bookingTime && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span>{bookingTime}</span>
+                              </div>
+                            )}
+                            {hasVehicle && vehicleType && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Truck className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span className="capitalize">
+                                  {vehicleType}
+                                  {numberOfVehicles ? ` ×${numberOfVehicles}` : ""}
+                                </span>
+                              </div>
+                            )}
+                            {noOfFloors > 0 && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Layers className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span>{noOfFloors} floor(s)</span>
+                              </div>
+                            )}
+                            {no_of_trips > 0 && (
+                              <div className="flex items-center gap-1 text-gray-600">
+                                <Route className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                <span>{no_of_trips} trip(s)</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Lift badge */}
+                          {hasLift && (
+                            <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded border border-green-100 inline-block">
+                              ✓ Elevator / lift available
                             </p>
-                            <AddressLine location={drop} dot="red" />
-                          </div>
-                        </div>
+                          )}
 
-                        {/* Details row */}
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                          {weightKg && (
-                            <div className="flex items-center gap-1">
-                              <Package className="h-4 w-4 text-gray-400" />
-                              <span>{weightKg} kg</span>
+                          {requirements && (
+                            <div className="bg-purple-50 rounded-lg p-2 text-xs text-gray-600 border border-purple-100">
+                              <span className="font-medium">Requirements: </span>
+                              {requirements}
                             </div>
                           )}
-                          {teamSize && (
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4 text-gray-400" />
-                              <span>{teamSize} workers needed</span>
+                        </CardContent>
+
+                        <CardFooter className="p-4 pt-0">
+                          <div className="flex gap-2 w-full justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-28"
+                              disabled={rejecting || accepting}
+                              onClick={() => handleReject(bookingId)}
+                            >
+                              {rejecting ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <XCircle className="mr-1 h-3 w-3" />
+                                  Decline
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              disabled={accepting || rejecting}
+                              onClick={() => handleAccept(bookingId)}
+                            >
+                              {accepting ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle className="mr-1 h-3 w-3" />
+                                  Accept &amp; Notify Team
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── SCHEDULE TAB ── */}
+      {activeTab === "schedule" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              My Upcoming Bookings
+            </CardTitle>
+            <CardDescription>
+              Bookings your team has committed to, sorted by date. Check this before accepting new requests to avoid conflicts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-28rem)] min-h-[300px] pr-2">
+              {bookingsLoading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+                  <p className="text-gray-500">Loading schedule…</p>
+                </div>
+              ) : upcomingTeamBookings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Calendar className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">No upcoming bookings</p>
+                  <p className="text-xs text-gray-500">
+                    Bookings you accept will appear here, sorted by date.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {upcomingTeamBookings.map((booking) => {
+                    const purposeInfo = PURPOSE_LABEL[booking.purpose_of_booking];
+                    const statusClass =
+                      STATUS_BADGE[booking.status] ||
+                      "bg-gray-100 text-gray-600";
+                    return (
+                      <Card
+                        key={booking._id}
+                        className="border-l-4 border-l-blue-400 hover:shadow-md transition-all"
+                      >
+                        <CardHeader className="p-4 pb-2">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${statusClass}`}
+                              >
+                                {booking.status.replace(/_/g, " ")}
+                              </Badge>
+                              {purposeInfo && (
+                                <Badge variant="outline" className="text-xs">
+                                  {purposeInfo.emoji} {purposeInfo.label}
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs font-mono">
+                                #{String(booking._id).slice(-6).toUpperCase()}
+                              </Badge>
                             </div>
-                          )}
-                          {bookingDate && (
-                            <div className="flex items-center gap-1">
-                              <CalendarDays className="h-4 w-4 text-gray-400" />
-                              <span>
-                                {new Date(bookingDate).toLocaleDateString()}
+                            {booking.bookingDate && (
+                              <div className="flex items-center gap-1 text-xs font-semibold text-primary">
+                                <CalendarDays className="h-3.5 w-3.5" />
+                                {new Date(booking.bookingDate).toLocaleDateString(
+                                  undefined,
+                                  { weekday: "short", month: "short", day: "numeric" },
+                                )}
+                                {booking.bookingTime && (
+                                  <span className="ml-1 text-gray-500 font-normal">
+                                    @ {booking.bookingTime}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </CardHeader>
+
+                        <CardContent className="p-4 pt-2 space-y-3">
+                          {/* Customer info */}
+                          {booking.userId?.name && (
+                            <p className="text-xs text-gray-500">
+                              Customer:{" "}
+                              <span className="font-medium text-gray-700">
+                                {booking.userId.name}
                               </span>
-                            </div>
+                              {booking.userId.phone && (
+                                <span className="ml-2">{booking.userId.phone}</span>
+                              )}
+                            </p>
                           )}
-                          {bookingTime && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4 text-gray-400" />
-                              <span>{bookingTime}</span>
-                            </div>
-                          )}
-                        </div>
 
-                        {requirements && (
-                          <div className="bg-purple-50 rounded-lg p-2 text-xs text-gray-600 border border-purple-100">
-                            <span className="font-medium">Requirements: </span>
-                            {requirements}
+                          {/* Pickup / drop */}
+                          <div className="space-y-1">
+                            <AddressLine location={booking.pickup} dot="green" />
+                            <AddressLine location={booking.drop} dot="red" />
                           </div>
-                        )}
-                      </CardContent>
 
-                      <CardFooter className="p-4 pt-0">
-                        <div className="flex gap-2 w-full justify-end">
+                          {/* Meta */}
+                          <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                            {booking.teamSize && (
+                              <div className="flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5 text-gray-400" />
+                                {booking.teamSize} porters
+                              </div>
+                            )}
+                            {booking.weightKg && (
+                              <div className="flex items-center gap-1">
+                                <Package className="h-3.5 w-3.5 text-gray-400" />
+                                {booking.weightKg} kg
+                              </div>
+                            )}
+                            {booking.hasVehicle && booking.vehicleType && (
+                              <div className="flex items-center gap-1 capitalize">
+                                <Truck className="h-3.5 w-3.5 text-gray-400" />
+                                {booking.vehicleType}
+                                {booking.numberOfVehicles
+                                  ? ` ×${booking.numberOfVehicles}`
+                                  : ""}
+                              </div>
+                            )}
+                          </div>
+
+                          {booking.requirements && (
+                            <div className="bg-gray-50 rounded p-2 text-xs text-gray-600 border">
+                              <span className="font-medium">Requirements: </span>
+                              {booking.requirements}
+                            </div>
+                          )}
+                        </CardContent>
+
+                        <CardFooter className="p-4 pt-0">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-28"
-                            disabled={rejecting || accepting}
-                            onClick={() => handleReject(bookingId)}
+                            onClick={() =>
+                              navigate(
+                                "/dashboard/porters/team-lead/confirm-booking",
+                                { state: { bookingId: booking._id, booking } },
+                              )
+                            }
                           >
-                            {rejecting ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <>
-                                <XCircle className="mr-1 h-3 w-3" />
-                                Decline
-                              </>
-                            )}
+                            View Details
                           </Button>
-                          <Button
-                            size="sm"
-                            className="w-40 bg-purple-600 hover:bg-purple-700"
-                            disabled={accepting || rejecting}
-                            onClick={() => handleAccept(bookingId)}
-                          >
-                            {accepting ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <>
-                                <CheckCircle className="mr-1 h-3 w-3" />
-                                Accept & Notify Team
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

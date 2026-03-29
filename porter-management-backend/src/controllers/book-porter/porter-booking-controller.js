@@ -448,11 +448,32 @@ export const getPorterBookings = async (req, res) => {
       .populate("bookingId")
       .limit(10);
 
+    // For team owners: fetch upcoming accepted/confirmed team bookings (sorted by date)
+    // so the team owner can see their schedule before accepting new requests
+    let upcomingTeamBookings = [];
+    try {
+      const { default: Porters } = await import("../../models/porter/Porters.js");
+      const porterDoc = await Porters.findById(porterId);
+      if (porterDoc && porterDoc.role === "owner" && porterDoc.teamId) {
+        upcomingTeamBookings = await PorterBooking.find({
+          assignedTeamId: porterDoc.teamId,
+          status: { $in: ["WAITING_PORTER_RESPONSE", "CONFIRMED", "IN_PROGRESS"] },
+          bookingDate: { $gte: new Date() },
+        })
+          .sort({ bookingDate: 1 })
+          .populate("userId", "name email phone")
+          .limit(20);
+      }
+    } catch (e) {
+      console.warn("Could not fetch upcoming team bookings:", e.message);
+    }
+
     return res.status(200).json({
       success: true,
       data: {
         bookings,
         pendingRequests,
+        upcomingTeamBookings,
         pagination: {
           total,
           page: parseInt(page),
@@ -502,10 +523,23 @@ export const getBookingDetails = async (req, res) => {
       (p) => p.porterId._id.toString() === porterId?.toString(),
     );
 
+    // Also allow team lead who has accepted (or has pending) request for this booking
+    let isTeamLeadForBooking = false;
+    if (porterId) {
+      const porterRequest = await BookintgPorterRequest.findOne({
+        bookingId,
+        porterId,
+        isTeamLead: true,
+        status: { $in: ["ACCEPTED", "PENDING"] },
+      });
+      isTeamLeadForBooking = !!porterRequest;
+    }
+
     if (
       !isOwner &&
       !isAssignedPorter &&
       !isTeamMember &&
+      !isTeamLeadForBooking &&
       req.user.role !== "admin"
     ) {
       return res.status(403).json({

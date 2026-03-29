@@ -213,24 +213,76 @@ const TeamLeadConfirmBooking = () => {
                 </div>
               )}
               <Separator />
-              <div className="flex justify-between">
-                <span className="text-gray-500">Weight</span>
-                <span className="font-semibold">{currentBooking?.weightKg} kg</span>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div className="flex justify-between col-span-2 sm:col-span-1">
+                  <span className="text-gray-500">Weight</span>
+                  <span className="font-semibold">{currentBooking?.weightKg} kg</span>
+                </div>
+                <div className="flex justify-between col-span-2 sm:col-span-1">
+                  <span className="text-gray-500">Team Size</span>
+                  <span className="font-semibold">{requiredMembers}</span>
+                </div>
+                {currentBooking?.purpose_of_booking && (
+                  <div className="flex justify-between col-span-2">
+                    <span className="text-gray-500">Purpose</span>
+                    <span className="font-semibold capitalize">
+                      {currentBooking.purpose_of_booking === "delivery" ? "📦" : "🚚"}{" "}
+                      {currentBooking.purpose_of_booking}
+                    </span>
+                  </div>
+                )}
+                {currentBooking?.bookingDate && (
+                  <div className="flex justify-between col-span-2 sm:col-span-1">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-semibold">
+                      {new Date(currentBooking.bookingDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                {currentBooking?.bookingTime && (
+                  <div className="flex justify-between col-span-2 sm:col-span-1">
+                    <span className="text-gray-500">Time</span>
+                    <span className="font-semibold">{currentBooking.bookingTime}</span>
+                  </div>
+                )}
+                {currentBooking?.hasVehicle && currentBooking?.vehicleType && (
+                  <div className="flex justify-between col-span-2">
+                    <span className="text-gray-500">Vehicle</span>
+                    <span className="font-semibold capitalize">
+                      {currentBooking.vehicleType}
+                      {currentBooking.numberOfVehicles
+                        ? ` ×${currentBooking.numberOfVehicles}`
+                        : ""}
+                    </span>
+                  </div>
+                )}
+                {currentBooking?.noOfFloors > 0 && (
+                  <div className="flex justify-between col-span-2 sm:col-span-1">
+                    <span className="text-gray-500">Floors</span>
+                    <span className="font-semibold">{currentBooking.noOfFloors}</span>
+                  </div>
+                )}
+                {currentBooking?.no_of_trips > 0 && (
+                  <div className="flex justify-between col-span-2 sm:col-span-1">
+                    <span className="text-gray-500">Trips</span>
+                    <span className="font-semibold">{currentBooking.no_of_trips}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Required Members</span>
-                <span className="font-semibold">{requiredMembers}</span>
-              </div>
-              {currentBooking?.bookingDate && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Date</span>
-                  <span className="font-semibold">
-                    {new Date(currentBooking.bookingDate).toLocaleDateString()}
-                  </span>
+              {currentBooking?.hasLift && (
+                <p className="text-xs text-green-700 bg-green-50 px-2 py-1.5 rounded border border-green-100">
+                  ✓ Elevator / lift available at pickup
+                </p>
+              )}
+              {currentBooking?.requirements && (
+                <div className="bg-gray-50 p-2 rounded-lg text-xs text-gray-600 border">
+                  <span className="font-medium">Requirements: </span>
+                  {currentBooking.requirements}
                 </div>
               )}
             </CardContent>
           </Card>
+
 
           {/* Response Counters */}
           <Card>
