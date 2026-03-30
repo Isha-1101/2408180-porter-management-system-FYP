@@ -39,6 +39,12 @@ const getNavItems = (role) => {
       end: true,
     },
     {
+      label: "Porter Registration",
+      to: "/dashboard/porters/register",
+      icon: <ClipboardCheck className="w-5 h-5" />,
+      end: true,
+    },
+    {
       label: "My Profile",
       to: "/dashboard/porters/profile",
       icon: <UserCog className="w-5 h-5" />,
@@ -81,7 +87,7 @@ const getNavItems = (role) => {
   ];
 
   if (role === "admin") return adminItems;
-  if (role === "porter") return porterItems;
+  if (role === "porter") return porterItems.filter(Boolean);
   return userItems;
 };
 
