@@ -1,9 +1,7 @@
-import { User, Mail, Shield, CalendarDays, Truck } from "lucide-react";
+import { User, Mail, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import PageLayout from "@/components/common/PageLayout";
 import { useAuthStore } from "@/store/auth.store";
-import { useNavigate } from "react-router-dom";
 
 const InfoRow = ({ icon, label, value }) => (
   <div className="flex items-start gap-3 py-3 border-b border-gray-100 last:border-0">
@@ -23,7 +21,6 @@ const InfoRow = ({ icon, label, value }) => (
 
 const UserProfile = () => {
   const user = useAuthStore((state) => state.user);
-  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -108,29 +105,6 @@ const UserProfile = () => {
           </CardContent>
         </Card>
 
-        {/* ── Become a Porter CTA ── */}
-        <Card className="shadow-sm border-primary/20 bg-primary/5">
-          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-5">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 bg-primary/15 rounded-lg text-primary shrink-0">
-                <Truck className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-800">Become a Porter</p>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Register as a porter to start earning by helping people move
-                  their goods.
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => navigate("/dashboard/porters/register")}
-              className="shrink-0 bg-primary hover:bg-primary/90 text-white"
-            >
-              Register Now
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </PageLayout>
   );

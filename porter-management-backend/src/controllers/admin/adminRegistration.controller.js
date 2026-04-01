@@ -1,5 +1,8 @@
 import PorterRegistration from "../../models/porter/porter-registration.js";
 import User from "../../models/User.js";
+import PorterBasicInfo from "../../models/porter/porter-basic-info.js";
+import PorterVehicle from "../../models/porter/porter-vehicle-info.js";
+import PorterDocument from "../../models/porter/porter-document-info.js";
 
 export const getAllRegistrations = async (req, res) => {
   try {
@@ -12,13 +15,41 @@ export const getAllRegistrations = async (req, res) => {
       .populate("userId", "name email phone")
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
+
+    const registrationIds = registrations.map((reg) => reg._id);
+
+    const [basicInfos, vehicles, documents] = await Promise.all([
+      PorterBasicInfo.find({ registrationId: { $in: registrationIds } }).lean(),
+      PorterVehicle.find({ registrationId: { $in: registrationIds } }).lean(),
+      PorterDocument.find({ registrationId: { $in: registrationIds } }).lean(),
+    ]);
+
+    const enrichedRegistrations = registrations.map((reg) => {
+      const basicInfo = basicInfos.find(
+        (b) => b.registrationId.toString() === reg._id.toString()
+      );
+      const vehicle = vehicles.find(
+        (v) => v.registrationId.toString() === reg._id.toString()
+      );
+      const document = documents.find(
+        (d) => d.registrationId.toString() === reg._id.toString()
+      );
+
+      return {
+        ...reg,
+        basicInfo: basicInfo || null,
+        vehicle: vehicle || null,
+        documents: document || null,
+      };
+    });
 
     const total = await PorterRegistration.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      data: registrations,
+      data: enrichedRegistrations,
       pagination: {
         total,
         page: parseInt(page),
