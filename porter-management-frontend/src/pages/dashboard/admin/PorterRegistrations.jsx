@@ -22,13 +22,6 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -233,7 +226,11 @@ const PorterRegistrations = () => {
                 </TableRow>
               ) : (
                 registrations.map((reg) => (
-                  <TableRow key={reg._id} className="hover:bg-gray-50">
+                  <TableRow
+                    key={reg._id}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => openDetail(reg)}
+                  >
                     <TableCell className="font-mono text-xs text-gray-600">
                       {reg.registrationId}
                     </TableCell>
@@ -268,7 +265,7 @@ const PorterRegistrations = () => {
                         {reg.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right pr-4">
+                    <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         {reg.status === "submitted" && (
                           <>
@@ -394,115 +391,182 @@ const PorterRegistrations = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>      {/* Detail Dialog - centered */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="text-xl font-bold">
+              Applicant Registration Details
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs">
+              {detailReg?.registrationId}
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Detail Sheet */}
-      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Registration Details</SheetTitle>
-            <SheetDescription>
-              Full details for{" "}
-              <span className="font-mono">{detailReg?.registrationId}</span>
-            </SheetDescription>
-          </SheetHeader>
           {detailReg && (
-            <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6 py-2">
+
+              {/* ── Applicant Overview ── */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4">
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Applicant
-                  </p>
-                  <p className="text-sm font-semibold mt-1">
-                    {detailReg.userId?.name || "N/A"}
-                  </p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Applicant</p>
+                  <p className="text-sm font-semibold text-gray-900">{detailReg.userId?.name || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Email
-                  </p>
-                  <p className="text-sm mt-1">
-                    {detailReg.userId?.email || "N/A"}
-                  </p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Email</p>
+                  <p className="text-sm text-gray-700 break-all">{detailReg.userId?.email || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Phone
-                  </p>
-                  <p className="text-sm mt-1">
-                    {detailReg.userId?.phone || "N/A"}
-                  </p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Phone</p>
+                  <p className="text-sm text-gray-700">{detailReg.userId?.phone || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Status
-                  </p>
-                  <Badge
-                    className={`mt-1 capitalize ${STATUS_BADGE[detailReg.status]}`}
-                  >
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Status</p>
+                  <Badge className={`capitalize flex items-center gap-1 w-fit mt-0.5 ${STATUS_BADGE[detailReg.status]}`}>
+                    {STATUS_ICON[detailReg.status]}
                     {detailReg.status}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Type
-                  </p>
-                  <p className="text-sm mt-1 capitalize">
-                    {detailReg.registrationType || "—"}
-                  </p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Type</p>
+                  <p className="text-sm capitalize text-gray-700">{detailReg.registrationType || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Role
-                  </p>
-                  <p className="text-sm mt-1 capitalize">
-                    {detailReg.role || "—"}
-                  </p>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Role</p>
+                  <p className="text-sm capitalize text-gray-700">{detailReg.role || "—"}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                    Submitted
-                  </p>
-                  <p className="text-sm mt-1">
-                    {new Date(detailReg.updatedAt).toLocaleString()}
-                  </p>
+                <div className="col-span-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Submitted</p>
+                  <p className="text-sm text-gray-700">{new Date(detailReg.updatedAt).toLocaleString()}</p>
                 </div>
                 {detailReg.rejectionReason && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                      Rejection Reason
-                    </p>
-                    <p className="text-sm mt-1 text-red-600 bg-red-50 p-2 rounded">
-                      {detailReg.rejectionReason}
-                    </p>
+                  <div className="col-span-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-red-400 mb-1">Rejection Reason</p>
+                    <p className="text-sm text-red-700">{detailReg.rejectionReason}</p>
                   </div>
                 )}
               </div>
 
-              {/* Porter-specific info */}
               {detailReg.basicInfo && (
-                <div className="border-t pt-4">
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-3">
-                    Basic Info
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    {Object.entries(detailReg.basicInfo)
-                      .filter(([, v]) => typeof v !== "object" && v)
-                      .map(([k, v]) => (
-                        <div key={k}>
-                          <span className="text-gray-500 capitalize">
-                            {k.replace(/([A-Z])/g, " $1")}:{" "}
-                          </span>
-                          <span className="font-medium">{String(v)}</span>
+                <>
+                  {/* ── Basic Info ── */}
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Basic Info</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {[
+                        { label: "Full Name", value: detailReg.basicInfo.fullName },
+                        { label: "Phone", value: detailReg.basicInfo.phone },
+                        { label: "Address", value: detailReg.basicInfo.address },
+                        { label: "Identity Type", value: detailReg.basicInfo.identityType },
+                        { label: "Identity Number", value: detailReg.basicInfo.identityNumber },
+                        { label: "Experience", value: detailReg.basicInfo.experienceYears ? `${detailReg.basicInfo.experienceYears} yr(s)` : null },
+                      ].filter(i => i.value).map((item, idx) => (
+                        <div key={idx} className="bg-white rounded-lg border p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">{item.label}</p>
+                          <p className="text-sm font-medium text-gray-900">{item.value}</p>
                         </div>
                       ))}
+                    </div>
                   </div>
-                </div>
+
+                  {/* ── Vehicle Info ── */}
+                  {detailReg.vehicle && (
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Vehicle Info</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="bg-white rounded-lg border p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Has Vehicle</p>
+                          <p className="text-sm font-medium text-gray-900">{detailReg.vehicle.hasVehicle ? "Yes" : "No"}</p>
+                        </div>
+                        {detailReg.vehicle.hasVehicle && (
+                          <>
+                            <div className="bg-white rounded-lg border p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Category</p>
+                              <p className="text-sm font-medium capitalize text-gray-900">{detailReg.vehicle.vehicleCategory}</p>
+                            </div>
+                            <div className="bg-white rounded-lg border p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Number</p>
+                              <p className="text-sm font-medium text-gray-900">{detailReg.vehicle.vehicleNumber}</p>
+                            </div>
+                            {detailReg.vehicle.capacity && (
+                              <div className="bg-white rounded-lg border p-3">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Capacity</p>
+                                <p className="text-sm font-medium text-gray-900">{detailReg.vehicle.capacity}</p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Uploaded Documents ── */}
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Uploaded Documents</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {detailReg.basicInfo.porterPhoto && (
+                        <div className="flex flex-col items-center gap-2">
+                          <p className="text-xs font-semibold text-gray-600 self-start">Porter Photo</p>
+                          <a href={detailReg.basicInfo.porterPhoto} target="_blank" rel="noreferrer" className="w-full">
+                            <img
+                              src={detailReg.basicInfo.porterPhoto}
+                              alt="Porter"
+                              className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
+                            />
+                          </a>
+                        </div>
+                      )}
+                      {detailReg.basicInfo.registrationIdDocument?.flatMap((doc, idx) => [
+                        doc.identityCardImageFront && (
+                          <div key={`front-${idx}`} className="flex flex-col items-center gap-2">
+                            <p className="text-xs font-semibold text-gray-600 self-start">ID Front</p>
+                            <a href={doc.identityCardImageFront} target="_blank" rel="noreferrer" className="w-full">
+                              <img
+                                src={doc.identityCardImageFront}
+                                alt="ID Front"
+                                className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
+                              />
+                            </a>
+                          </div>
+                        ),
+                        doc.identityCardImageBack && (
+                          <div key={`back-${idx}`} className="flex flex-col items-center gap-2">
+                            <p className="text-xs font-semibold text-gray-600 self-start">ID Back</p>
+                            <a href={doc.identityCardImageBack} target="_blank" rel="noreferrer" className="w-full">
+                              <img
+                                src={doc.identityCardImageBack}
+                                alt="ID Back"
+                                className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
+                              />
+                            </a>
+                          </div>
+                        ),
+                      ].filter(Boolean))}
+                      {detailReg.documents?.porterLicenseDocument && (
+                        <div className="flex flex-col items-center gap-2">
+                          <p className="text-xs font-semibold text-gray-600 self-start">
+                            License
+                            {detailReg.documents.licenseNumber && (
+                              <span className="font-normal text-gray-400 ml-1">#{detailReg.documents.licenseNumber}</span>
+                            )}
+                          </p>
+                          <a href={detailReg.documents.porterLicenseDocument} target="_blank" rel="noreferrer" className="w-full">
+                            <img
+                              src={detailReg.documents.porterLicenseDocument}
+                              alt="License"
+                              className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
+                            />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
 
-              {/* Actions in detail */}
+              {/* ── Actions ── */}
               {detailReg.status === "submitted" && (
-                <div className="border-t pt-4 flex gap-3">
+                <DialogFooter className="border-t pt-4 flex gap-3 sm:justify-start">
                   <Button
                     className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                     onClick={() => {
@@ -510,6 +574,7 @@ const PorterRegistrations = () => {
                       setIsDetailOpen(false);
                     }}
                   >
+                    <CheckCircle className="h-4 w-4 mr-2" />
                     Approve
                   </Button>
                   <Button
@@ -521,14 +586,15 @@ const PorterRegistrations = () => {
                       setIsRejectModalOpen(true);
                     }}
                   >
+                    <XCircle className="h-4 w-4 mr-2" />
                     Reject
                   </Button>
-                </div>
+                </DialogFooter>
               )}
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
