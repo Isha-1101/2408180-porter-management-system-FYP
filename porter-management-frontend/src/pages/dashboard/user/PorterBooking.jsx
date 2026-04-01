@@ -111,18 +111,22 @@ const PorterBooking = () => {
   // ── Validation ───────────────────────────────────────────────────────────
   const validateForm = () => {
     if (!pickup.lat || !pickup.lng) return "Please select a pickup location.";
-    if (!dropoff.lat || !dropoff.lng) return "Please select a drop-off location.";
+    if (!dropoff.lat || !dropoff.lng)
+      return "Please select a drop-off location.";
 
     if (porterType === "individual") {
-      if (!purpose) return "Please select a purpose of booking.";
-      if (!weight || Number(weight) < 5) return "Weight must be at least 5 kg.";
+      if (!hasVehicle && !purpose) return "Please select a purpose of booking.";
+      if (!hasVehicle && (!weight || Number(weight) < 5))
+        return "Weight must be at least 5 kg.";
       if (hasVehicle && !vehicleType) return "Please select a vehicle type.";
     }
 
     if (porterType === "team") {
-      if (!teamSize || Number(teamSize) < 1) return "Number of porters must be at least 1.";
-      if (!weight || Number(weight) < 5) return "Weight must be at least 5 kg.";
-      if (!purpose) return "Please select a purpose of booking.";
+      if (!teamSize || Number(teamSize) < 1)
+        return "Number of porters must be at least 1.";
+      if ((!hasVehicle && !weight) || Number(weight) < 5)
+        return "Weight must be at least 5 kg.";
+      if (!hasVehicle && !purpose) return "Please select a purpose of booking.";
       if (hasVehicle && !vehicleType) return "Please select a vehicle type.";
       if (hasVehicle && numberOfVehicles && Number(numberOfVehicles) < 1)
         return "Number of vehicles must be at least 1.";
@@ -131,9 +135,11 @@ const PorterBooking = () => {
         const selectedDate = new Date(bookingDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        if (selectedDate < today) return "Booking date must be today or a future date.";
+        if (selectedDate < today)
+          return "Booking date must be today or a future date.";
       }
-      if (bookingDate && !bookingTime) return "Please provide a booking time when a date is selected.";
+      if (bookingDate && !bookingTime)
+        return "Please provide a booking time when a date is selected.";
     }
 
     return null;
@@ -660,7 +666,8 @@ const PorterBooking = () => {
                         className="text-sm font-medium flex items-center gap-2 text-gray-700"
                       >
                         <UserPlus className="w-4 h-4 text-primary" />
-                        Number of Porters <span className="text-red-500">*</span>
+                        Number of Porters{" "}
+                        <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
                         <Input
@@ -726,7 +733,8 @@ const PorterBooking = () => {
                         htmlFor="purpose-team"
                         className="text-sm font-medium text-gray-700"
                       >
-                        Purpose of Booking <span className="text-red-500">*</span>
+                        Purpose of Booking{" "}
+                        <span className="text-red-500">*</span>
                       </Label>
                       <Select
                         id="purpose-team"
@@ -907,8 +915,16 @@ const PorterBooking = () => {
                 {/* Validation error banner */}
                 {formError && (
                   <div className="flex items-start gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
-                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 012 0v4a1 1 0 01-2 0V7zm1 7a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    <svg
+                      className="w-4 h-4 mt-0.5 shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 012 0v4a1 1 0 01-2 0V7zm1 7a1 1 0 100-2 1 1 0 000 2z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <span>{formError}</span>
                   </div>
