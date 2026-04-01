@@ -23,9 +23,7 @@ export const searchNearbyPorters = async (req, res) => {
       requiredTeamSize = 1,
       radiusKm = 5,
     } = req.body;
-    console.log({ reqBody: req.body });
     const bookingType = req.params.bookingType;
-    console.log({ bookingType });
     const wghtInNum = Number(weightKg);
     const matchQuery = {
       porterType: bookingType,
@@ -52,7 +50,6 @@ export const searchNearbyPorters = async (req, res) => {
           query: matchQuery,
         },
       },
-
       {
         $lookup: {
           from: "portervehicles",
@@ -61,14 +58,12 @@ export const searchNearbyPorters = async (req, res) => {
           as: "vehicle",
         },
       },
-
       {
         $unwind: {
           path: "$vehicle",
           preserveNullAndEmptyArrays: true,
         },
       },
-
       {
         $lookup: {
           from: "porterbasicinfos",
@@ -77,14 +72,12 @@ export const searchNearbyPorters = async (req, res) => {
           as: "basicInfo",
         },
       },
-
       {
         $unwind: {
           path: "$basicInfo",
           preserveNullAndEmptyArrays: true,
         },
       },
-
       ...(hasVehicle
         ? [
             {
@@ -105,6 +98,7 @@ export const searchNearbyPorters = async (req, res) => {
       { $sort: { distanceMeters: 1 } },
       { $limit: 5 },
     ];
+    
     const porters = await Porters.aggregate(pipeline);
     return res.json({
       success: true,

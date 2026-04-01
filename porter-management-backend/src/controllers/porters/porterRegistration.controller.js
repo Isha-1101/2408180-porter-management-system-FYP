@@ -439,15 +439,6 @@ export const approveRegistration = async (req, res) => {
         { session },
       );
 
-      // ── If this is a team worker, increment team member counts
-      if (teamId && role === "worker") {
-        await porterTeam.findByIdAndUpdate(
-          teamId,
-          { $inc: { noOfMember: 1, noOfAvailableMember: 1 } },
-          { session },
-        );
-      }
-
       const user = await User.findById(userId);
       registration.status = "approved";
       await registeredAsPorterMailController(user.email, user.name);

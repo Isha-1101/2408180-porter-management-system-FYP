@@ -47,6 +47,7 @@ const FareEstimateBreakdown = ({
   weight,
   hasVehicle,
   vehicleType,
+  distanceKm,
   showFareBreakdown,
   setShowFareBreakdown,
   setTotalPrice,
@@ -57,10 +58,10 @@ const FareEstimateBreakdown = ({
       has_lift: hasLift || false,
       no_of_trips: numberOfTrips || 1,
       weightKg: weight || 5,
-      has_vehicle: hasVehicle,
-      vehicleType: hasVehicle ? vehicleType || "bike" : undefined,
+      vehicleType: hasVehicle && vehicleType ? vehicleType : undefined,
+      distanceKm: distanceKm || 0,
     }),
-    [numberOfFloors, hasLift, numberOfTrips, weight, hasVehicle, vehicleType],
+    [numberOfFloors, hasLift, numberOfTrips, weight, hasVehicle, vehicleType, distanceKm],
   );
 
   const debouncedPayload = useDebounce(payload, 500);

@@ -28,7 +28,7 @@ import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
 import ChatBox from "@/components/chat/ChatBox";
 
-// ─── Status step definitions ──────────────────────────────────────────────────
+// Status step definitions
 const STATUS_STEPS = [
   { key: "WAITING_PORTER", label: "Searching for porter", icon: Clock },
   { key: "CONFIRMED",      label: "Porter accepted",       icon: CheckCircle2 },
@@ -44,7 +44,6 @@ const STATUS_COLORS = {
   CANCELLED:      "bg-red-100 text-red-700 border-red-200",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 const BookingTracking = () => {
   const location  = useLocation();
@@ -84,12 +83,12 @@ const BookingTracking = () => {
   const resolvedStatus =
     liveStatus || fetchedBooking?.status || "WAITING_PORTER";
 
-  // ── Redirect guard ─────────────────────────────────────────────────────────
+  // Redirect guard
   useEffect(() => {
     if (!bookingId) navigate("/dashboard");
   }, [bookingId, navigate]);
 
-  // ── Socket + SSE listeners ─────────────────────────────────────────────────
+  // Socket + SSE listeners
   useEffect(() => {
     if (!bookingId) return;
 
@@ -140,7 +139,7 @@ const BookingTracking = () => {
     };
   }, [bookingId, navigate, token]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  // Handlers
   const handleCancel = async () => {
     if (!bookingId) return;
     try {
@@ -149,7 +148,7 @@ const BookingTracking = () => {
     } catch { /* toasted by hook */ }
   };
 
-  // ── Loading state (only when accessed via URL param without router state) ──
+  // Loading state (only when accessed via URL param without router state)
   if (bookingLoading && !statePickup && !fetchedBooking) {
     return (
       <PageLayout title="Booking Status" description="Track your booking status">
@@ -163,7 +162,7 @@ const BookingTracking = () => {
     );
   }
 
-  // ── Derived values ─────────────────────────────────────────────────────────
+  // Derived values
   const currentStep  = STATUS_STEPS.findIndex((s) => s.key === resolvedStatus);
   const isCancellable =
     resolvedStatus === "WAITING_PORTER" || resolvedStatus === "CONFIRMED";
@@ -174,7 +173,7 @@ const BookingTracking = () => {
       ? `~NPR ${acceptedPorter.price}`
       : "Calculating…";
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // Render
   return (
     <PageLayout title="Booking Status" description="Track your booking status">
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">

@@ -18,12 +18,11 @@ export const getDistanceKm = (pickup, drop) => {
   return R * c;
 }
 
-export const priceCalculator = (distance, fare) => {
-    const baseDistance = 5;
-    const fareUpToFiveKm = 50;
-    const baseFarePerKm = 10;
-
-    const totalDistance = distance > baseDistance ? distance : baseDistance;
-    const totalFare = totalDistance * baseFarePerKm + (totalDistance - baseDistance) * fareUpToFiveKm + fare;
-    return totalFare;
+export const priceCalculator = (distance, extraFare = 0) => {
+  const BASE_FARE_DISTANCE = 30;
+  const EXTRA_KM_RATE = 10;
+  const distanceCost = distance <= 5
+    ? BASE_FARE_DISTANCE
+    : BASE_FARE_DISTANCE + Math.ceil(distance - 5) * EXTRA_KM_RATE;
+  return distanceCost + extraFare;
 }

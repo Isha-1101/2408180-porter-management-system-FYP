@@ -4,6 +4,7 @@ import Porters from "../../models/porter/Porters.js";
 import PorterTeam from "../../models/porter/porterTeam.js";
 import BookingPorterRequest from "../../models/BookintgPorterRequest.js";
 import TeamBookingSelection from "../../models/TeamBookingSelection.js";
+import User from "../../models/User.js";
 import sseService from "../../utils/sse-service.js";
 import { notifyUser } from "../../utils/notification-service.js";
 
@@ -391,17 +392,15 @@ export const teamLeadAcceptBooking = async (req, res) => {
       { session },
     );
 
-    // Get only NOT-ASSIGNED active+verified workers up to teamSize
+    // Get ALL active+verified workers in this team
     const teamWorkers = await Porters.find({
       teamId: teamLead.teamId,
       role: "worker",
       status: "active",
       isVerified: true,
       canAcceptBooking: true,
-      assigned_status: "not_assigned",
     })
       .populate("userId", "name email phone")
-      .limit(booking.teamSize)
       .session(session);
 
     if (!teamWorkers.length) {
@@ -409,20 +408,11 @@ export const teamLeadAcceptBooking = async (req, res) => {
       session.endSession();
       return res.status(400).json({
         success: false,
-        message: "No available (unassigned) workers found in your team",
+        message: "No active workers found in your team",
       });
     }
 
-    if (teamWorkers.length < booking.teamSize) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        success: false,
-        message: `Not enough available workers. Need ${booking.teamSize}, found ${teamWorkers.length}`,
-      });
-    }
-
-    // Create TeamBookingSelection with exactly teamSize workers set to PENDING
+    // Create TeamBookingSelection with all workers set to PENDING
     const [selection] = await TeamBookingSelection.create(
       [
         {
@@ -511,18 +501,6 @@ export const teamMemberRespond = async (req, res) => {
         .json({ success: false, message: "You can only respond for yourself" });
     }
 
-    // Guard: booking must still be waiting for responses
-    const booking = await PorterBooking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
-    }
-    if (booking.status !== "WAITING_PORTER_RESPONSE") {
-      return res.status(400).json({
-        success: false,
-        message: "Booking is no longer accepting responses",
-      });
-    }
-
     const selection = await TeamBookingSelection.findOne({ bookingId });
     if (!selection) {
       return res
@@ -554,29 +532,26 @@ export const teamMemberRespond = async (req, res) => {
 
     // Notify team lead via SSE
     const porter = await Porters.findById(porterId).populate("userId");
+    const teamLead = await User.findById(selection.teamLeadId);
     const teamLeadPorter = await Porters.findOne({
       userId: selection.teamLeadId,
     });
-
-    const acceptedCount = selection.selectedPorters.filter(
-      (p) => p.status === "ACCEPTED",
-    ).length;
-    const allResponded = selection.selectedPorters.every(
-      (p) => p.status !== "PENDING",
-    );
-    const canConfirm = acceptedCount >= booking.teamSize;
 
     if (teamLeadPorter) {
       sseService.sendToPorter(teamLeadPorter._id, "porter-responded", {
         bookingId,
         porterName: porter?.userId?.name || "A porter",
         accepted,
-        acceptedCount,
-        requiredMembers: booking.teamSize,
-        canConfirm,
-        allResponded,
       });
     }
+
+    const allResponded = selection.selectedPorters.every(
+      (p) => p.status !== "PENDING",
+    );
+    const acceptedCount = selection.selectedPorters.filter(
+      (p) => p.status === "ACCEPTED",
+    ).length;
+    const booking = await PorterBooking.findById(bookingId);
 
     return res.status(200).json({
       success: true,
@@ -676,11 +651,6 @@ export const teamLeadConfirm = async (req, res) => {
     // ── Mark team lead (owner) as busy too
     await Porters.findByIdAndUpdate(teamLeadPorterId, {
       currentStatus: "busy",
-    });
-
-    // ── Decrement noOfAvailableMember on the team
-    await PorterTeam.findByIdAndUpdate(booking.assignedTeamId, {
-      $inc: { noOfAvailableMember: -acceptedPorterIds.length },
     });
 
     // ── Notify user via SSE + in-app notification
@@ -815,11 +785,6 @@ export const completeTeamBooking = async (req, res) => {
         { _id: { $in: assignedPorterIds } },
         { canAcceptBooking: true, assigned_status: "not_assigned", currentStatus: "online" },
       );
-
-      // ── Restore noOfAvailableMember on the team
-      await PorterTeam.findByIdAndUpdate(booking.assignedTeamId, {
-        $inc: { noOfAvailableMember: assignedPorterIds.length },
-      });
     }
 
     // ── Also free up the team lead

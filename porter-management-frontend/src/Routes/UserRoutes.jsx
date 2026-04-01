@@ -1,5 +1,5 @@
 import DashboardHome from "../pages/dashboard/DashboardHome";
-import PorterBooking from "../pages/dashboard/user/PorterBooking";
+import PorterBooking from "../pages/dashboard/user/PorterBooking/index";
 import Orders from "../pages/dashboard/user/Orders";
 import Settings from "../pages/dashboard/user/Settings";
 import UserProfile from "../pages/dashboard/user/UserProfile";

@@ -7,8 +7,8 @@ export const calculateFare = (fareCalculatorData) => {
       has_lift: fareCalculatorData.has_lift,
       no_of_trips: fareCalculatorData.no_of_trips,
       weightKg: fareCalculatorData.weightKg,
-      has_vehicle:
-        fareCalculatorData.has_vehicle || fareCalculatorData.hasVehicle,
+      vehicleType: fareCalculatorData.vehicleType || undefined,
+      distanceKm: fareCalculatorData.distanceKm || 0,
     },
   });
 };
