@@ -75,9 +75,13 @@ const FareEstimateBreakdown = ({
     },
   );
 
-  if (!fareEstimate) return null;
+  useEffect(() => {
+    if (fareEstimate?.totalCost !== undefined) {
+      setTotalPrice(fareEstimate.totalCost);
+    }
+  }, [fareEstimate?.totalCost, setTotalPrice]);
 
-  setTotalPrice(fareEstimate?.totalCost);
+  if (!fareEstimate) return null;
 
   return (
     <div className="rounded-xl border border-orange-200 overflow-hidden shadow-sm">
