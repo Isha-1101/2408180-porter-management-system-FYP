@@ -21,7 +21,7 @@ const TeamFields = ({
     {/* Team Size */}
     <div className="md:col-span-6 space-y-2">
       <Label htmlFor="teamSize" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <UserPlus className="w-4 h-4 text-primary" />
+        <UserPlus className="w-4 h-4" style={{ color: '#0C4C40' }} />
         Number of Porters <span className="text-red-500">*</span>
       </Label>
       <div className="relative">
@@ -46,7 +46,7 @@ const TeamFields = ({
     {/* Weight */}
     <div className="md:col-span-6 space-y-2">
       <Label htmlFor="weight-team" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <Weight className="w-4 h-4 text-primary" />
+        <Weight className="w-4 h-4" style={{ color: '#0C4C40' }} />
         Weight (kg) <span className="text-red-500">*</span>
       </Label>
       <div className="relative">
@@ -92,7 +92,7 @@ const TeamFields = ({
       <>
         <div className="md:col-span-6 space-y-2">
           <label htmlFor="floors-team" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-            <Layers className="w-4 h-4 text-primary" />
+            <Layers className="w-4 h-4" style={{ color: '#0C4C40' }} />
             Number of Floors
           </label>
           <div className="relative">
@@ -133,7 +133,7 @@ const TeamFields = ({
     {purpose && (
       <div className="md:col-span-6 space-y-2">
         <label htmlFor="numberOfTrips-team" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-          <Route className="w-4 h-4 text-primary" />
+          <Route className="w-4 h-4" style={{ color: '#0C4C40' }} />
           Number of Trips
         </label>
         <div className="relative">
@@ -159,7 +159,7 @@ const TeamFields = ({
     {/* Special Requirements */}
     <div className="md:col-span-12 space-y-2">
       <Label htmlFor="requirements" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <Search className="w-4 h-4 text-primary" />
+        <Search className="w-4 h-4" style={{ color: '#0C4C40' }} />
         Special Requirements
       </Label>
       <textarea
@@ -174,7 +174,7 @@ const TeamFields = ({
     {/* Date */}
     <div className="md:col-span-6 space-y-2">
       <Label htmlFor="bookingDate" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <CalendarDays className="w-4 h-4 text-primary" />
+        <CalendarDays className="w-4 h-4" style={{ color: '#0C4C40' }} />
         Booking Date <span className="text-red-500">*</span>
       </Label>
       <Input
@@ -190,7 +190,7 @@ const TeamFields = ({
     {/* Time */}
     <div className="md:col-span-6 space-y-2">
       <Label htmlFor="bookingTime" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <Clock className="w-4 h-4 text-primary" />
+        <Clock className="w-4 h-4" style={{ color: '#0C4C40' }} />
         Booking Time
       </Label>
       <Input

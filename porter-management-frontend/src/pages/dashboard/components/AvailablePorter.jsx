@@ -30,7 +30,7 @@ const AvailablePorter = ({ availablePorters, onBook, isLoadingPorter }) => {
           <div className="flex items-start gap-4 mb-4">
             {/* Avatar */}
             <div className="shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shadow-md overflow-hidden">
+              <div className="w-12 h-12 rounded-full bg-[#C5E2B6] flex items-center justify-center text-[#0C4C40] font-bold text-lg shadow-md overflow-hidden">
                 {porter.photo ? (
                   <img
                     src={getCloudinaryUrl(porter.photo)}
@@ -48,14 +48,14 @@ const AvailablePorter = ({ availablePorters, onBook, isLoadingPorter }) => {
             {/* Details */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="font-bold text-[#1C5493] text-base">
+                <h3 className="font-bold text-[#0C4C40] text-base">
                   {porter.porterName || "Porter"}
                 </h3>
               </div>
 
               {/* Distance */}
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <MapPin className="w-3.5 h-3.5 text-primary" />
+                <MapPin className="w-3.5 h-3.5" style={{ color: '#C5E2B6' }} />
                 <span>
                   {porter.distanceMeters
                     ? `${Math.round(porter.distanceMeters)} m away`
@@ -98,7 +98,7 @@ const AvailablePorter = ({ availablePorters, onBook, isLoadingPorter }) => {
             className="w-full rounded-xl font-semibold shadow-sm hover:shadow-md transition-all"
             onClick={() => onBook && onBook(porter)}
           >
-            Book This Porter
+            Book Porter
           </Button>
         </div>
       ))}

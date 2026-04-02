@@ -34,13 +34,13 @@ const VehicleSelector = ({
 }) => (
   <div className="md:col-span-12 space-y-3">
     {/* Toggle */}
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <div className="flex items-center justify-between p-4 bg-[#E8F5E8] rounded-lg border border-[#C5E2B6]">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary/10 rounded-lg">
-          <Truck className="w-5 h-5 text-primary" />
+        <div className="p-2 bg-[#C5E2B6]/50 rounded-lg">
+          <Truck className="w-5 h-5 text-[#0C4C40]" />
         </div>
         <div>
-          <p className="font-medium text-sm">Include Vehicle</p>
+          <p className="font-medium text-sm text-gray-700">Include Vehicle</p>
           <p className="text-xs text-gray-500">
             Porter with vehicle assistance
           </p>
@@ -48,7 +48,7 @@ const VehicleSelector = ({
       </div>
       <button
         onClick={onToggle}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? "bg-primary" : "bg-gray-300"}`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${hasVehicle ? "bg-[#0C4C40]" : "bg-gray-300"}`}
       >
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${hasVehicle ? "translate-x-6" : "translate-x-1"}`}
@@ -69,14 +69,14 @@ const VehicleSelector = ({
               onClick={() => onVehicleTypeChange(type.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-all flex items-center gap-2 ${
                 vehicleType === type.id
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  ? "bg-[#C5E2B6] text-[#0C4C40] border-[#C5E2B6] font-semibold"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-[#C5E2B6] hover:bg-[#C5E2B6]/30"
               }`}
             >
               <type.icon className="w-4 h-4" />
               {type.label}
               <span
-                className={`text-xs ${vehicleType === type.id ? "text-white/80" : "text-gray-400"}`}
+                className={`text-xs ${vehicleType === type.id ? "text-[#0C4C40]/70" : "text-gray-400"}`}
               >
                 up to {VEHICLE_MAX_WEIGHT[type.id]}kg · Rs.
                 {VEHICLE_PRICES[type.id]}
@@ -87,7 +87,7 @@ const VehicleSelector = ({
 
         {/* Auto-weight info badge */}
         {vehicleType && (
-          <p className="text-xs text-primary font-medium bg-primary/5 border border-primary/20 rounded-md px-3 py-1.5">
+          <p className="text-xs text-[#0C4C40] font-medium bg-[#E8F5E8] border border-[#C5E2B6] rounded-md px-3 py-1.5">
             Weight auto-set to {VEHICLE_MAX_WEIGHT[vehicleType]} kg · Fixed
             vehicle charge: Rs. {VEHICLE_PRICES[vehicleType]}
           </p>

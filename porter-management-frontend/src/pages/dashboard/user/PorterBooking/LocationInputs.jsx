@@ -7,7 +7,7 @@ const LocationInputs = ({ pickup, dropoff, selectingMapFor, onPickupChange, onDr
     {/* From */}
     <div className="space-y-2">
       <Label htmlFor="from-location" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <MapPin className="w-4 h-4 text-primary" />
+        <MapPin className="w-4 h-4" style={{ color: '#0C4C40' }} />
         From
       </Label>
       <div className="relative">
@@ -47,7 +47,7 @@ const LocationInputs = ({ pickup, dropoff, selectingMapFor, onPickupChange, onDr
     {/* To */}
     <div className="space-y-2">
       <Label htmlFor="to-location" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-        <Navigation className="w-4 h-4 text-primary" />
+        <Navigation className="w-4 h-4" style={{ color: '#0C4C40' }} />
         To
       </Label>
       <div className="relative">

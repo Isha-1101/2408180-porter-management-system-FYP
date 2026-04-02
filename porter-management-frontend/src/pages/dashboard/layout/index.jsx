@@ -107,10 +107,10 @@ const DashboardLayout = () => {
                 <div className="relative" ref={notifRef}>
                   <button
                     onClick={handleBellClick}
-                    className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+                    className="relative p-2 rounded-lg hover:bg-green-50 text-gray-600 transition-colors"
                     aria-label="Notifications"
                   >
-                    <Bell className="w-5 h-5 text-[#1C5493]" />
+                    <Bell className="w-5 h-5 text-[#0C4C40]" />
                     {unseenCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium animate-pulse">
                         {unseenCount > 9 ? "9+" : unseenCount}
@@ -141,7 +141,7 @@ const DashboardLayout = () => {
                           notifications.map((notif) => (
                             <div
                               key={notif.id}
-                              className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                              className="flex items-start gap-3 px-4 py-3 hover:bg-green-50 border-b border-gray-100 last:border-0 transition-colors"
                             >
                               <div className="mt-0.5 shrink-0">
                                 {NOTIF_ICONS[notif.type] || (
@@ -210,8 +210,8 @@ const DashboardLayout = () => {
                   </div>
 
                   <div className="relative group">
-                    <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="w-9 h-9 bg-[#1C5493] rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
+                    <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-green-50 transition-colors">
+                      <div className="w-9 h-9 bg-[#0C4C40] rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </div>
                     </button>
@@ -236,14 +236,14 @@ const DashboardLayout = () => {
                                 : "/dashboard/profile",
                             )
                           }
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 flex items-center gap-2 transition-colors"
                         >
                           <User className="w-4 h-4" />
                           My Profile
                         </button>
                         <button
                           onClick={() => navigate("/dashboard/settings")}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 flex items-center gap-2 transition-colors"
                         >
                           <Settings className="w-4 h-4" />
                           Settings

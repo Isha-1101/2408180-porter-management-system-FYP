@@ -13,9 +13,9 @@ import {
 import { useAuthStore } from "../../../store/auth.store";
 import getNavItems from "./component/nav-items";
 
-const SIDEBAR_BG = "#1C5493";
+const SIDEBAR_BG = "#0C4C40";
 const SIDEBAR_ACTIVE_BG = "#FFFFFF";
-const SIDEBAR_ACTIVE_TEXT = "#1C5493";
+const SIDEBAR_ACTIVE_TEXT = "#0C4C40";
 const SIDEBAR_HOVER_BG = "rgba(255, 255, 255, 0.15)";
 const SIDEBAR_TEXT = "#FFFFFF";
 
@@ -81,7 +81,7 @@ const AppSidebar = () => {
                           "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:mx-auto",
                           isActive
                             ? /* Active – white background with sidebar blue text */
-                            "bg-white text-[#1C5493] font-semibold shadow-md"
+                            "bg-white text-[#0C4C40] font-semibold shadow-md"
                             : /* Idle – white text with subtle hover */
                             "text-white hover:bg-white/15 hover:shadow-sm",
                         ].join(" ")

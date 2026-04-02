@@ -63,7 +63,6 @@ const BookingConfirmation = () => {
     <PageLayout
       className="max-w-full p-4"
       title="Booking Confirmation"
-      description="Confirm your booking details"
     >
       <div className="flex flex-col  items-center">
         <Card className="w-3xl mt-2">

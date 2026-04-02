@@ -39,7 +39,7 @@ const PurposeFields = ({
         {/* Weight */}
         <div className="space-y-2">
           <Label htmlFor="weight" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-            <Weight className="w-4 h-4 text-primary" />
+            <Weight className="w-4 h-4" style={{ color: '#0C4C40' }} />
             Weight (kg)
           </Label>
           <div className="relative">
@@ -67,7 +67,7 @@ const PurposeFields = ({
         {/* Trips */}
         <div className="space-y-2">
           <label htmlFor="numberOfTrips" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-            <Route className="w-4 h-4 text-primary" />
+            <Route className="w-4 h-4" style={{ color: '#0C4C40' }} />
             Number of Trips
           </label>
           <div className="relative">
@@ -94,7 +94,7 @@ const PurposeFields = ({
             {/* Floors */}
             <div className="space-y-2">
               <label htmlFor="floors" className="text-sm font-medium flex items-center gap-2 text-gray-700">
-                <Layers className="w-4 h-4 text-primary" />
+                <Layers className="w-4 h-4" style={{ color: '#0C4C40' }} />
                 Number of Floors
               </label>
               <div className="relative">
