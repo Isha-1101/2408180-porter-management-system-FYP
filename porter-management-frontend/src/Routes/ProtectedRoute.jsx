@@ -7,6 +7,7 @@ const ProtectedRoute = () => {
   const location = useLocation();
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
 
   // Role-based redirect: when accessing /dashboard directly, redirect based on role
   if (location.pathname === "/dashboard") {
