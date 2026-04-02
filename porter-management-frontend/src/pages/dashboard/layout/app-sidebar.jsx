@@ -13,55 +13,88 @@ import {
 import { useAuthStore } from "../../../store/auth.store";
 import getNavItems from "./component/nav-items";
 
+const SIDEBAR_BG = "#1C5493";
+const SIDEBAR_ACTIVE_BG = "#FFFFFF";
+const SIDEBAR_ACTIVE_TEXT = "#1C5493";
+const SIDEBAR_HOVER_BG = "rgba(255, 255, 255, 0.15)";
+const SIDEBAR_TEXT = "#FFFFFF";
+
 const AppSidebar = () => {
   const user = useAuthStore((state) => state.user);
-
   const role = user?.role;
   const navItems = getNavItems(role);
 
-  const isActive = (item) => {
-    return item.to === window.location.pathname;
-  };
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-3 px-2 py-2">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shrink-0">
-            <Logo />
+    <Sidebar
+      collapsible="icon"
+      className="
+        border-none shadow-xl overflow-hidden
+        transition-all duration-300
+        group-data-[collapsible=icon]:rounded-r-3xl
+      "
+      style={{ backgroundColor: SIDEBAR_BG }}
+    >
+      {/* Header */}
+      <SidebarHeader
+        className="border-none group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-4"
+        style={{ backgroundColor: SIDEBAR_BG }}
+      >
+        <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 -ml-1">
+          {/* Logo icon — always visible, no circle background */}
+          <div className="shrink-0 w-17 h-18 flex items-center justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8">
+            <Logo containerClassName="w-full h-full" />
           </div>
-          <div className="group-data-[collapsible=icon]:hidden">
-            <div className="font-bold text-primary whitespace-nowrap">
+          {/* Text — hidden when collapsed */}
+          <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
+            <div className="font-bold text-white whitespace-nowrap tracking-wide text-base">
               DOKO Namlo
             </div>
-            <div className="text-xs text-gray-500 whitespace-nowrap">
+            <div className="text-xs text-white/60 whitespace-nowrap">
               Dashboard
             </div>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-1 bg-primary/80">
-        <SidebarGroup>
+      {/* Nav Items */}
+      <SidebarContent
+        className="p-2 border-none"
+        style={{ backgroundColor: SIDEBAR_BG, color: SIDEBAR_TEXT }}
+      >
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
                     asChild
                     tooltip={item.label}
-                    className={
-                      isActive(item)
-                        ? "data-[active=true]:bg-primary data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-primary/20 bg-white text-primary"
-                        : "text-primary-foreground"
-                    }
+                    className="h-auto p-0 bg-transparent hover:bg-transparent"
                   >
                     <NavLink
                       to={item.to}
                       end={item.end}
-                      className={({ isActive }) => (isActive ? "active" : "")}
+                      className={({ isActive }) =>
+                        [
+                          "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full",
+                          /* Collapsed: centre the icon chip */
+                          "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:mx-auto",
+                          isActive
+                            ? /* Active – white background with sidebar blue text */
+                            "bg-white text-[#1C5493] font-semibold shadow-md"
+                            : /* Idle – white text with subtle hover */
+                            "text-white hover:bg-white/15 hover:shadow-sm",
+                        ].join(" ")
+                      }
                     >
-                      {item.icon}
-                      <span>{item.label}</span>
+                      {/* Icon wrapper keeps size consistent */}
+                      <span className="shrink-0 w-5 h-5 flex items-center justify-center">
+                        {item.icon}
+                      </span>
+                      {/* Label – hidden in collapsed mode */}
+                      <span className="group-data-[collapsible=icon]:hidden whitespace-nowrap text-sm">
+                        {item.label}
+                      </span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

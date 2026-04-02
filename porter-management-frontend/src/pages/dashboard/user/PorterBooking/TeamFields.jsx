@@ -81,8 +81,8 @@ const TeamFields = ({
           <SelectValue placeholder="Select purpose" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="transportation">🚚 Transportation (Moving / House Shift)</SelectItem>
-          <SelectItem value="delivery">📦 Delivery</SelectItem>
+          <SelectItem value="transportation">Transportation (Moving / House Shift)</SelectItem>
+          <SelectItem value="delivery">Delivery</SelectItem>
         </SelectContent>
       </Select>
     </div>

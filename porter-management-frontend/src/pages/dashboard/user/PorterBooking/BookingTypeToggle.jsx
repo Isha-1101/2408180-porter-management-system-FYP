@@ -6,7 +6,7 @@ const BookingTypeToggle = ({ porterType, onChange }) => (
       onClick={() => onChange("individual")}
       className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
         porterType === "individual"
-          ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+          ? "bg-white text-[#1C5493] shadow-sm ring-1 ring-black/5"
           : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
       }`}
     >
@@ -17,7 +17,7 @@ const BookingTypeToggle = ({ porterType, onChange }) => (
       onClick={() => onChange("team")}
       className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold transition-all ${
         porterType === "team"
-          ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+          ? "bg-white text-[#1C5493] shadow-sm ring-1 ring-black/5"
           : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
       }`}
     >

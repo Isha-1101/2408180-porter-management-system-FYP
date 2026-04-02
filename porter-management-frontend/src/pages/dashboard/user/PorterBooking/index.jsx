@@ -320,7 +320,7 @@ const PorterBooking = () => {
                 {/* Submit */}
                 <div className="pt-2 flex justify-center">
                   <Button
-                    className="w-full md:w-auto px-12 h-10 font-medium text-base shadow-sm hover:shadow active:scale-[0.98] transition-all bg-[#D35400] hover:bg-[#A04000] text-white"
+                    className="w-full md:w-auto px-12 h-10 font-medium text-base shadow-sm hover:shadow active:scale-[0.98] transition-all"
                     onClick={handleSearch}
                     disabled={porterType === "team" ? createTeamBookingPending : searchNearByPorterPending}
                   >

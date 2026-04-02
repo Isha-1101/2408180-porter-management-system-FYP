@@ -48,7 +48,7 @@ const AvailablePorter = ({ availablePorters, onBook, isLoadingPorter }) => {
             {/* Details */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="font-bold text-secondary text-base">
+                <h3 className="font-bold text-[#1C5493] text-base">
                   {porter.porterName || "Porter"}
                 </h3>
               </div>
@@ -68,21 +68,30 @@ const AvailablePorter = ({ availablePorters, onBook, isLoadingPorter }) => {
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
             {porter.experienceYears != null && (
-              <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                {porter.experienceYears} yrs experience
+              <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200">
+                Experience: {porter.experienceYears}+
               </span>
             )}
-            {porter.maxWeightKg != null && (
-              <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 inline-flex items-center gap-1">
-                <Weight className="w-3 h-3" />
-                Up to {porter.maxWeightKg} kg
+            <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg
+                    key={star}
+                    className={`w-3 h-3 ${
+                      porter.averageRating && star <= Math.round(porter.averageRating)
+                        ? 'fill-amber-500'
+                        : 'fill-gray-300'
+                    }`}
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                  </svg>
+                ))}
               </span>
-            )}
-            {porter.porterType && (
-              <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 capitalize">
-                {porter.porterType}
+              <span>
+                {porter.averageRating ? porter.averageRating.toFixed(1) : '0.0'}
               </span>
-            )}
+            </span>
           </div>
 
           <Button

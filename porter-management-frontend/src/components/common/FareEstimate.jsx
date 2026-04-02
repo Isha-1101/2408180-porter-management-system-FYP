@@ -28,16 +28,16 @@ function useDebounce(value, delay) {
 const getIconForTitle = (title) => {
   const t = title.toLowerCase();
   if (t.includes("floor"))
-    return <Layers className="w-3.5 h-3.5 text-orange-400" />;
+    return <Layers className="w-3.5 h-3.5 text-[#1C5493]" />;
   if (t.includes("weight"))
-    return <Weight className="w-3.5 h-3.5 text-orange-400" />;
+    return <Weight className="w-3.5 h-3.5 text-[#1C5493]" />;
   if (t.includes("vehicle"))
-    return <Truck className="w-3.5 h-3.5 text-orange-400" />;
+    return <Truck className="w-3.5 h-3.5 text-[#1C5493]" />;
   if (t.includes("trip"))
-    return <Route className="w-3.5 h-3.5 text-orange-400" />;
+    return <Route className="w-3.5 h-3.5 text-[#1C5493]" />;
   if (t.includes("lift"))
-    return <ChevronUp className="w-3.5 h-3.5 text-orange-400" />;
-  return <Calculator className="w-3.5 h-3.5 text-orange-400" />;
+    return <ChevronUp className="w-3.5 h-3.5 text-[#1C5493]" />;
+  return <Calculator className="w-3.5 h-3.5 text-[#1C5493]" />;
 };
 
 const FareEstimateBreakdown = ({
@@ -84,12 +84,12 @@ const FareEstimateBreakdown = ({
   if (!fareEstimate) return null;
 
   return (
-    <div className="rounded-xl border border-orange-200 overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-cyan-200 overflow-hidden shadow-sm">
       {/* Header */}
       <button
         type="button"
         onClick={() => setShowFareBreakdown((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-linear-to-r from-[#D35400] to-[#E67E22] text-white"
+        className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#32C1E0] to-[#28a3c0] text-white"
         disabled={isFetching}
       >
         <span className="flex items-center gap-2 font-semibold text-sm">
@@ -114,7 +114,7 @@ const FareEstimateBreakdown = ({
 
       {/* Breakdown */}
       {showFareBreakdown && !isFetching && fareEstimate?.breakdown && (
-        <div className="bg-orange-50/60 divide-y divide-orange-100">
+        <div className="bg-cyan-50/60 divide-y divide-cyan-100">
           {fareEstimate.breakdown.map((item, index) => (
             <div
               key={index}
@@ -131,13 +131,13 @@ const FareEstimateBreakdown = ({
           ))}
 
           {/* Total */}
-          <div className="flex items-center justify-between px-4 py-3 bg-orange-100/70">
+          <div className="flex items-center justify-between px-4 py-3 bg-cyan-100/70">
             <span className="font-bold text-gray-800 flex items-center gap-1.5">
-              <Calculator className="w-4 h-4 text-[#D35400]" />
+              <Calculator className="w-4 h-4 text-[#1C5493]" />
               Estimated Total
             </span>
 
-            <span className="font-bold text-lg text-[#D35400]">
+            <span className="font-bold text-lg text-[#1C5493]">
               Rs. {fareEstimate?.totalCost ?? 0}
             </span>
           </div>

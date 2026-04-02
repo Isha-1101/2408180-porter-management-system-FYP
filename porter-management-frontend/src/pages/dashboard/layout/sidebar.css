@@ -1,22 +1,24 @@
-/* Custom styles for dashboard layout sidebar */
+/* ── Sidebar pill shape when collapsed ────────────────────── */
 
-/* Active NavLink styling for sidebar menu items */
-[data-sidebar="menu-button"] a.active {
-  background-color: hsl(var(--primary));
-  color: white;
-  font-weight: 500;
+/* Round the right edge of the entire sidebar rail */
+[data-sidebar="sidebar"][data-state="collapsed"],
+.group-data-\[collapsible\=icon\] [data-sidebar="sidebar"] {
+  border-radius: 0 1.75rem 1.75rem 0;
+  overflow: hidden;
 }
 
-[data-sidebar="menu-button"] a.active svg {
-  color: white;
+/* Smooth width transition */
+[data-sidebar="sidebar"] {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.3s ease;
 }
 
-/* Ensure smooth transitions */
-[data-sidebar="menu-button"] a {
-  transition: all 0.2s ease-in-out;
+/* Remove any default Shadcn sidebar border */
+[data-sidebar="sidebar"] {
+  border: none !important;
 }
 
-/* Fix for collapsed sidebar icon-only view */
-.group-data-\[collapsible\=icon\] [data-sidebar="menu-button"] a.active {
-  background-color: hsl(var(--primary));
+/* Scrollbar hidden inside sidebar */
+[data-sidebar="content"]::-webkit-scrollbar {
+  display: none;
 }

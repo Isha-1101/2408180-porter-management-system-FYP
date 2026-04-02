@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import AppSidebar from "./app-sidebar";
 import "./sidebar.css";
-import Logo from "@components/common/Logo";
+
 import { useAuthStore } from "@/store/auth.store";
 import useSSENotifications from "@/hooks/useSSENotifications";
 import {
@@ -87,7 +87,7 @@ const DashboardLayout = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-gray-50 flex w-full">
+      <div className="min-h-screen bg-background flex w-full">
         {/* App Sidebar */}
         <AppSidebar />
 
@@ -99,15 +99,6 @@ const DashboardLayout = () => {
               {/* Left Section */}
               <div className="flex items-center gap-3">
                 <SidebarTrigger />
-                <button
-                  onClick={() => navigate("/")}
-                  className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors"
-                >
-                  <Logo isColored containerClassName="h-20 w-20" />
-                  <span className="hidden sm:inline font-bold text-primary">
-                    DOKO Namlo
-                  </span>
-                </button>
               </div>
 
               {/* Right Section */}
@@ -119,7 +110,7 @@ const DashboardLayout = () => {
                     className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
                     aria-label="Notifications"
                   >
-                    <Bell className="w-5 h-5 text-primary" />
+                    <Bell className="w-5 h-5 text-[#1C5493]" />
                     {unseenCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium animate-pulse">
                         {unseenCount > 9 ? "9+" : unseenCount}
@@ -220,7 +211,7 @@ const DashboardLayout = () => {
 
                   <div className="relative group">
                     <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
+                      <div className="w-9 h-9 bg-[#1C5493] rounded-full flex items-center justify-center text-white font-semibold shadow-sm">
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </div>
                     </button>
