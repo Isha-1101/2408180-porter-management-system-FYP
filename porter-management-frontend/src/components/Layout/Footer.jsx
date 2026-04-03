@@ -47,9 +47,6 @@ export default function Footer() {
           </div>
 
           <div>
-            <div className="mb-6">
-              <Logo text={true} isColored={true} />
-            </div>
             <h6 className="text-lg font-semibold mb-3 text-left">Subscribe</h6>
 
             <p className="text-gray-500 mb-4 text-base">
@@ -80,11 +77,21 @@ export default function Footer() {
                 </p>
               </div>
 
-              <Button className="bg-primary hover:bg-primary/90 text-white">Subscribe</Button>
+              <Button className="bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40]">Subscribe</Button>
             </div>
           </div>
         </div>
-        <p className="text-center mt-8 text-gray-700">
+
+        <div className="flex justify-center mt-5 mb-4">
+          <Logo 
+            text={true} 
+            isColored={true} 
+            logoClassName="w-12 h-12"
+            textClassName="text-xl"
+          />
+        </div>
+
+        <p className="text-center text-gray-700">
           &copy; {CURRENT_YEAR} Doko-Namlo.{" "}
           <a
             href="https://www.creative-tim.com"

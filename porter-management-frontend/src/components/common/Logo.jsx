@@ -1,8 +1,8 @@
-export default function Logo({ containerClassName = "", text = false, isColored = false ,imgClassName="" ,logoClassName=""}) {
+export default function Logo({ containerClassName = "", text = false, isColored = false ,imgClassName="" ,logoClassName="w-full h-full", textClassName="text-3xl" }) {
   return (
     <div className={`flex items-center gap-3 ${containerClassName}`}>
       {/* Logo Icon */}
-      <div className={`w-full h-full ${logoClassName}`}>
+      <div className={logoClassName}>
         {isColored ? (
           <img
             src="/images/doko_namlo.svg"
@@ -26,7 +26,7 @@ export default function Logo({ containerClassName = "", text = false, isColored 
         )}
       </div>
       {text && (
-        <span className="text-3xl font-bold tracking-wide text-primary">
+        <span className={`${textClassName} font-bold tracking-wide text-[#0C4C40] whitespace-nowrap`}>
           DOKO Namlo
         </span>
       )}

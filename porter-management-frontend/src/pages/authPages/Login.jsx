@@ -80,14 +80,15 @@ export default function Login() {
                 className="mb-2 flex flex-col items-center"
               >
                 <Logo
-                  containerClassName="flex-col gap-4 justify-center items-center"
+                  containerClassName="flex justify-center items-center"
+                  logoClassName="w-35 h-35"
                   isColored
                 />
-                <h1 className="mt-4 text-3xl font-bold text-center text-[#0C4C40]">
+                <h1 className="text-2xl font-bold text-center text-[#0C4C40]">
                   DOKO Namlo
                 </h1>
                 <h2 className="text-lg font-medium text-gray-600 mt-2">
-                  Welcome Back
+                  Welcome Back, Please Sign In to Continue !
                 </h2>
               </motion.div>
             </div>
