@@ -2,7 +2,7 @@
 
 /** Max weight each vehicle type can carry (kg) */
 export const VEHICLE_MAX_WEIGHT = {
-  bike: 200,
+  bike: 50,
   van: 500,
   "mini-truck": 800,
   truck: 2000,
@@ -12,8 +12,8 @@ export const VEHICLE_MAX_WEIGHT = {
 export const VEHICLE_PRICES = {
   bike: 50,
   van: 100,
-  "mini-truck": 350,
-  truck: 350,
+  "mini-truck": 200,
+  truck: 300,
 };
 
 const BASE_FARE_WEIGHT = 20;   // Rs. for first 5 kg
