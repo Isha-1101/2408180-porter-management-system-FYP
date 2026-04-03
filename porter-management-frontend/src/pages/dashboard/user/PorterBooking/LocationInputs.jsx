@@ -24,7 +24,7 @@ const LocationInputs = ({ pickup, dropoff, selectingMapFor, onPickupChange, onDr
                 <button
                   type="button"
                   onClick={() => onSelectMapFor(selectingMapFor === "pickup" ? null : "pickup")}
-                  className={`p-1.5 rounded-full transition-colors ${selectingMapFor === "pickup" ? "bg-primary text-white" : "hover:bg-gray-100 text-gray-500"}`}
+                  className={`p-1.5 rounded-full transition-colors ${selectingMapFor === "pickup" ? "bg-[#0C4C40] text-white" : "hover:bg-[#C5E2B6] text-gray-500 hover:text-[#0C4C40]"}`}
                   title="Select from map"
                 >
                   <MapPin className="w-4 h-4" />
@@ -33,7 +33,7 @@ const LocationInputs = ({ pickup, dropoff, selectingMapFor, onPickupChange, onDr
               <button
                 type="button"
                 onClick={onSetCurrentLocation}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-[#C5E2B6] rounded-full text-gray-500 hover:text-[#0C4C40] transition-colors"
                 title="Use current location"
               >
                 <Crosshair className="w-4 h-4" />
@@ -62,7 +62,7 @@ const LocationInputs = ({ pickup, dropoff, selectingMapFor, onPickupChange, onDr
             <button
               type="button"
               onClick={() => onSelectMapFor(selectingMapFor === "dropoff" ? null : "dropoff")}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${selectingMapFor === "dropoff" ? "bg-primary text-white" : "hover:bg-gray-100 text-gray-500"}`}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${selectingMapFor === "dropoff" ? "bg-[#0C4C40] text-white" : "hover:bg-[#C5E2B6] text-gray-500 hover:text-[#0C4C40]"}`}
               title="Select from map"
             >
               <MapPin className="w-4 h-4" />

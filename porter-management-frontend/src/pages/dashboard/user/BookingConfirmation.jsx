@@ -68,22 +68,30 @@ const BookingConfirmation = () => {
         <Card className="w-3xl mt-2">
           <CardContent className="space-y-6">
             {/* Route */}
-            <div className="bg-muted/30 p-4 rounded-lg">
+            <div className="bg-[#F5FBF2] p-4 rounded-lg border border-[#C5E2B6]">
               <div className="flex gap-3">
                 <div className="mt-1 flex flex-col items-center">
-                  <div className="w-2 h-2 rounded-full bg-green-500 ring-4 ring-green-100" />
-                  <div className="w-0.5 h-10 bg-gray-200 my-1" />
-                  <div className="w-2 h-2 rounded-full bg-red-500 ring-4 ring-red-100" />
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="w-0.5 h-10 bg-[#C5E2B6] my-1" />
+                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
                 <div className="flex-1 space-y-4">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                    <p className="text-xs text-[#0C4C40] uppercase tracking-wider font-semibold mb-1">
                       Pickup
                     </p>
                     <AddressLine location={pickup} />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                    <p className="text-xs text-[#0C4C40] uppercase tracking-wider font-semibold mb-1">
                       Dropoff
                     </p>
                     <AddressLine location={dropoff} />
@@ -93,8 +101,8 @@ const BookingConfirmation = () => {
             </div>
 
             {/* Porter */}
-            <div className="flex items-center gap-4 border p-4 rounded-lg">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+            <div className="flex items-center gap-4 border border-[#C5E2B6] p-4 rounded-lg bg-[#F5FBF2]">
+              <div className="w-12 h-12 bg-[#C5E2B6] rounded-full flex items-center justify-center overflow-hidden">
                 {porter.photo ? (
                   <img
                     src={getCloudinaryUrl(porter.photo)}
@@ -102,15 +110,15 @@ const BookingConfirmation = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-primary font-bold text-lg">
+                  <span className="text-[#0C4C40] font-bold text-lg">
                     {porter.porterName?.charAt(0) || "P"}
                   </span>
                 )}
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-lg">{porter.porterName}</h4>
+                <h4 className="font-semibold text-lg text-[#0C4C40]">{porter.porterName}</h4>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium capitalize">
+                  <span className="bg-[#C5E2B6] text-[#0C4C40] px-2 py-0.5 rounded text-xs font-medium capitalize">
                     {porter.porterType} Porter
                   </span>
                   <span>•</span>
@@ -118,13 +126,13 @@ const BookingConfirmation = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-bold text-xl text-primary">NPR 50</p>
+                <p className="font-bold text-xl text-[#0C4C40]">NPR 50</p>
                 <p className="text-xs text-muted-foreground">Base Rate</p>
               </div>
             </div>
 
             {/* Weight */}
-            <div className="flex items-center justify-between p-3 bg-blue-50 text-blue-900 rounded-md border border-blue-100">
+            <div className="flex items-center justify-between p-3 bg-[#E8F5E8] text-[#0C4C40] rounded-md border border-[#C5E2B6]">
               <div className="flex items-center gap-2">
                 <Weight className="w-5 h-5" />
                 <span className="font-medium">Total Weight</span>
@@ -136,7 +144,7 @@ const BookingConfirmation = () => {
 
             {/* Vehicle */}
             <div className="space-y-2">
-              <h3 className="font-semibold flex items-center gap-2">
+              <h3 className="font-semibold flex items-center gap-2 text-[#0C4C40]">
                 <Truck className="w-4 h-4" /> Vehicle Details
               </h3>
               <div className="space-y-1 text-sm">
@@ -182,8 +190,8 @@ const BookingConfirmation = () => {
               </div> */}
               <Separator className="my-2" />
               <div className="flex justify-between items-center text-lg font-bold">
-                <span>Total Amount</span>
-                <span className="text-primary text-2xl">NPR {totalPrice}</span>
+                <span className="text-[#0C4C40]">Total Amount</span>
+                <span className="text-[#0C4C40] text-2xl">NPR {totalPrice}</span>
               </div>
             </div>
           </CardContent>
@@ -208,9 +216,7 @@ const BookingConfirmation = () => {
                   <Loader2 className="w-5 h-5 animate-spin" /> Confirming…
                 </>
               ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5" /> Confirm Booking
-                </>
+                "Confirm Booking"
               )}
             </Button>
           </CardFooter>

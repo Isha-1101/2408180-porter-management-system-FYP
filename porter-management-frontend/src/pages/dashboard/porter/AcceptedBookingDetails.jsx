@@ -47,7 +47,7 @@ const normalize = (b) => ({
   weight: b.weight ?? b.weightKg ?? 0,
   vehicleType: b.vehicleType || "N/A",
   distance: b.distance ?? b.distanceKm ?? 0,
-  fare: b.fare ?? b.totalFare ?? 0,
+  fare: b.fare ?? b.totalFare ?? b.totalPrice ?? b.price ?? 0,
   status: b.status || "CONFIRMED",
 });
 

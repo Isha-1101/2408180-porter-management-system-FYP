@@ -30,17 +30,17 @@ import ChatBox from "@/components/chat/ChatBox";
 
 // Status step definitions
 const STATUS_STEPS = [
-  { key: "WAITING_PORTER", label: "Searching for porter", icon: Clock },
+  { key: "WAITING_PORTER", label: "Waiting for porter", icon: Clock },
   { key: "CONFIRMED",      label: "Porter accepted",       icon: CheckCircle2 },
   { key: "IN_PROGRESS",    label: "Pickup in progress",    icon: Navigation },
   { key: "COMPLETED",      label: "Booking completed",     icon: CheckCircle2 },
 ];
 
 const STATUS_COLORS = {
-  WAITING_PORTER: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  CONFIRMED:      "bg-blue-100 text-blue-700 border-blue-200",
-  IN_PROGRESS:    "bg-primary/10 text-primary border-primary/20",
-  COMPLETED:      "bg-green-100 text-green-700 border-green-200",
+  WAITING_PORTER: "bg-[#FEF3E0] text-[#E5A03D] border-[#FDB64E]",
+  CONFIRMED:      "bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976]",
+  IN_PROGRESS:    "bg-[#E8F5E8] text-[#0C4C40] border-[#C5E2B6]",
+  COMPLETED:      "bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976]",
   CANCELLED:      "bg-red-100 text-red-700 border-red-200",
 };
 
@@ -175,23 +175,11 @@ const BookingTracking = () => {
 
   // Render
   return (
-    <PageLayout title="Booking Status" description="Track your booking status">
+    <PageLayout title="Booking Status">
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
         {/* Header row */}
         <div className="flex items-center gap-3 flex-wrap">
-          <BackButton to="/dashboard/orders" label="Back to Orders" />
-          <Badge
-            className={`ml-auto text-xs px-3 py-1 rounded-full border ${
-              STATUS_COLORS[resolvedStatus] || "bg-gray-100 text-gray-700"
-            }`}
-          >
-            {resolvedStatus.replace(/_/g, " ")}
-          </Badge>
-          {bookingId && (
-            <Badge variant="outline" className="text-xs">
-              #{String(bookingId).slice(-6).toUpperCase()}
-            </Badge>
-          )}
+          <BackButton onClick={() => navigate(-1)} label="Back to Orders" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -224,7 +212,7 @@ const BookingTracking = () => {
                       <div key={step.key} className="flex items-center gap-3">
                         <div
                           className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                            done ? "bg-primary text-white" : "bg-gray-100 text-gray-400"
+                            done ? "bg-[#0C4C40] text-white" : "bg-gray-100 text-gray-400"
                           }`}
                         >
                           {active && resolvedStatus === "WAITING_PORTER" ? (
@@ -241,10 +229,10 @@ const BookingTracking = () => {
                           {step.label}
                         </p>
                         {done && i < currentStep && (
-                          <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Done</Badge>
+                          <Badge className="bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976] text-xs">Done</Badge>
                         )}
                         {active && (
-                          <Badge className="bg-primary/10 text-primary border-primary/20 text-xs animate-pulse">Active</Badge>
+                          <Badge className="bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976] text-xs">Active</Badge>
                         )}
                       </div>
                     );
@@ -258,13 +246,21 @@ const BookingTracking = () => {
                   <div className="space-y-2 text-sm">
                     {pickup && (
                       <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                         <AddressLine location={pickup} />
                       </div>
                     )}
                     {dropoff && (
                       <div className="flex items-start gap-2">
-                        <Navigation className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                        <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                         <AddressLine location={dropoff} />
                       </div>
                     )}
@@ -275,31 +271,33 @@ const BookingTracking = () => {
                 {/* Fare */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Estimated Fare</span>
-                  <span className="font-bold text-primary">{displayFare}</span>
+                  <span className="font-bold text-[#0C4C40]">
+                    NPR {fetchedBooking?.totalPrice || fare || acceptedPorter?.price || 0}
+                  </span>
                 </div>
 
                 {/* Porter card (when confirmed) */}
                 {acceptedPorter && resolvedStatus !== "WAITING_PORTER" && (
                   <>
                     <Separator />
-                    <div className="flex items-center gap-3 bg-blue-50 p-3 rounded-lg">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    <div className="flex items-center gap-3 bg-[#F5FBF2] p-3 rounded-lg border border-[#C5E2B6]">
+                      <div className="w-10 h-10 rounded-full bg-[#C5E2B6] flex items-center justify-center text-[#0C4C40] font-bold">
                         {acceptedPorter.porterName?.charAt(0) || "P"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">
+                        <p className="font-medium text-sm text-[#0C4C40]">
                           {acceptedPorter.porterName || "Your Porter"}
                         </p>
                         <p className="text-xs text-gray-500">
                           ★ {acceptedPorter.rating || "4.8"}
                         </p>
                       </div>
-                      <button className="p-2 rounded-full bg-white border border-gray-200 shadow-sm">
-                        <PhoneCall className="w-4 h-4 text-primary" />
+                      <button className="p-2 rounded-full bg-white border border-[#C5E2B6] shadow-sm hover:bg-[#F5FBF2]">
+                        <PhoneCall className="w-4 h-4 text-[#0C4C40]" />
                       </button>
                       <button
                         onClick={() => setIsChatOpen(!isChatOpen)}
-                        className="p-2 rounded-full bg-primary text-white border border-primary shadow-sm hover:bg-primary/90"
+                        className="p-2 rounded-full bg-[#0C4C40] text-white border border-[#0C4C40] shadow-sm hover:bg-[#8DC976]"
                       >
                         <MessageSquare className="w-4 h-4" />
                       </button>
@@ -313,10 +311,10 @@ const BookingTracking = () => {
             <div className="space-y-2">
               {resolvedStatus === "COMPLETED" && (
                 <div className="text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  <div className="w-12 h-12 rounded-full bg-[#C5E2B6] flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6 text-[#0C4C40]" />
                   </div>
-                  <p className="text-sm font-semibold text-green-700">Booking completed!</p>
+                  <p className="text-sm font-semibold text-[#0C4C40]">Booking completed!</p>
                   <Button className="w-full" onClick={() => navigate("/dashboard/orders")}>
                     View My Orders
                   </Button>
