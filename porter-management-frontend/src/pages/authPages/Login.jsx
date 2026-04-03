@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, ArrowRight, Lock, Smartphone } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Lock, Smartphone, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import Logo from "../../components/common/Logo";
 
@@ -53,34 +53,25 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen  flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 z-10">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="hidden lg:flex flex-col justify-center p-8 relative"
-        >
-          <div className="flex flex-col items-center h-full w-full bg-background p-8 rounded-full shadow-2xl border border-white/20">
-            <Logo
-              containerClassName="flex-col gap-2 justify-center"
-              isColored
-            />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F5FBF2]">
+      {/* Back Arrow Button */}
+      <button
+        onClick={() => navigate("/")}
+        type="button"
+        className="absolute top-8 left-8 p-3 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 border border-[#C5E2B6] group z-50"
+        title="Back to landing page"
+      >
+        <ArrowLeft className="w-6 h-6 text-[#0C4C40] group-hover:text-[#8DC976] transition-colors" />
+      </button>
 
-            <h1 className="mt-6 text-4xl font-bold text-center text-primary">
-              DOKO Namlo
-            </h1>
-          </div>
-        </motion.div>
-
-        {/* Right Side - Login Form */}
+      <div className="w-full max-w-lg z-10 mt-16">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5 }}
           className="flex justify-center items-center"
         >
-          <div className="w-full max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-[#C5E2B6]">
             {/* Form Header */}
             <div className="text-center pt-8 pb-4 px-8">
               <motion.div
@@ -88,12 +79,14 @@ export default function Login() {
                 animate={{ y: 0 }}
                 className="mb-2 flex flex-col items-center"
               >
-                <img
-                  src="/images/doko_namlo.svg"
-                  alt="App Logo"
-                  className="w-24 h-24 mb-1"
+                <Logo
+                  containerClassName="flex-col gap-4 justify-center items-center"
+                  isColored
                 />
-                <h2 className="text-3xl font-bold text-primary">
+                <h1 className="mt-4 text-3xl font-bold text-center text-[#0C4C40]">
+                  DOKO Namlo
+                </h1>
+                <h2 className="text-lg font-medium text-gray-600 mt-2">
                   Welcome Back
                 </h2>
               </motion.div>
@@ -110,7 +103,7 @@ export default function Login() {
                     Phone Number
                   </Label>
                   <div className="relative">
-                    <Smartphone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Smartphone className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
                     <Input
                       id="phone"
                       name="phone"
@@ -118,7 +111,7 @@ export default function Login() {
                       onChange={handleChange}
                       placeholder="98XXXXXXXX"
                       maxLength="10"
-                      className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-lg"
+                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40] text-lg"
                     />
                   </div>
                 </div>
@@ -135,13 +128,13 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={() => navigate("/forgot-password")}
-                      className="text-sm text-primary hover:text-primary font-medium"
+                      className="text-sm text-[#0C4C40] hover:text-[#8DC976] font-medium"
                     >
                       Forgot password?
                     </button>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
                     <Input
                       id="password"
                       type={togglePassword ? "text" : "password"}
@@ -149,12 +142,12 @@ export default function Login() {
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="pl-10 pr-12 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="pl-10 pr-12 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
                     />
                     <button
                       type="button"
                       onClick={() => setTogglePassword((prev) => !prev)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-3 text-[#0C4C40] hover:text-[#8DC976] transition-colors"
                     >
                       {togglePassword ? (
                         <EyeOff size={20} />
@@ -172,12 +165,12 @@ export default function Login() {
                 >
                   <Button
                     type="submit"
-                    className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    className="w-full h-12 rounded-lg bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
                     disabled={loginLoading}
                   >
                     {loginLoading ? (
                       <div className="flex items-center justify-center">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <div className="w-5 h-5 border-2 border-[#1A1A1A] border-t-transparent rounded-full animate-spin mr-2"></div>
                         Signing In...
                       </div>
                     ) : (
@@ -251,7 +244,7 @@ export default function Login() {
                   <Button
                     variant="link"
                     onClick={() => navigate("/register")}
-                    className="text-primary hover:text-primary/90 font-semibold p-0 ml-1"
+                    className="text-[#0C4C40] hover:text-[#8DC976] font-semibold p-0 ml-1"
                   >
                     Sign up now
                   </Button>
