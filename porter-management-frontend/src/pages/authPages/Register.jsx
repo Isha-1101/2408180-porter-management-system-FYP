@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ArrowLeft,
   CheckCircle,
   User,
   Mail,
@@ -112,7 +113,17 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F5FBF2] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Back Arrow Button */}
+      <button
+        onClick={() => navigate("/")}
+        type="button"
+        className="absolute top-8 left-8 p-3 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 border border-[#C5E2B6] group z-50"
+        title="Back to landing page"
+      >
+        <ArrowLeft className="w-6 h-6 text-[#0C4C40] group-hover:text-[#8DC976] transition-colors" />
+      </button>
+
       <div className="w-full flex justify-center z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -127,9 +138,16 @@ const Register = () => {
                 animate={{ y: 0 }}
                 className="mb-2 flex flex-col items-center"
               >
-                <img src="/images/doko_namlo.svg" alt="App Logo" className="w-24 h-24 mb-1" />
-                <h2 className="text-3xl font-bold text-primary">
-                  Create Account
+                <Logo
+                  containerClassName="flex justify-center items-center"
+                  logoClassName="w-28 h-28"
+                  isColored
+                />
+                <h1 className="text-2xl font-bold text-center text-[#0C4C40]">
+                  DOKO Namlo
+                </h1>
+                <h2 className="text-lg font-medium text-center text-gray-600 mt-2">
+                  Create Account to Get Started !
                 </h2>
               </motion.div>
             </CardHeader>
@@ -145,14 +163,14 @@ const Register = () => {
                     Full Name
                   </Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <User className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
                     <Input
                       id="name"
                       name="name"
                       value={form.name}
                       onChange={changeHandler}
-                      placeholder="Name Lastname"
-                      className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Enter your full name"
+                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
                     />
                   </div>
                 </div>
@@ -166,15 +184,15 @@ const Register = () => {
                     Email Address
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
                     <Input
                       id="email"
                       type="email"
                       name="email"
                       value={form.email}
                       onChange={changeHandler}
-                      placeholder="name@herald.com"
-                      className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Enter your email address"
+                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
                     />
                   </div>
                 </div>
@@ -188,15 +206,15 @@ const Register = () => {
                     Phone Number
                   </Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Phone className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
                     <Input
                       id="phone"
                       name="phone"
                       value={form.phone}
                       onChange={changeHandler}
-                      placeholder="98XXXXXXXX"
+                      placeholder="Enter your phone number"
                       maxLength="10"
-                      className="pl-10 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
                     />
                   </div>
                 </div>
@@ -210,20 +228,20 @@ const Register = () => {
                     Password
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
                     <Input
                       id="password"
                       type={togglePassword ? "text" : "password"}
                       name="password"
                       value={form.password}
                       onChange={changeHandler}
-                      placeholder="••••••••"
-                      className="pl-10 pr-12 h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Enter your password"
+                      className="pl-10 pr-12 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
                     />
                     <button
                       type="button"
                       onClick={() => setTogglePassword((prev) => !prev)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-3 text-[#0C4C40] hover:text-gray-600 transition-colors"
                     >
                       {togglePassword ? (
                         <EyeOff size={20} />
@@ -250,8 +268,8 @@ const Register = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "user"
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                        ? "border-[#0C4C40] bg-[#C5E2B6] text-[#0C4C40]"
+                        : "border-[#C5E2B6] hover:border-[#8DC976] hover:bg-[#F5FBF2] text-gray-600"
                         }`}
                     >
                       <User className="w-6 h-6 mx-auto mb-2" />
@@ -265,8 +283,8 @@ const Register = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "porter"
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                        ? "border-[#0C4C40] bg-[#C5E2B6] text-[#0C4C40]"
+                        : "border-[#C5E2B6] hover:border-[#8DC976] hover:bg-[#F5FBF2] text-gray-600"
                         }`}
                     >
                       <Building className="w-6 h-6 mx-auto mb-2" />
@@ -285,7 +303,7 @@ const Register = () => {
                 >
                   <Button
                     type="submit"
-                    className="w-full h-12 cursor-pointer bg-primary hover:bg-primary/90 text-white"
+                    className="w-full h-12 cursor-pointer bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300"
                     disabled={registerPending || isLoading}
                   >
                     {registerPending || isLoading ? (
@@ -312,7 +330,7 @@ const Register = () => {
                 <Button
                   variant="link"
                   onClick={() => navigate("/login")}
-                  className="text-primary hover:text-primary/80 font-semibold p-0"
+                  className="text-[#0C4C40] hover:text-[#8DC976] font-semibold p-0"
                 >
                   Sign In
                 </Button>

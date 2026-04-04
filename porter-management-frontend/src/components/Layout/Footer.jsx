@@ -83,10 +83,10 @@ export default function Footer() {
         </div>
 
         <div className="flex justify-center mt-5 mb-4">
-          <Logo 
-            text={true} 
-            isColored={true} 
-            logoClassName="w-12 h-12"
+          <Logo
+            text={true}
+            isColored={true}
+            logoClassName="w-25 h-25"
             textClassName="text-xl"
           />
         </div>
