@@ -4,10 +4,7 @@ import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label";
 import {
   Card,
-  CardContent,
   CardHeader,
-  CardTitle,
-  CardFooter,
 } from "@/components/ui/card.jsx";
 import { useRegister } from "../../apis/hooks/authHooks";
 import { toast } from "react-hot-toast";
@@ -17,7 +14,6 @@ import {
   EyeOff,
   ArrowRight,
   ArrowLeft,
-  CheckCircle,
   User,
   Mail,
   Phone,
@@ -34,58 +30,78 @@ const Register = () => {
     email: "",
     phone: "",
     password: "",
+    confirmPassword: "",
     role: "user",
   });
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    phone: false,
+    password: false,
+    confirmPassword: false,
+    role: false,
+  });
   const [togglePassword, setTogglePassword] = useState(false);
+  const [toggleConfirmPassword, setToggleConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const errors = {
+    name: !form.name
+      ? "Only letters allowed, minimum 2 characters"
+      : /^[a-zA-Z]+(?: [a-zA-Z]+)*$/.test(form.name) && form.name.length >= 2
+      ? ""
+      : "Only letters allowed, minimum 2 characters",
+    email: !form.email
+      ? "Enter a valid email address"
+      : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && !/\s/.test(form.email)
+      ? ""
+      : "Enter a valid email address",
+    phone: !form.phone
+      ? "Enter a valid 10-digit phone number"
+      : /^(98|97)\d{8}$/.test(form.phone)
+      ? ""
+      : "Enter a valid 10-digit phone number",
+    password: !form.password
+      ? "Password must include uppercase, lowercase, and a number"
+      : /(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}/.test(form.password)
+      ? ""
+      : "Password must include uppercase, lowercase, and a number",
+    confirmPassword: !form.confirmPassword
+      ? "Please confirm your password"
+      : form.password === form.confirmPassword
+      ? ""
+      : "Passwords do not match",
+    role: form.role === "user" || form.role === "porter" ? "" : "Please select a role",
+  };
+
+  const isFormValid = Object.values(errors).every((err) => err === "");
 
   const changeHandler = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setTouched({ ...touched, [e.target.name]: true });
+  };
+
+  const blurHandler = (e) => {
+    setTouched({ ...touched, [e.target.name]: true });
   };
 
   const { mutateAsync: register, isPending: registerPending } = useRegister();
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    if (!isFormValid) return;
+    
     setIsLoading(true);
 
-    if (
-      !form.name ||
-      !form.email ||
-      !form.phone ||
-      !form.password ||
-      !form.role
-    ) {
-      toast.error("All fields are required");
-      setIsLoading(false);
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      toast.error("Please enter a valid email address");
-      setIsLoading(false);
-      return;
-    }
-
-    // Phone validation (10 digits)
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(form.phone)) {
-      toast.error("Please enter a valid 10-digit phone number");
-      setIsLoading(false);
-      return;
-    }
-
-    // Password validation
-    if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      await register(form);
+      const payload = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        role: form.role,
+      };
+      await register(payload);
       toast.success("Account created successfully! Please login.");
       navigate("/login");
 
@@ -94,7 +110,16 @@ const Register = () => {
         email: "",
         phone: "",
         password: "",
+        confirmPassword: "",
         role: "user",
+      });
+      setTouched({
+        name: false,
+        email: false,
+        phone: false,
+        password: false,
+        confirmPassword: false,
+        role: false,
       });
     } catch (error) {
       console.log(error);
@@ -102,15 +127,6 @@ const Register = () => {
       setIsLoading(false);
     }
   };
-
-  const benefits = [
-    "Book porters instantly",
-    "Track deliveries in real-time",
-    "Manage multiple porters",
-    "Secure payment options",
-    "24/7 customer support",
-    "Detailed analytics dashboard",
-  ];
 
   return (
     <div className="min-h-screen bg-[#F5FBF2] flex items-center justify-center p-4 relative overflow-hidden">
@@ -169,10 +185,18 @@ const Register = () => {
                       name="name"
                       value={form.name}
                       onChange={changeHandler}
+                      onBlur={blurHandler}
                       placeholder="Enter your full name"
-                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      className={`pl-10 h-12 pr-10 rounded-lg transition-colors hover:bg-[#F5FBF2] ${
+                        touched.name && errors.name
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
                     />
                   </div>
+                  {touched.name && errors.name && (
+                    <p className="text-xs text-red-500">{errors.name}</p>
+                  )}
                 </div>
 
                 {/* Email Field */}
@@ -191,10 +215,18 @@ const Register = () => {
                       name="email"
                       value={form.email}
                       onChange={changeHandler}
+                      onBlur={blurHandler}
                       placeholder="Enter your email address"
-                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      className={`pl-10 h-12 pr-10 rounded-lg transition-colors hover:bg-[#F5FBF2] ${
+                        touched.email && errors.email
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
                     />
                   </div>
+                  {touched.email && errors.email && (
+                    <p className="text-xs text-red-500">{errors.email}</p>
+                  )}
                 </div>
 
                 {/* Phone Field */}
@@ -212,11 +244,19 @@ const Register = () => {
                       name="phone"
                       value={form.phone}
                       onChange={changeHandler}
+                      onBlur={blurHandler}
                       placeholder="Enter your phone number"
                       maxLength="10"
-                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      className={`pl-10 h-12 pr-10 rounded-lg transition-colors hover:bg-[#F5FBF2] ${
+                        touched.phone && errors.phone
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
                     />
                   </div>
+                  {touched.phone && errors.phone && (
+                    <p className="text-xs text-red-500">{errors.phone}</p>
+                  )}
                 </div>
 
                 {/* Password Field */}
@@ -235,22 +275,66 @@ const Register = () => {
                       name="password"
                       value={form.password}
                       onChange={changeHandler}
+                      onBlur={blurHandler}
                       placeholder="Enter your password"
-                      className="pl-10 pr-12 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      className={`pl-10 pr-12 h-12 rounded-lg transition-colors hover:bg-[#F5FBF2] ${
+                        touched.password && errors.password
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
                     />
                     <button
                       type="button"
                       onClick={() => setTogglePassword((prev) => !prev)}
-                      className="absolute right-3 top-3 text-[#0C4C40] hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-3.5 text-[#0C4C40] hover:text-gray-600 transition-colors"
                     >
-                      {togglePassword ? (
-                        <EyeOff size={20} />
-                      ) : (
-                        <Eye size={20} />
-                      )}
+                      {togglePassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500">Minimum 6 characters</p>
+                  {touched.password && errors.password ? (
+                    <p className="text-xs text-red-500">{errors.password}</p>
+                  ) : (
+                    <p className="text-xs text-gray-500">
+                      Minimum 8 characters, include uppercase, lowercase, and a number
+                    </p>
+                  )}
+                </div>
+
+                {/* Confirm Password Field */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Confirm Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 w-5 h-5 text-[#0C4C40]" />
+                    <Input
+                      id="confirmPassword"
+                      type={toggleConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={form.confirmPassword}
+                      onChange={changeHandler}
+                      onBlur={blurHandler}
+                      placeholder="Confirm your password"
+                      className={`pl-10 pr-12 h-12 rounded-lg transition-colors hover:bg-[#F5FBF2] ${
+                        touched.confirmPassword && errors.confirmPassword
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setToggleConfirmPassword((prev) => !prev)}
+                      className="absolute right-3 top-3.5 text-[#0C4C40] hover:text-gray-600 transition-colors"
+                    >
+                      {toggleConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {touched.confirmPassword && errors.confirmPassword && (
+                    <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+                  )}
                 </div>
 
                 {/* Role Selection */}
@@ -264,13 +348,17 @@ const Register = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <motion.button
                       type="button"
-                      onClick={() => setForm({ ...form, role: "user" })}
+                      onClick={() => {
+                        setForm({ ...form, role: "user" });
+                        setTouched({ ...touched, role: true });
+                      }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "user"
-                        ? "border-[#0C4C40] bg-[#C5E2B6] text-[#0C4C40]"
-                        : "border-[#C5E2B6] hover:border-[#8DC976] hover:bg-[#F5FBF2] text-gray-600"
-                        }`}
+                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                        form.role === "user"
+                          ? "border-[#0C4C40] bg-[#C5E2B6] text-[#0C4C40]"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] hover:bg-[#F5FBF2] text-gray-600"
+                      }`}
                     >
                       <User className="w-6 h-6 mx-auto mb-2" />
                       <div className="font-medium">User</div>
@@ -279,21 +367,26 @@ const Register = () => {
 
                     <motion.button
                       type="button"
-                      onClick={() => setForm({ ...form, role: "porter" })}
+                      onClick={() => {
+                        setForm({ ...form, role: "porter" });
+                        setTouched({ ...touched, role: true });
+                      }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${form.role === "porter"
-                        ? "border-[#0C4C40] bg-[#C5E2B6] text-[#0C4C40]"
-                        : "border-[#C5E2B6] hover:border-[#8DC976] hover:bg-[#F5FBF2] text-gray-600"
-                        }`}
+                      className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                        form.role === "porter"
+                          ? "border-[#0C4C40] bg-[#C5E2B6] text-[#0C4C40]"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] hover:bg-[#F5FBF2] text-gray-600"
+                      }`}
                     >
                       <Building className="w-6 h-6 mx-auto mb-2" />
                       <div className="font-medium">Porter</div>
-                      <div className="text-xs text-gray-500">
-                        Offer services
-                      </div>
+                      <div className="text-xs text-gray-500">Offer services</div>
                     </motion.button>
                   </div>
+                  {touched.role && errors.role && (
+                    <p className="text-xs text-red-500">{errors.role}</p>
+                  )}
                 </div>
 
                 {/* Submit Button */}
@@ -303,8 +396,12 @@ const Register = () => {
                 >
                   <Button
                     type="submit"
-                    className="w-full h-12 cursor-pointer bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300"
-                    disabled={registerPending || isLoading}
+                    className={`w-full h-12 transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl ${
+                      isFormValid
+                        ? "bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40] cursor-pointer"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed border-none shadow-none"
+                    }`}
+                    disabled={registerPending || isLoading || !isFormValid}
                   >
                     {registerPending || isLoading ? (
                       <div className="flex items-center justify-center">
@@ -320,8 +417,6 @@ const Register = () => {
                   </Button>
                 </motion.div>
               </form>
-
-
             </div>
 
             <div className="pb-8 text-center bg-transparent">
@@ -338,35 +433,10 @@ const Register = () => {
             </div>
           </Card>
         </motion.div>
-      </div >
-
-      <style jsx>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
-    </div >
+      </div>
+    </div>
   );
 };
 
 export default Register;
+

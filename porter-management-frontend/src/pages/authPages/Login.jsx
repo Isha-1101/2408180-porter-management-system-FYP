@@ -17,28 +17,51 @@ export default function Login() {
     phone: "",
     password: "",
   });
+  const [touched, setTouched] = useState({
+    phone: false,
+    password: false,
+  });
+
+  const errors = {
+    phone: !formData.phone
+      ? "Enter a registered number"
+      : /^(98|97)\d{8}$/.test(formData.phone)
+      ? ""
+      : "Enter a registered number",
+    password: !formData.password ? "Password is required" : "",
+  };
+
+  const isFormValid = formData.phone && formData.password && !errors.phone && !errors.password;
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // For phone number we validate real-time (so mark as touched while typing)
+    if (e.target.name === "phone") {
+      setTouched((prev) => ({ ...prev, phone: true }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    setTouched((prev) => ({
+      ...prev,
+      [e.target.name]: true,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setTouched({ phone: true, password: true });
+
     if (!formData.phone || !formData.password) {
-      toast.error("Phone and password are required.");
+      toast.error("All fields are required");
       return;
     }
 
-    // Phone validation
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      toast.error("Please enter a valid 10-digit phone number");
-      return;
-    }
+    if (errors.phone || errors.password) return;
 
     try {
       const response = await login(formData);
@@ -48,7 +71,7 @@ export default function Login() {
         navigate("/dashboard");
       }
     } catch (error) {
-      console.log(error);
+      toast.error("Invalid phone number or password");
     }
   };
 
@@ -110,11 +133,19 @@ export default function Login() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="98XXXXXXXX"
                       maxLength="10"
-                      className="pl-10 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40] text-lg"
+                      className={`pl-10 h-12 pr-10 rounded-lg transition-colors hover:bg-[#F5FBF2] text-lg ${
+                        touched.phone && errors.phone
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
                     />
                   </div>
+                  {touched.phone && errors.phone && (
+                    <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+                  )}
                 </div>
 
                 {/* Password Field */}
@@ -142,8 +173,13 @@ export default function Login() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="••••••••"
-                      className="pl-10 pr-12 h-12 rounded-lg border-[#C5E2B6] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      className={`pl-10 pr-12 h-12 rounded-lg transition-colors hover:bg-[#F5FBF2] ${
+                        touched.password && errors.password
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-[#C5E2B6] hover:border-[#8DC976] focus:border-[#0C4C40] focus:ring-[#0C4C40]"
+                      }`}
                     />
                     <button
                       type="button"
@@ -157,6 +193,9 @@ export default function Login() {
                       )}
                     </button>
                   </div>
+                  {touched.password && errors.password && (
+                    <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+                  )}
                 </div>
 
                 {/* Submit Button */}
@@ -166,7 +205,7 @@ export default function Login() {
                 >
                   <Button
                     type="submit"
-                    className="w-full h-12 rounded-lg bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    className="w-full h-12 rounded-lg transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl bg-[#C5E2B6] hover:bg-[#8DC976] text-[#0C4C40] cursor-pointer"
                     disabled={loginLoading}
                   >
                     {loginLoading ? (
