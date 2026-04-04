@@ -7,7 +7,12 @@ import {
 } from "../controllers/porterController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
+import { attachPorterId } from "../middlewares/porterMiddleware.js";
 import { createBookingAndNotifyPorters } from "../controllers/book-porter/porter-booking-controller.js";
+import {
+  getPorterAnalytics,
+  getPorterBookingHistory,
+} from "../controllers/book-porter/porter-analytics-controller.js";
 
 const PorterRouter = express.Router();
 
@@ -43,6 +48,24 @@ PorterRouter.put(
   authenticate,
   authorizeRole("porter"),
   togglePorterStatus,
+);
+
+// Porter analytics dashboard
+PorterRouter.get(
+  "/analytics",
+  authenticate,
+  authorizeRole("porter"),
+  attachPorterId,
+  getPorterAnalytics,
+);
+
+// Porter booking history
+PorterRouter.get(
+  "/bookings/history",
+  authenticate,
+  authorizeRole("porter"),
+  attachPorterId,
+  getPorterBookingHistory,
 );
 
 export default PorterRouter;

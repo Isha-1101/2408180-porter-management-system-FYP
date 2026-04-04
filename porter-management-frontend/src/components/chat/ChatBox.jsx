@@ -3,11 +3,13 @@ import { Send, X } from "lucide-react";
 import socket from "../../utils/socket";
 import axiosInstance from "../../apis/axiosInstance";
 import { useAuthStore } from "../../store/auth.store";
+import toast from "react-hot-toast";
 
 const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
 
   const bottomRef = useRef(null);
   const user = useAuthStore((state) => state.user);
@@ -20,7 +22,6 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
         ? String(bookingId._id || bookingId.id)
         : String(bookingId);
 
-    // Fetch chat history
     const fetchHistory = async () => {
       try {
         const response = await axiosInstance.get(`/chat/${strBookingId}`);
@@ -36,21 +37,16 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
 
     fetchHistory();
 
-    // Join room function
     const joinRoom = () => socket.emit("join-chat", strBookingId);
 
-    // In case socket is already connected
     if (socket.connected) {
       joinRoom();
     }
 
-    // Ensure we rejoin if reconnecting
     socket.on("connect", joinRoom);
 
-    // Listen for new messages
     const handleReceiveMessage = (message) => {
       setMessages((prev) => {
-        // Prevent duplicate append if we optimistically added
         if (
           prev.some(
             (m) =>
@@ -68,16 +64,21 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
       });
     };
 
+    const handleMessageError = (data) => {
+      toast.error(data?.error || "Failed to send message");
+    };
+
     socket.on("receive-message", handleReceiveMessage);
+    socket.on("message-error", handleMessageError);
 
     return () => {
       socket.off("connect", joinRoom);
       socket.off("receive-message", handleReceiveMessage);
+      socket.off("message-error", handleMessageError);
     };
   }, [bookingId]);
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     if (bottomRef.current) {
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -87,10 +88,8 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    console.log("handleSendMessage triggered", { newMessage, currentUserId });
     
     if (!newMessage.trim() || !currentUserId) {
-      console.warn("Message not sent. Reason: ", !newMessage.trim() ? "Empty message" : "Missing currentUserId");
       return;
     }
 
@@ -107,9 +106,9 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
       text: newMessage,
       createdAt: new Date().toISOString(),
     };
-    console.log(tempMsg);
-    // Optimistic UI update
+
     setMessages((prev) => [...prev, tempMsg]);
+    setIsSending(true);
 
     socket.emit("send-message", {
       bookingId: strBookingId,
@@ -117,9 +116,11 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
       senderModel: currentUserModel,
       text: newMessage,
     });
+
     setNewMessage("");
+    setTimeout(() => setIsSending(false), 1000);
   };
-  console.log(messages);
+
   return (
     <div className="flex flex-col h-[400px] w-full max-w-sm bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden relative">
       <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
@@ -177,7 +178,7 @@ const ChatBox = ({ bookingId, currentUserModel, onClose }) => {
         />
         <button
           type="submit"
-          disabled={!newMessage.trim()}
+          disabled={!newMessage.trim() || isSending}
           className="p-2 rounded-full bg-primary text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shrink-0"
         >
           <Send className="w-4 h-4" />

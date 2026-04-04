@@ -18,7 +18,7 @@ export const cancelBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
     const { reason } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id;
     const userRole = req.user.role;
 
     // Validate input
@@ -51,7 +51,7 @@ export const cancelBooking = async (req, res) => {
 
     if (
       userRole === "porter" &&
-      booking.assignedPorterId?.toString() !== userId.toString()
+      booking.assignedPorterId?.toString() !== req.user.porterId?.toString()
     ) {
       return res.status(403).json({
         success: false,
@@ -110,9 +110,9 @@ export const cancelBooking = async (req, res) => {
       userId,
       cancelledBy: userRole === "user" ? "user" : "porter",
       reason,
-      refundAmount,
-      paymentMethod: booking.paymentMethod,
-      refundStatus: refundAmount > 0 ? "pending" : "n/a",
+      // refundAmount,
+      // paymentMethod: booking.paymentMethod,
+      // refundStatus: refundAmount > 0 ? "pending" : "n/a",
     });
 
     await cancellationLog.save();

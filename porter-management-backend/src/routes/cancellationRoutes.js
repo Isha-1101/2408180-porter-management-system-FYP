@@ -9,10 +9,11 @@ import {
 } from "../controllers/cancellationController.js";
 import { authenticate } from "../middlewares/authMiddleware.js";
 import { authorizeRole } from "../middlewares/roleMiddleware.js";
+import { attachPorterId } from "../middlewares/porterMiddleware.js";
 const router = express.Router();
 
 // User/Porter routes
-router.post("/:bookingId/cancel", authenticate, cancelBooking);
+router.post("/:bookingId/cancel", authenticate, attachPorterId, cancelBooking);
 router.get("/remaining", authenticate, getRemainingCancellationsToday);
 router.get("/user/:userId/history", authenticate, getUserCancellationHistory);
 router.get(

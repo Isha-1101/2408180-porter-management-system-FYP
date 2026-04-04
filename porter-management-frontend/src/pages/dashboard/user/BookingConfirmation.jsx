@@ -15,11 +15,10 @@ import { BackButton } from "../../../components/common/BackButton";
 import { AddressLine } from "../../../components/common/AddressLine";
 import { getCloudinaryUrl } from "../../../utils/helper";
 import { useCreateIndividualBooking } from "../../../apis/hooks/porterBookingsHooks";
-import dayjs from "dayjs";
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { porter, pickup, dropoff, weight, totalPrice } = location.state || {};
+  const { porter, pickup, dropoff, weight, totalPrice, purpose, numberOfFloors, has_lift, hasVehicle, trip } = location.state || {};
 
   const { mutateAsync: confirmBooking, isPending } =
     useCreateIndividualBooking();
@@ -43,16 +42,18 @@ const BookingConfirmation = () => {
           address: dropoff?.address || "",
         },
         weightKg: weight || 200,
-        hasVehicle: porter.hasVehicle || false,
+        hasVehicle: hasVehicle || porter.hasVehicle || false,
         vehicleType: porter.vehicleCategory || null,
         radiusKm: 5,
         totalPrice,
-        bookingDate: dayjs().format("YYYY-MM-DD"),
-        bookingTime: dayjs().format("HH:mm:ss"),
+        noOfFloors: numberOfFloors ? Number(numberOfFloors) : null,
+        hasLift: has_lift || false,
+        no_of_trips: trip ? Number(trip) : 1,
+        purpose_of_booking: purpose || "transportation",
       });
 
       navigate("/dashboard/booking/tracking", {
-        state: { bookingId: res?.data?.bookingId, pickup, dropoff, porter },
+        state: { bookingId: res?.data?.bookingId, pickup, dropoff, porter, fare: totalPrice },
       });
     } catch (err) {
       console.error(err);

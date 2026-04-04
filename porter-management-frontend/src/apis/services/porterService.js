@@ -73,4 +73,17 @@ export const porterService = {
     const response = axiosInstance.put(`/porters/status`);
     return response;
   },
+
+  getPorterAnalytics: async () => {
+    const response = axiosInstance.get(`/porters/analytics`);
+    return response;
+  },
+
+  getPorterBookingHistory: async (params = {}) => {
+    const { status, page = 1, limit = 20 } = params;
+    const response = axiosInstance.get(`/porters/bookings/history`, {
+      params: { status, page, limit },
+    });
+    return response;
+  },
 };

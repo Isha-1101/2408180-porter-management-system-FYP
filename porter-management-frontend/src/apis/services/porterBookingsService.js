@@ -60,3 +60,8 @@ export const getBookingByIdService = (bookingId) => {
 export const getUserBookingsService = (params = {}) => {
   return axiosInstance.get("/bookings/user", { params });
 };
+
+// Porter cancels a booking (with daily limit enforcement)
+export const porterCancelBookingService = (bookingId, reason) => {
+  return axiosInstance.post(`/cancellations/${bookingId}/cancel`, { reason });
+};

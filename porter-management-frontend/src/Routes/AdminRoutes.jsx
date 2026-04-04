@@ -3,8 +3,13 @@ import AdminDashboardOverview from "../pages/dashboard/admin/AdminDashboardOverv
 import UserManagement from "../pages/dashboard/admin/UserManagement";
 import PorterRegistrations from "../pages/dashboard/admin/PorterRegistrations";
 import PorterManagement from "../pages/dashboard/admin/PorterManagement";
+import AdminBookingsMonitor from "../pages/dashboard/admin/AdminBookingsMonitor";
+import AdminCancellationsMonitor from "../pages/dashboard/admin/AdminCancellationsMonitor";
+import AdminPaymentsMonitor from "../pages/dashboard/admin/AdminPaymentsMonitor";
+import AdminPorterPerformance from "../pages/dashboard/admin/AdminPorterPerformance";
+import AdminActivityFeed from "../pages/dashboard/admin/AdminActivityFeed";
+import AdminAnalytics from "../pages/dashboard/admin/AdminAnalytics";
 
-// Admin routes configuration array for useRoutes
 const adminRoutes = [
   {
     path: "admin",
@@ -25,6 +30,30 @@ const adminRoutes = [
       {
         path: "porters",
         element: <PorterManagement />,
+      },
+      {
+        path: "bookings",
+        element: <AdminBookingsMonitor />,
+      },
+      {
+        path: "cancellations",
+        element: <AdminCancellationsMonitor />,
+      },
+      {
+        path: "payments",
+        element: <AdminPaymentsMonitor />,
+      },
+      {
+        path: "porter-performance",
+        element: <AdminPorterPerformance />,
+      },
+      {
+        path: "activity",
+        element: <AdminActivityFeed />,
+      },
+      {
+        path: "analytics",
+        element: <AdminAnalytics />,
       },
     ],
   },

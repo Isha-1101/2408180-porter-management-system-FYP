@@ -11,7 +11,7 @@ import connectDB from "./src/config/db.js";
 import { multerErrorHandler } from "./src/middlewares/multerErrorHandler.js";
 import aiRouter from "./src/routes/aiRoutes.js";
 import teamRouter from "./src/routes/team/teamRoutes.js";
-import adminRouter from "./src/routes/admin/adminApproved.js";
+import adminRouter from "./src/routes/admin/adminRoutes.js";
 import bookingRouter from "./src/routes/bookingRoutes.js";
 import FareCalculatorRouter from "./src/routes/fare-calculator/farecalculator.routes.js";
 import sseRouter from "./src/routes/sseRoutes.js";

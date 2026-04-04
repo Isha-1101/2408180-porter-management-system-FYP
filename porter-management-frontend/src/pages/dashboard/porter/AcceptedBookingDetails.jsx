@@ -13,6 +13,8 @@ import {
   Navigation,
   MapPin,
   Clock,
+  AlertCircle,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,15 +26,19 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import UserMap from "@/components/Map/UserMap";
 import { BackButton } from "../../../components/common/BackButton";
 import { AddressLine } from "../../../components/common/AddressLine";
 import {
   useCompleteBooking,
-  useRejectPorterBooking,
+  useStartBooking,
+  usePorterCancelBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
 import socket from "../../../utils/socket";
 import ChatBox from "@/components/chat/ChatBox";
+import toast from "react-hot-toast";
 
 const normalize = (b) => ({
   id: b._id || b.id || "N/A",
@@ -61,11 +67,15 @@ const AcceptedBookingDetails = () => {
   const [currentStatus, setCurrentStatus] = useState(booking.status);
   const [porterLocation, setPorterLocation] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const { mutateAsync: completeBooking, isPending: completing } =
     useCompleteBooking();
-  const { mutateAsync: cancelRequest, isPending: cancelling } =
-    useRejectPorterBooking();
+  const { mutateAsync: startBooking, isPending: starting } =
+    useStartBooking();
+  const { mutateAsync: porterCancelBooking, isPending: cancelling } =
+    usePorterCancelBooking();
 
   // Emit porter-location every 5s once journey starts
   const intervalRef = useRef(null);
@@ -100,10 +110,14 @@ const AcceptedBookingDetails = () => {
     };
   }, [booking.bookingId]);
 
-  const handleStartJourney = () => {
-    setCurrentStatus("IN_PROGRESS");
-    startEmittingLocation();
-    socket.emit("booking-in-progress", { bookingId: booking.bookingId });
+  const handleStartJourney = async () => {
+    try {
+      await startBooking(booking.bookingId);
+      setCurrentStatus("IN_PROGRESS");
+      startEmittingLocation();
+    } catch {
+      // handled in hook
+    }
   };
 
   const handleCompleteJourney = async () => {
@@ -117,9 +131,19 @@ const AcceptedBookingDetails = () => {
   };
 
   const handleCancelRequest = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation");
+      return;
+    }
+    if (cancelReason.trim().length < 5) {
+      toast.error("Reason must be at least 5 characters");
+      return;
+    }
     try {
-      await cancelRequest(booking.bookingId);
-      navigate("/dashboard/porters");
+      await porterCancelBooking({ bookingId: booking.bookingId, reason: cancelReason.trim() });
+      setCurrentStatus("CANCELLED");
+      setShowCancelForm(false);
+      setCancelReason("");
     } catch {
       // handled in hook
     }
@@ -280,7 +304,7 @@ const AcceptedBookingDetails = () => {
 
           {/* Action Buttons */}
           <div className="space-y-2 mt-auto pb-2">
-            {currentStatus === "CONFIRMED" && (
+            {currentStatus === "CONFIRMED" && !showCancelForm && (
               <>
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700 h-11 font-semibold"
@@ -293,16 +317,80 @@ const AcceptedBookingDetails = () => {
                   variant="outline"
                   className="w-full text-red-600 border-red-200 hover:bg-red-50 h-10"
                   disabled={cancelling}
-                  onClick={handleCancelRequest}
+                  onClick={() => setShowCancelForm(true)}
                 >
-                  {cancelling ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <XCircle className="w-4 h-4 mr-2" />
-                  )}
-                  {cancelling ? "Cancelling…" : "Cancel Request"}
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Cancel Request
                 </Button>
               </>
+            )}
+
+            {currentStatus === "CONFIRMED" && showCancelForm && (
+              <Card className="w-full border-red-200 bg-red-50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-red-700 flex items-center gap-2 text-base">
+                    <AlertCircle className="w-5 h-5" />
+                    Cancel Booking
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Reason for Cancellation
+                    </label>
+                    <Textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      placeholder="Please explain why you want to cancel this booking..."
+                      className="min-h-24"
+                      disabled={cancelling}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Minimum 5 characters required
+                    </p>
+                  </div>
+
+                  <Alert className="bg-yellow-50 border-yellow-200">
+                    <AlertCircle className="w-4 h-4 text-yellow-600" />
+                    <AlertDescription className="text-sm text-yellow-700">
+                      Cancelling this booking cannot be undone. Make sure this is what
+                      you want.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setShowCancelForm(false);
+                        setCancelReason("");
+                      }}
+                      disabled={cancelling}
+                    >
+                      Keep Booking
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={handleCancelRequest}
+                      disabled={cancelling || !cancelReason.trim()}
+                    >
+                      {cancelling ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Cancelling...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Confirm Cancel
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {currentStatus === "IN_PROGRESS" && (

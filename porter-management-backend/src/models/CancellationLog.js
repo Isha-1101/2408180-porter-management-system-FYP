@@ -25,47 +25,47 @@ const cancellationLogSchema = new mongoose.Schema(
       required: true,
     },
 
-    refundAmount: {
-      type: Number,
-      default: 0,
-    },
+    // refundAmount: {
+    //   type: Number,
+    //   default: 0,
+    // },
 
-    refundStatus: {
-      type: String,
-      enum: ["pending", "processed", "failed"],
-      default: "pending",
-    },
+    // refundStatus: {
+    //   type: String,
+    //   enum: ["pending", "processed", "failed"],
+    //   default: "pending",
+    // },
 
-    paymentMethod: {
-      type: String,
-      enum: ["cash", "digital"],
-      required: true,
-    },
+    // paymentMethod: {
+    //   type: String,
+    //   enum: ["cash", "digital"],
+    //   required: true,
+    // },
 
     // For digital refunds
-    refundTxnId: {
-      type: String,
-      default: null,
-    },
+    // refundTxnId: {
+    //   type: String,
+    //   default: null,
+    // },
 
     // For cash refunds - admin approval
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+    // approvedBy: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "User",
+    //   default: null,
+    // },
 
-    approvedAt: {
-      type: Date,
-      default: null,
-    },
+    // approvedAt: {
+    //   type: Date,
+    //   default: null,
+    // },
 
-    rejectionReason: {
-      type: String,
-      default: null,
-    },
+    // rejectionReason: {
+    //   type: String,
+    //   default: null,
+    // },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("CancellationLog", cancellationLogSchema);
