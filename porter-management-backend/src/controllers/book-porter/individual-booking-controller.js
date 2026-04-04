@@ -12,6 +12,7 @@ import {
 /**
  * Create individual porter booking
  * POST /api/bookings/individual
+ * Body: { pickup, drop, weightKg, hasVehicle, vehicleType, radiusKm, totalPrice, paymentMethod }
  */
 export const createIndividualBooking = async (req, res) => {
   const session = await mongoose.startSession();
@@ -24,7 +25,22 @@ export const createIndividualBooking = async (req, res) => {
       hasVehicle,
       vehicleType,
       radiusKm = 5,
+      totalPrice = 0,
+      paymentMethod,
+      noOfFloors,
+      hasLift = false,
+      no_of_trips = 1,
+      purpose_of_booking = "transportation",
     } = req.body;
+    console.log({
+      pickup,
+      drop,
+      weightKg,
+      hasVehicle,
+      vehicleType,
+      radiusKm,
+      paymentMethod,
+    });
 
     const userId = req.user.id;
 
@@ -38,7 +54,9 @@ export const createIndividualBooking = async (req, res) => {
       });
     }
 
-    // Create booking
+    // Payment method is optional during booking, will be collected after completion
+
+    // Create booking with payment fields (payment method optional, collected after completion)
     const booking = await PorterBooking.create(
       [
         {
@@ -50,7 +68,14 @@ export const createIndividualBooking = async (req, res) => {
           hasVehicle: hasVehicle || false,
           vehicleType: hasVehicle ? vehicleType : null,
           radiusKm,
-          status: "WAITING_PORTER",
+          totalPrice,
+          paymentMethod: paymentMethod || null,
+          paymentStatus: "pending",
+          noOfFloors: noOfFloors || null,
+          hasLift: hasLift || false,
+          no_of_trips: no_of_trips || 1,
+          purpose_of_booking: purpose_of_booking || "transportation",
+          status: "SEARCHING",
         },
       ],
       { session },
@@ -58,85 +83,15 @@ export const createIndividualBooking = async (req, res) => {
 
     const bookingDoc = booking[0];
 
-    // Find nearby porters with $geoNear (was broken: model class was being .map()-ed directly)
-    const nearbyPorters = await Porters.aggregate([
-      {
-        $geoNear: {
-          near: { type: "Point", coordinates: [pickup.lng, pickup.lat] },
-          maxDistance: radiusKm * 1000,
-          distanceField: "distanceMeters",
-          spherical: true,
-          query: {
-            status: "active",
-            isVerified: true,
-            canAcceptBooking: true,
-            currentStatus: "online",
-          },
-        },
-      },
-      { $limit: 10 },
-    ]);
-
-    if (nearbyPorters.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({
-        success: false,
-        message: "No porters available nearby. Please try again later.",
-      });
-    }
-
-    // Create a BookingPorterRequest for each nearby porter
-    const porterRequests = nearbyPorters.map((porter) => ({
-      bookingId: bookingDoc._id,
-      porterId: porter._id,
-      distanceKm: Number((porter.distanceMeters / 1000).toFixed(2)),
-      notificationType: "DIRECT",
-      isTeamLead: false,
-      status: "PENDING",
-    }));
-
-    await BookingPorterRequest.insertMany(porterRequests, { session });
-
     await session.commitTransaction();
     session.endSession();
 
-    // Emit live socket booking-request events to each porter's room
-    try {
-      const io = getIO();
-      nearbyPorters.forEach((porter) => {
-        io.to(`porter:${porter._id.toString()}`).emit("booking-request", {
-          bookingId: bookingDoc._id,
-          pickup: bookingDoc.pickup,
-          drop: bookingDoc.drop,
-          weightKg: bookingDoc.weightKg,
-          hasVehicle: bookingDoc.hasVehicle,
-          vehicleType: bookingDoc.vehicleType,
-          distanceKm: Number((porter.distanceMeters / 1000).toFixed(2)),
-          createdAt: bookingDoc.createdAt,
-        });
-      });
-    } catch (socketErr) {
-      console.error("Socket emit error:", socketErr.message);
-    }
-
-    // Push notifications (fire-and-forget)
-    const porterIds = nearbyPorters.map((p) => p._id);
-    const distances = nearbyPorters.map((p) =>
-      Number((p.distanceMeters / 1000).toFixed(2)),
-    );
-    notifyMultiplePorters(porterIds, bookingDoc, distances).catch((err) =>
-      console.error("Notification error:", err),
-    );
-    notifyUser(userId, bookingDoc, "BOOKING_CREATED").catch((err) =>
-      console.error("User notification error:", err),
-    );
-
     return res.status(201).json({
       success: true,
-      message: "Booking created, notifying nearby porters",
+      message: "Booking created. Please complete payment to proceed.",
       bookingId: bookingDoc._id,
-      portersNotified: nearbyPorters.length,
+      totalPrice: bookingDoc.totalPrice,
+      paymentMethod: bookingDoc.paymentMethod,
       data: { booking: bookingDoc },
     });
   } catch (error) {
@@ -378,7 +333,9 @@ export const completeBooking = async (req, res) => {
     try {
       const io = getIO();
       // Notify user via SSE/Socket for live tracking update
-      const sseService = await import("../../utils/sse-service.js").then(m => m.default);
+      const sseService = await import("../../utils/sse-service.js").then(
+        (m) => m.default,
+      );
       sseService.sendToUser(booking.userId, "booking-status-update", {
         bookingId: booking._id,
         status: "COMPLETED",
@@ -474,6 +431,214 @@ export const startBooking = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to start booking",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Search for nearby porters after payment confirmation
+ * POST /api/bookings/individual/:id/confirm-and-search
+ * Called after payment is confirmed (cash verified or digital payment successful)
+ */
+export const confirmPaymentAndSearchPorters = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user.id;
+
+    const booking = await PorterBooking.findById(bookingId).session(session);
+
+    if (!booking) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    // Verify ownership
+    if (booking.userId.toString() !== userId.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to confirm this booking",
+      });
+    }
+
+    // Check if payment is confirmed
+    if (
+      booking.paymentStatus !== "confirmed" &&
+      booking.paymentStatus !== "verified"
+    ) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Payment not confirmed. Please complete payment first.",
+      });
+    }
+
+    // Update booking status to start searching
+    booking.status = "WAITING_PORTER";
+    await booking.save({ session });
+
+    // Find nearby porters with $geoNear
+    const nearbyPorters = await Porters.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: [booking.pickup.lng, booking.pickup.lat],
+          },
+          maxDistance: (booking.radiusKm || 5) * 1000,
+          distanceField: "distanceMeters",
+          spherical: true,
+          query: {
+            status: "active",
+            isVerified: true,
+            canAcceptBooking: true,
+            currentStatus: "online",
+          },
+        },
+      },
+      { $limit: 10 },
+    ]);
+
+    if (nearbyPorters.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({
+        success: false,
+        message: "No porters available nearby. Please try again later.",
+      });
+    }
+
+    // Create BookingPorterRequest for each nearby porter
+    const porterRequests = nearbyPorters.map((porter) => ({
+      bookingId: booking._id,
+      porterId: porter._id,
+      distanceKm: Number((porter.distanceMeters / 1000).toFixed(2)),
+      notificationType: "DIRECT",
+      isTeamLead: false,
+      status: "PENDING",
+    }));
+
+    await BookingPorterRequest.insertMany(porterRequests, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // Emit socket booking-request events
+    try {
+      const io = getIO();
+      nearbyPorters.forEach((porter) => {
+        io.to(`porter:${porter._id.toString()}`).emit("booking-request", {
+          bookingId: booking._id,
+          pickup: booking.pickup,
+          drop: booking.drop,
+          weightKg: booking.weightKg,
+          hasVehicle: booking.hasVehicle,
+          vehicleType: booking.vehicleType,
+          totalPrice: booking.totalPrice,
+          paymentMethod: booking.paymentMethod,
+          distanceKm: Number((porter.distanceMeters / 1000).toFixed(2)),
+          createdAt: booking.createdAt,
+        });
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
+
+    // Send notifications
+    const porterIds = nearbyPorters.map((p) => p._id);
+    const distances = nearbyPorters.map((p) =>
+      Number((p.distanceMeters / 1000).toFixed(2)),
+    );
+    notifyMultiplePorters(porterIds, booking, distances).catch((err) =>
+      console.error("Notification error:", err),
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment confirmed. Searching for available porters...",
+      bookingId: booking._id,
+      portersNotified: nearbyPorters.length,
+      data: { booking },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error confirming payment and searching porters:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to search for porters",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Update payment method after journey completion
+ * POST /api/bookings/individual/:id/update-payment-method
+ * Called after booking is COMPLETED, before navigating to orders
+ */
+export const updatePaymentMethodAfterCompletion = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user.id;
+    const { paymentMethod } = req.body;
+
+    // Validate payment method
+    if (!paymentMethod || !["cash", "digital"].includes(paymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid payment method (cash or digital) is required",
+      });
+    }
+
+    const booking = await PorterBooking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    // Verify ownership and booking is completed
+    if (booking.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to update this booking",
+      });
+    }
+
+    if (booking.status !== "COMPLETED") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment method can only be updated after booking completion",
+      });
+    }
+
+    // Update payment method
+    booking.paymentMethod = paymentMethod;
+    booking.paymentStatus = "pending"; // Reset to pending until payment is processed
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment method updated successfully",
+      data: { booking },
+    });
+  } catch (error) {
+    console.error("Error updating payment method:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update payment method",
       error: error.message,
     });
   }

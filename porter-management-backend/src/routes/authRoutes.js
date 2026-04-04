@@ -14,37 +14,6 @@ import { switchToPorter } from "../controllers/userSwitch/switchToPorter.js";
 
 const authRouter = express.Router();
 
-/**
- * @swagger
- * /core-api/auth/register:
- *   post:
- *     summary: Register a new user
- *     description: Register a new user with the provided details.
- *     tags:
- *       - Auth
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               phone:
- *                 type: string
- *               role:
- *                 type: string
- *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         description: Bad request
- */
 authRouter.post("/register", register);
 
 /**
@@ -54,6 +23,7 @@ authRouter.post("/register", register);
  *     summary: Login a user
  *     description: Login a user with phone and password.
  *     tags:
+ *
  *       - Auth
  *     requestBody:
  *       required: true

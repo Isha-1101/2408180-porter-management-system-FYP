@@ -5,6 +5,8 @@ import {
   porterRejectBooking,
   completeBooking,
   startBooking,
+  confirmPaymentAndSearchPorters,
+  updatePaymentMethodAfterCompletion,
 } from "../controllers/book-porter/individual-booking-controller.js";
 import {
   createTeamBooking,
@@ -104,6 +106,20 @@ router.post("/individual/:id/complete", ...porterOnly, completeBooking);
  * @access  Private (Porter)
  */
 router.post("/individual/:id/start", ...porterOnly, startBooking);
+
+/**
+ * @route   POST /api/bookings/individual/:id/confirm-and-search
+ * @desc    Confirm payment and start searching for porters
+ * @access  Private (User)
+ */
+router.post("/individual/:id/confirm-and-search", ...userOnly, confirmPaymentAndSearchPorters);
+
+/**
+ * @route   POST /api/bookings/individual/:id/update-payment-method
+ * @desc    Update payment method after journey completion
+ * @access  Private (User)
+ */
+router.post("/individual/:id/update-payment-method", ...userOnly, updatePaymentMethodAfterCompletion);
 
 // ============================================
 // TEAM BOOKING ROUTES

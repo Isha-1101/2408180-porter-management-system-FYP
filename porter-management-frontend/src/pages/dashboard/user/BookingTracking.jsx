@@ -19,6 +19,7 @@ import PageLayout from "../../../components/common/PageLayout";
 import { BackButton } from "../../../components/common/BackButton";
 import { AddressLine } from "../../../components/common/AddressLine";
 import UserMap from "@/components/Map/UserMap";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import socket from "../../../utils/socket";
 import {
   useCancelBooking,
@@ -27,6 +28,7 @@ import {
 import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
 import ChatBox from "@/components/chat/ChatBox";
+import toast from "react-hot-toast";
 
 // Status step definitions
 const STATUS_STEPS = [
@@ -76,6 +78,8 @@ const BookingTracking = () => {
   const [porterLocation, setPorterLocation] = useState(null);
   const [acceptedPorter, setAcceptedPorter] = useState(statePorter || null);
   const [isChatOpen,     setIsChatOpen]     = useState(false);
+  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const sseRef = useRef(null);
 
   const { mutateAsync: cancelBooking, isPending: cancelling } = useCancelBooking();
@@ -99,7 +103,7 @@ const BookingTracking = () => {
     const onCompleted  = (data) => {
       if (match(data)) {
         setLiveStatus("COMPLETED");
-        setTimeout(() => navigate("/dashboard/orders"), 2500);
+        setShowPaymentMethod(true);
       }
     };
     const onCancelled  = (data) => { if (match(data)) setLiveStatus("CANCELLED"); };
@@ -120,7 +124,9 @@ const BookingTracking = () => {
         "booking-status-update": (data) => {
           if (match(data)) {
             setLiveStatus(data.status);
-            if (data.status === "COMPLETED") setTimeout(() => navigate("/dashboard/orders"), 2500);
+            if (data.status === "COMPLETED") {
+              setShowPaymentMethod(true);
+            }
           }
         },
         "booking-cancelled": (data) => { if (match(data)) setLiveStatus("CANCELLED"); },
@@ -146,6 +152,39 @@ const BookingTracking = () => {
       await cancelBooking(bookingId);
       navigate("/dashboard/orders");
     } catch { /* toasted by hook */ }
+  };
+
+  const handlePaymentMethodSelect = async (paymentMethod) => {
+    if (!bookingId) return;
+    
+    setIsSubmittingPayment(true);
+    try {
+      const response = await fetch(`/api/bookings/individual/${bookingId}/update-payment-method`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${useAuthStore.getState().access_token}`,
+        },
+        body: JSON.stringify({ paymentMethod }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update payment method");
+      }
+
+      const data = await response.json();
+      toast.success("Payment method saved! Redirecting to orders...");
+      
+      setTimeout(() => {
+        navigate("/dashboard/orders");
+      }, 1500);
+    } catch (error) {
+      console.error("Error updating payment method:", error);
+      toast.error(error.message || "Failed to save payment method");
+    } finally {
+      setIsSubmittingPayment(false);
+    }
   };
 
   // Loading state (only when accessed via URL param without router state)
@@ -309,15 +348,26 @@ const BookingTracking = () => {
 
             {/* Action buttons */}
             <div className="space-y-2">
-              {resolvedStatus === "COMPLETED" && (
+              {resolvedStatus === "COMPLETED" && !showPaymentMethod && (
                 <div className="text-center space-y-2">
                   <div className="w-12 h-12 rounded-full bg-[#C5E2B6] flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-6 h-6 text-[#0C4C40]" />
                   </div>
                   <p className="text-sm font-semibold text-[#0C4C40]">Booking completed!</p>
-                  <Button className="w-full" onClick={() => navigate("/dashboard/orders")}>
-                    View My Orders
-                  </Button>
+                </div>
+              )}
+
+              {resolvedStatus === "COMPLETED" && showPaymentMethod && (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600 text-center mb-4">
+                    Please select your payment method to complete the booking.
+                  </p>
+                  <PaymentMethodSelector
+                    amount={fetchedBooking?.totalPrice || fare || acceptedPorter?.price || 0}
+                    onMethodSelect={handlePaymentMethodSelect}
+                    isLoading={isSubmittingPayment}
+                    disabled={isSubmittingPayment}
+                  />
                 </div>
               )}
 
