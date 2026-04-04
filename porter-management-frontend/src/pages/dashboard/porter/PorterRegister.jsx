@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import PersonalInfo from "./component/porter-register/porter-basic-info.jsx";
-import VehicleInfo from "./component/porter-register/porter-vehicle-info.jsx";
-import DocumentInfo from "./component/porter-register/porter-document-info.jsx";
+import PersonalInfo, { isPersonalInfoValid } from "./component/porter-register/porter-basic-info.jsx";
+import VehicleInfo, { isVehicleInfoValid } from "./component/porter-register/porter-vehicle-info.jsx";
+import DocumentInfo, { isDocumentInfoValid } from "./component/porter-register/porter-document-info.jsx";
 import SidebarSteps from "./component/porter-register/side-bar-steps";
 import ReviewPage from "./component/porter-register/porter-review-page.jsx";
 import { porterRetgistrationHooks } from "@/apis/hooks/porterRegistratioHooks.jsx";
@@ -154,17 +154,33 @@ const PorterRegister = () => {
   const handleNextStep = async () => {
     try {
       if (step === 1) {
+        if (!formData?.registrationType) {
+          toast.error("Please select a registration type");
+          return;
+        }
         await startRegistrations();
       }
       if (step === 2) {
+        if (!isPersonalInfoValid(formData?.basicInfo)) {
+          toast.error("Please fill all required fields correctly");
+          return;
+        }
         await handleSaveStep1();
       }
 
       if (step === 3) {
+        if (!isVehicleInfoValid(formData?.vehicle)) {
+          toast.error("Please fill all required fields correctly");
+          return;
+        }
         await handleSaveStep2();
       }
 
       if (step === 4) {
+        if (!isDocumentInfoValid(formData?.documents)) {
+          toast.error("Please fill all required fields correctly");
+          return;
+        }
         await handleSaveStep3();
       }
 
@@ -269,9 +285,7 @@ const PorterRegister = () => {
                 </Button>
 
                 <Button
-                  disabled={
-                    step === 5 || (step === 1 && !formData?.registrationType)
-                  }
+                  disabled={step === 5}
                   onClick={handleNextStep}
                 >
                   Next <ChevronRight size={16} />

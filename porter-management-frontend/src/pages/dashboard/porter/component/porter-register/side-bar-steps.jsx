@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, Check, ChevronRight, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const steps = [
   "Registration Type",
@@ -11,6 +12,8 @@ const steps = [
 ];
 
 const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
 
   const isStepUnlocked = (targetStep) => {
@@ -44,7 +47,13 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
             <Button
               size="icon"
               variant="ghost"
-              onClick={toggle}
+              onClick={() => {
+                if (step > 1) {
+                  setStep(step - 1);
+                } else {
+                  navigate(-1);
+                }
+              }}
               className="h-8 w-8"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -86,7 +95,7 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
                         }`}
                     >
                       {isCompleted ? (
-                        <CheckCircle className="h-5 w-5" />
+                        <Check className="h-5 w-5 stroke-[3]" />
                       ) : (
                         <span
                           className={`font-semibold text-sm ${isCurrent ? "text-primary" : "text-gray-500"

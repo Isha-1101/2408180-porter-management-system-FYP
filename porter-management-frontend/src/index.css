@@ -68,11 +68,11 @@
   --popover: #FFFFFF;
   --popover-foreground: #1A1A1A;
 
-  /* ── Primary — buttons & CTAs (Yellow) ─── */
-  --primary: #FDB64E;
-  --primary-hover: #E5A03D;
-  --primary-light: #FEF3E0;
-  --primary-foreground: #1A1A1A;
+  /* ── Primary — buttons & CTAs (Green Pastel) ─── */
+  --primary: #8DC976;
+  --primary-hover: #7EBA68;
+  --primary-light: #E8F5E8;
+  --primary-foreground: #0C4C40;
 
   /* ── Brand / Accent (Green) ────────────────── */
   --brand: #0C4C40;

@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Truck, Package, Hash, Tag, Weight } from "lucide-react";
+import { Car, Truck, Package, Hash, Tag, Weight, CheckCircle, AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,8 +9,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useState } from "react";
+
+const validate = (data) => {
+  if (data?.hasVehicle === false) {
+    return { vehicleCategory: "", capacity: "" };
+  }
+  return {
+    vehicleCategory: !data?.vehicleCategory ? "Select your vehicle category" : "",
+    capacity: data?.capacity 
+      ? (!/^\d+(\.\d+)?$/.test(data.capacity) || Number(data.capacity) <= 0
+        ? "Enter a valid positive number"
+        : "")
+      : "" // Optional field, if provided must be > 0 and digits
+  };
+};
+
+export const isVehicleInfoValid = (data) => {
+  if (data?.hasVehicle === false) return true;
+  if (data?.hasVehicle === undefined || data?.hasVehicle === null) return false;
+  const errors = validate(data);
+  return Object.values(errors).every((e) => e === "");
+};
+
+// ── Helper: field border class ────────────────────────────────────────────────
+const fieldClass = (touched, error, value) => {
+  if (!touched) return "border-gray-300 focus:border-primary focus:ring-primary";
+  if (error)    return "border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50/30";
+  return "border-gray-300 focus:border-primary focus:ring-primary";
+};
+
+// ── FieldMsg: shows error or success icon underneath ─────────────────────────
+const FieldMsg = ({ touched, error, value }) => {
+  if (!touched) return null;
+  if (error)
+    return (
+      <p className="flex items-center gap-1 text-xs text-red-500 mt-1">
+        <AlertCircle className="h-3 w-3 shrink-0" />
+        {error}
+      </p>
+    );
+  return null;
+};
 
 const VehicleInfo = ({ data, onChange }) => {
+  const [touched, setTouched] = useState({
+    vehicleCategory: false,
+    capacity: false,
+  });
+
+  const errors = validate(data);
+
+  const touch = (field) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
   const vehicleCategories = [
     { value: "bike", label: "Bike" },
     { value: "truck", label: "Truck" },
@@ -19,10 +71,8 @@ const VehicleInfo = ({ data, onChange }) => {
   ];
 
   const handleHasVehicleChange = (value) => {
-    console.log(value);
     onChange("vehicle", "hasVehicle", value);
     if (!value) {
-      onChange("vehicle", "vehicleNumber", "");
       onChange("vehicle", "vehicleCategory", "");
       onChange("vehicle", "capacity", "");
     }
@@ -40,7 +90,7 @@ const VehicleInfo = ({ data, onChange }) => {
         {/* Do you have a vehicle? */}
         <div className="space-y-3">
           <Label className="text-base font-medium">
-            Do you have a vehicle?
+            Do you have a vehicle? *
           </Label>
           <div className="flex gap-4">
             <div
@@ -68,7 +118,7 @@ const VehicleInfo = ({ data, onChange }) => {
                 }
               `}
             >
-              <weight className="h-5 w-5" />
+              <Weight className="h-5 w-5" />
               <span className="font-semibold">No, I'm a walker</span>
             </div>
           </div>
@@ -83,53 +133,29 @@ const VehicleInfo = ({ data, onChange }) => {
                 Vehicle Category *
               </Label>
               <Select
-                value={data?.vehicleCategory}
-                onValueChange={(value) =>
-                  onChange("vehicle", "vehicleCategory", value)
-                }
+                value={data?.vehicleCategory || ""}
+                onValueChange={(value) => {
+                  touch("vehicleCategory");
+                  onChange("vehicle", "vehicleCategory", value);
+                }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select vehicle category" />
+                <SelectTrigger className={`w-full transition-colors ${fieldClass(touched.vehicleCategory, errors.vehicleCategory, data?.vehicleCategory)}`}>
+                  <SelectValue placeholder="Select your vehicle category" />
                 </SelectTrigger>
                 <SelectContent>
                   {vehicleCategories.map((category) => (
                     <SelectItem key={category.value} value={category.value}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{category.icon}</span>
                         <span>{category.label}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <FieldMsg touched={touched.vehicleCategory} error={errors.vehicleCategory} value={data?.vehicleCategory} />
             </div>
 
-            {/* Vehicle Number */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="vehicleNumber"
-                className="flex items-center gap-2"
-              >
-                <Hash className="h-4 w-4" />
-                Vehicle Registration Number *
-              </Label>
-              <div className="relative">
-                <Input
-                  id="vehicleNumber"
-                  value={data?.vehicleNumber || ""}
-                  onChange={(e) =>
-                    onChange(
-                      "vehicle",
-                      "vehicleNumber",
-                      e.target.value.toUpperCase(),
-                    )
-                  }
-                  placeholder="ABC-1234 or KA-01-AB-1234"
-                  className="pl-9 font-mono tracking-wider"
-                />
-                <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
+
 
             {/* Capacity Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -142,19 +168,21 @@ const VehicleInfo = ({ data, onChange }) => {
                   <div className="relative flex-1">
                     <Input
                       id="capacity"
-                      type="number"
+                      type="text"
                       value={data?.capacity || ""}
-                      onChange={(e) =>
-                        onChange("vehicle", "capacity", e.target.value)
-                      }
-                      placeholder="e.g. 500"
-                      className="pl-9"
-                      min="0"
-                      step="0.1"
+                      onChange={(e) => {
+                        touch("capacity");
+                        const val = e.target.value.replace(/[^\d.]/g, ""); // Only digits/dots
+                        onChange("vehicle", "capacity", val);
+                      }}
+                      onBlur={() => touch("capacity")}
+                      placeholder="Enter your vehicle capacity (e.g., 500)"
+                      className={`pl-9 transition-colors ${fieldClass(touched.capacity, errors.capacity, data?.capacity)}`}
                     />
                     <Weight className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
+                <FieldMsg touched={touched.capacity} error={errors.capacity} value={data?.capacity} />
               </div>
             </div>
           </div>

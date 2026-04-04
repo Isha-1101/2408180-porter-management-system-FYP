@@ -98,7 +98,11 @@ const ReviewPage = ({
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
                   {data.basicInfo?.porterPhoto ? (
                     <img
-                      src={getCloudinaryUrl(data.basicInfo?.porterPhoto)}
+                      src={
+                        data.basicInfo?.porterPhoto instanceof File
+                          ? URL.createObjectURL(data.basicInfo.porterPhoto)
+                          : getCloudinaryUrl(data.basicInfo?.porterPhoto)
+                      }
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
@@ -150,7 +154,11 @@ const ReviewPage = ({
                       <p className="text-xs text-muted-foreground">Front Side</p>
                       <div className="h-40 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
                         <img
-                          src={getCloudinaryUrl(data.basicInfo?.identityCardImageFront)}
+                          src={
+                            data.basicInfo?.identityCardImageFront instanceof File
+                              ? URL.createObjectURL(data.basicInfo.identityCardImageFront)
+                              : getCloudinaryUrl(data.basicInfo?.identityCardImageFront)
+                          }
                           alt="ID Front"
                           className="h-full object-contain"
                         />
@@ -162,7 +170,11 @@ const ReviewPage = ({
                       <p className="text-xs text-muted-foreground">Back Side</p>
                       <div className="h-40 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
                         <img
-                          src={getCloudinaryUrl(data.basicInfo?.identityCardImageBack)}
+                          src={
+                            data.basicInfo?.identityCardImageBack instanceof File
+                              ? URL.createObjectURL(data.basicInfo.identityCardImageBack)
+                              : getCloudinaryUrl(data.basicInfo?.identityCardImageBack)
+                          }
                           alt="ID Back"
                           className="h-full object-contain"
                         />
@@ -298,17 +310,32 @@ const ReviewPage = ({
             {/* Document Preview */}
             {data.documents?.porterLicenseDocument && (
               <div className="pt-4 border-t">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-blue-600" />
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">License Document</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <div className="h-40 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
+                      {data.documents.porterLicenseDocument?.type === "application/pdf" || 
+                       data.documents.porterLicenseDocument?.name?.endsWith(".pdf") ? (
+                        <div className="flex flex-col items-center justify-center p-4">
+                          <FileText className="h-12 w-12 text-gray-400 mb-2" />
+                          <p className="text-sm font-medium truncate max-w-full px-2">
+                            {data.documents.porterLicenseDocument.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground bg-gray-200 px-2 py-0.5 rounded mt-1">PDF</p>
+                        </div>
+                      ) : (
+                        <img
+                          src={
+                            data.documents.porterLicenseDocument instanceof File
+                              ? URL.createObjectURL(data.documents.porterLicenseDocument)
+                              : getCloudinaryUrl(data.documents.porterLicenseDocument)
+                          }
+                          alt="License Document"
+                          className="h-full object-contain"
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">License Document</p>
-                    <p className="text-xs text-muted-foreground">
-                      Ready for verification
-                    </p>
-                  </div>
-                  {/* View Logic could go here */}
                 </div>
               </div>
             )}

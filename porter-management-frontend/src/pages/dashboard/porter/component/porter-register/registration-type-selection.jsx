@@ -45,7 +45,7 @@ const RegistrationTypeSelection = ({ selectedType, onSelect }) => {
                                     className={`
                   p-4 rounded-full transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground
                   ${selectedType === type.id
-                                            ? "bg-primary/10 text-primary"
+                                            ? "bg-primary text-primary-foreground"
                                             : "bg-muted text-muted-foreground"
                                         }
                 `}
