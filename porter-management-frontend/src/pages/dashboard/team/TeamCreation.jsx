@@ -33,6 +33,7 @@ const TeamCreation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [members, setMembers] = useState([]);
+  const [activeTab, setActiveTab] = useState("added");
 
   // porter registration Request
   const {
@@ -46,7 +47,15 @@ const TeamCreation = () => {
   // Get Requested Porter by Team which was not approved by admin
   const { data: porterByTeam, isFetching: porterByTeamIsFetching } =
     useGetAllRequestedPorterByTeam(porter?.teamId);
-  const requestedPorter = porterByTeam?.data?.data ?? [];
+  const requestedPorters = porterByTeam?.data?.data ?? [];
+
+  // Get Added Porter by Team
+  const { data: addedPorterData, isFetching: addedPorterIsFetching } =
+    useGetPorterByTeam(porter?.teamId);
+  const addedPorters = addedPorterData?.data?.data ?? [];
+
+  const currentMembers = activeTab === "pending" ? requestedPorters : addedPorters;
+  const isFetching = activeTab === "pending" ? porterByTeamIsFetching : addedPorterIsFetching;
 
   //hook form
   const {
@@ -84,9 +93,31 @@ const TeamCreation = () => {
 
   return (
     <div className="w-full min-h-screen p-8 bg-gray-50">
-      {/* Header with Button */}
-      <div className="flex justify-between items-center mb-8">
-        {/* +Add Team Member Button - Top Left */}
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Team Creation</h1>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        {/* Tabs */}
+        <div className="flex gap-4">
+          <Button
+            variant={activeTab === "added" ? "default" : "outline"}
+            onClick={() => setActiveTab("added")}
+            className={activeTab === "added" ? "bg-primary text-white" : ""}
+          >
+            Added Team Members
+          </Button>
+          <Button
+            variant={activeTab === "pending" ? "default" : "outline"}
+            onClick={() => setActiveTab("pending")}
+            className={activeTab === "pending" ? "bg-primary text-white" : ""}
+          >
+            Pending Invitations
+          </Button>
+        </div>
+
+        {/* +Add Team Member Button */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2.5">
@@ -207,14 +238,14 @@ const TeamCreation = () => {
           </DialogContent>
         </Dialog>
 
-        <h1 className="text-3xl font-bold text-gray-900">Team Creation</h1>
       </div>
+
 
       {/* Team Members List */}
       <Card className="shadow-md">
         <CardHeader className="bg-white border-b">
           <CardTitle className="text-xl font-semibold">
-            Team Members ({requestedPorter?.length})
+            {activeTab === "added" ? "Added Members" : "Pending Invitations"} ({currentMembers.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -232,31 +263,33 @@ const TeamCreation = () => {
             </TableHeader>
             <TableBody>
               {/* Loading State */}
-              {porterByTeamIsFetching ? (
+              {isFetching ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-12">
+                  <TableCell colSpan={5} className="text-center py-12">
                     <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
                   </TableCell>
                 </TableRow>
-              ) : requestedPorter.length === 0 ? (
+              ) : currentMembers.length === 0 ? (
                 /* Empty State */
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center py-12 text-gray-500"
                   >
                     <div className="flex flex-col items-center gap-3">
                       <UserPlus className="h-16 w-16 text-gray-300" />
-                      <p className="text-lg font-medium">No team members yet</p>
-                      <p className="text-sm">
-                        Click "+Add Team Member" button to add your first member
-                      </p>
+                      <p className="text-lg font-medium">No {activeTab === "added" ? "added members" : "pending invitations"} yet</p>
+                      {activeTab === "pending" && (
+                        <p className="text-sm">
+                          Click "+Add Team Member" button to invite your first member
+                        </p>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 /* Data Render */
-                requestedPorter.map((member) => (
+                currentMembers.map((member) => (
                   <TableRow key={member._id} className="hover:bg-gray-50">
                     <TableCell className="font-medium capitalize">
                       {member.userName}
@@ -264,18 +297,22 @@ const TeamCreation = () => {
                     <TableCell className="captialize">{member.email}</TableCell>
                     <TableCell className="captialize">{member.phone}</TableCell>
                     <TableCell className="captialize">
-                      <span className="bg-orange-500 pl-2 pr-2 p-1 rounded-xl text-primary-foreground ">
-                        {member.status}
+                      <span className={`pl-2 pr-2 p-1 rounded-xl text-primary-foreground ${
+                        activeTab === "added" ? "bg-green-500" : "bg-orange-500"
+                      }`}>
+                        {member.status || (activeTab === "added" ? "approved" : "requested")}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(member._id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+                      {activeTab === "pending" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(member._id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

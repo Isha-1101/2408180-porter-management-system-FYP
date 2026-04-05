@@ -3,6 +3,9 @@ import {
   getAllPorterRegistrations,
   approveRegistration,
   rejectRegistration,
+  getAllTeamMemberRequests,
+  approveTeamMemberRequest,
+  rejectTeamMemberRequest
 } from "@/apis/services/adminService";
 import {
   Table,
@@ -76,17 +79,54 @@ const PorterRegistrations = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await getAllPorterRegistrations({
-          status: statusFilter,
-          page,
-          limit: 10,
-        });
-        if (response.data.success) {
-          setRegistrations(response.data.data || []);
-          setPagination(
-            response.data.pagination || { total: 0, page: 1, pages: 1 },
-          );
+        const [regResponse, teamReqResponse] = await Promise.all([
+          getAllPorterRegistrations({
+            status: statusFilter,
+            page,
+            limit: 10,
+          }),
+          getAllTeamMemberRequests({
+            status: statusFilter,
+            page,
+            limit: 10,
+          }),
+        ]);
+
+        let combined = [];
+        let returnedPagination = { total: 0, page: 1, pages: 1 };
+
+        if (regResponse.data?.success) {
+          const normalRegs = (regResponse.data.data || []).map((r) => ({
+            ...r,
+            requestCategory: "registration",
+          }));
+          combined = [...combined, ...normalRegs];
+          returnedPagination = regResponse.data.pagination || returnedPagination;
         }
+
+        if (teamReqResponse.data?.success) {
+          const teamRegs = (teamReqResponse.data.data || []).map((r) => ({
+            ...r,
+            registrationId: "TREQ-" + r._id.substring(0, 6).toUpperCase(),
+            userId: {
+              name: r.userName || "N/A",
+              phone: r.phone || "",
+              email: r.email || "",
+            },
+            registrationType: "Team Member Request",
+            role: "porter",
+            requestCategory: "team_member_addition",
+            submittedBy: r.teamId?.ownerId?.name || "Unknown Team",
+            status: r.status === "pending" ? "submitted" : r.status,
+          }));
+          combined = [...combined, ...teamRegs];
+        }
+
+        // Sort combined to show newest first
+        combined.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+        setRegistrations(combined);
+        setPagination(returnedPagination);
       } catch (err) {
         console.error("Failed to fetch registrations:", err);
         setError("Failed to load registrations. Please try again.");
@@ -101,10 +141,14 @@ const PorterRegistrations = () => {
     fetchRegistrations(1);
   }, [fetchRegistrations]);
 
-  const handleApprove = async (regId) => {
-    setApproveLoadingId(regId);
+  const handleApprove = async (reg) => {
+    setApproveLoadingId(reg.registrationId);
     try {
-      await approveRegistration(regId);
+      if (reg.requestCategory === "team_member_addition") {
+        await approveTeamMemberRequest(reg._id);
+      } else {
+        await approveRegistration(reg.registrationId);
+      }
       fetchRegistrations(pagination.page);
     } catch (error) {
       console.error("Failed to approve registration:", error);
@@ -120,7 +164,11 @@ const PorterRegistrations = () => {
     if (!rejectionReason.trim()) return;
     setRejectLoading(true);
     try {
-      await rejectRegistration(selectedReg.registrationId, { rejectionReason });
+      if (selectedReg.requestCategory === "team_member_addition") {
+        await rejectTeamMemberRequest(selectedReg._id, { rejectionReason });
+      } else {
+        await rejectRegistration(selectedReg.registrationId, { rejectionReason });
+      }
       setIsRejectModalOpen(false);
       setRejectionReason("");
       setSelectedReg(null);
@@ -242,6 +290,11 @@ const PorterRegistrations = () => {
                         <p className="text-xs text-gray-500">
                           {reg.userId?.email || reg.userId?.phone || ""}
                         </p>
+                        {reg.requestCategory === "team_member_addition" && (
+                          <p className="text-xs text-blue-600 mt-0.5">
+                            Added by: {reg.submittedBy}
+                          </p>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="capitalize text-sm">
@@ -272,7 +325,7 @@ const PorterRegistrations = () => {
                             <Button
                               size="sm"
                               className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3"
-                              onClick={() => handleApprove(reg.registrationId)}
+                              onClick={() => handleApprove(reg)}
                               disabled={approveLoadingId === reg.registrationId}
                             >
                               {approveLoadingId === reg.registrationId ? (
@@ -570,7 +623,7 @@ const PorterRegistrations = () => {
                   <Button
                     className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                     onClick={() => {
-                      handleApprove(detailReg.registrationId);
+                      handleApprove(detailReg);
                       setIsDetailOpen(false);
                     }}
                   >
