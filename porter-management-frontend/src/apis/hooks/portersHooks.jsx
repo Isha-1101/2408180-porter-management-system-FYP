@@ -81,3 +81,23 @@ export const useTogglePorterStatus = () => {
     },
   });
 };
+
+export const useGetPorterAnalytics = () => {
+  return useQuery({
+    queryKey: ["porter-analytics"],
+    queryFn: async () => {
+      const response = await porterService.getPorterAnalytics();
+      return response?.data?.data;
+    },
+  });
+};
+
+export const useGetPorterBookingHistory = (params = {}) => {
+  return useQuery({
+    queryKey: ["porter-booking-history", params],
+    queryFn: async () => {
+      const response = await porterService.getPorterBookingHistory(params);
+      return response?.data?.data;
+    },
+  });
+};

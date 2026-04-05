@@ -6,8 +6,6 @@ import UserProfile from "../pages/dashboard/user/UserProfile";
 import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
 import BookingTracking from "../pages/dashboard/user/BookingTracking";
 import TeamBookingTracking from "../pages/dashboard/user/TeamBookingTracking";
-import Payment from "../pages/dashboard/user/Payment";
-import BookingSuccess from "../pages/dashboard/user/BookingSuccess";
 
 // User routes configuration array for useRoutes
 const userRoutes = [
@@ -44,14 +42,6 @@ const userRoutes = [
   {
     path: "booking/tracking/:bookingId",
     element: <BookingTracking />,
-  },
-  {
-    path: "booking/payment",
-    element: <Payment />,
-  },
-  {
-    path: "booking/success",
-    element: <BookingSuccess />,
   },
   {
     path: "settings",

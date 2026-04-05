@@ -143,6 +143,24 @@ const bookingSchema = new mongoose.Schema(
       default: 0,
     },
 
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+      default: null,
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ["cash", "digital"],
+      default: null,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "confirmed", "verified", "failed"],
+      default: null,
+    },
+
     cancelledBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

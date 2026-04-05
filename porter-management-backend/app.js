@@ -11,12 +11,14 @@ import connectDB from "./src/config/db.js";
 import { multerErrorHandler } from "./src/middlewares/multerErrorHandler.js";
 import aiRouter from "./src/routes/aiRoutes.js";
 import teamRouter from "./src/routes/team/teamRoutes.js";
-import adminRouter from "./src/routes/admin/adminApproved.js";
+import adminRouter from "./src/routes/admin/adminRoutes.js";
 import bookingRouter from "./src/routes/bookingRoutes.js";
 import FareCalculatorRouter from "./src/routes/fare-calculator/farecalculator.routes.js";
 import sseRouter from "./src/routes/sseRoutes.js";
 import ratingRouter from "./src/routes/rating.routes.js";
 import chatRouter from "./src/routes/chatRoutes.js";
+import paymentRouter from "./src/routes/paymentRoutes.js";
+import cancellationRouter from "./src/routes/cancellationRoutes.js";
 import helmet from "helmet";
 import morgan from "morgan";
 dotenv.config({
@@ -57,6 +59,8 @@ app.use("/core-api/bookings/sse", sseRouter);
 app.use("/core-api/fare-calculator", FareCalculatorRouter);
 app.use("/core-api/ratings", ratingRouter);
 app.use("/core-api/chat", chatRouter);
+app.use("/core-api/payments", paymentRouter);
+app.use("/core-api/cancellations", cancellationRouter);
 
 app.get("/", (req, res) => {
   res.send("Porter Management Backend API (ISHA)");

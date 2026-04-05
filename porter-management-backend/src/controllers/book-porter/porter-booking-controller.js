@@ -36,6 +36,16 @@ export const searchNearbyPorters = async (req, res) => {
     if (bookingType === "team") {
       matchQuery.teamSize = { $gte: requiredTeamSize };
     }
+    console.log({
+      pickup,
+      weightKg,
+      hasVehicle,
+      vehicleType,
+      requiredTeamSize,
+      radiusKm,
+      bookingType,
+    });
+    console.log("matchQuery", matchQuery);
 
     const pipeline = [
       {
@@ -98,8 +108,9 @@ export const searchNearbyPorters = async (req, res) => {
       { $sort: { distanceMeters: 1 } },
       { $limit: 5 },
     ];
-    
+
     const porters = await Porters.aggregate(pipeline);
+    console.log(porters, "PORTERS");
     return res.json({
       success: true,
       data: porters,
@@ -446,12 +457,15 @@ export const getPorterBookings = async (req, res) => {
     // so the team owner can see their schedule before accepting new requests
     let upcomingTeamBookings = [];
     try {
-      const { default: Porters } = await import("../../models/porter/Porters.js");
+      const { default: Porters } =
+        await import("../../models/porter/Porters.js");
       const porterDoc = await Porters.findById(porterId);
       if (porterDoc && porterDoc.role === "owner" && porterDoc.teamId) {
         upcomingTeamBookings = await PorterBooking.find({
           assignedTeamId: porterDoc.teamId,
-          status: { $in: ["WAITING_PORTER_RESPONSE", "CONFIRMED", "IN_PROGRESS"] },
+          status: {
+            $in: ["WAITING_PORTER_RESPONSE", "CONFIRMED", "IN_PROGRESS"],
+          },
           bookingDate: { $gte: new Date() },
         })
           .sort({ bookingDate: 1 })

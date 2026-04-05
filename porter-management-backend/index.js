@@ -138,6 +138,48 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Typing indicator
+  socket.on("typing-start", (data) => {
+    const { bookingId, userId, userName } = data;
+    const roomName = `chat_${bookingId}`;
+    
+    // Broadcast to all others in the room (not sender)
+    socket.to(roomName).emit("user-typing", {
+      userId,
+      userName,
+      isTyping: true,
+    });
+    console.log(`${userName} is typing in ${roomName}`);
+  });
+
+  socket.on("typing-stop", (data) => {
+    const { bookingId, userId, userName } = data;
+    const roomName = `chat_${bookingId}`;
+    
+    socket.to(roomName).emit("user-typing", {
+      userId,
+      userName,
+      isTyping: false,
+    });
+  });
+
+  // Message read receipt
+  socket.on("message-read", (data) => {
+    const { messageId, bookingId, readerId, readerName } = data;
+    const roomName = `chat_${bookingId}`;
+    
+    // Broadcast read receipt to all in room
+    io.to(roomName).emit("message-read-receipt", {
+      messageId,
+      readBy: {
+        id: readerId,
+        name: readerName,
+      },
+      readAt: new Date(),
+    });
+    console.log(`Message ${messageId} read by ${readerName}`);
+  });
+
   socket.on("disconnect", () => {
     console.log("Socket disconnected:", socket.id);
   });

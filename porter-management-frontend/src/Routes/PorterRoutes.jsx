@@ -7,6 +7,8 @@ import PorterPendingGuard from "../guards/PorterPendingGuard";
 import PorterDashboard from "../pages/dashboard/porter/PorterDashboard";
 import AcceptedBookingDetails from "../pages/dashboard/porter/AcceptedBookingDetails";
 import PorterProfile from "../pages/dashboard/porter/PorterProfile";
+import PorterAnalytics from "../pages/dashboard/porter/PorterAnalytics";
+import PorterBookingHistory from "../pages/dashboard/porter/PorterBookingHistory";
 import TeamCreation from "../pages/dashboard/team/TeamCreation";
 import TeamOwnerDashboard from "../pages/dashboard/porter/TeamOwnerDashboard";
 import TeamLeadSelectPorters from "../pages/dashboard/porter/TeamLeadSelectPorters";
@@ -64,6 +66,14 @@ const porterRoutes = [
           {
             path: "profile",
             element: <PorterProfile />,
+          },
+          {
+            path: "analytics",
+            element: <PorterAnalytics />,
+          },
+          {
+            path: "booking-history",
+            element: <PorterBookingHistory />,
           },
 
           // ── Team owner dashboard ────────────────────────────────────────

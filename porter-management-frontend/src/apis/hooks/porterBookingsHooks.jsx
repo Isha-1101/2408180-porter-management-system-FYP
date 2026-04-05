@@ -11,6 +11,7 @@ import {
   getBookingByIdService,
   getUserBookingsService,
   startBookingService,
+  porterCancelBookingService,
 } from "../services/porterBookingsService.js";
 import { toast } from "react-hot-toast";
 
@@ -169,5 +170,41 @@ export const useGetUserBookings = () => {
     },
     refetchInterval: 15000,
     staleTime: 10000,
+  });
+};
+
+// Porter starts a booking journey
+export const useStartBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId) => {
+      const response = await startBookingService(bookingId);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Journey started!");
+      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || "Failed to start journey");
+    },
+  });
+};
+
+// Porter cancels a booking (with daily limit)
+export const usePorterCancelBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bookingId, reason }) => {
+      const response = await porterCancelBookingService(bookingId, reason);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Booking cancelled.");
+      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || "Failed to cancel booking");
+    },
   });
 };
