@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Bar,
-  Line,
-  Doughnut,
-  Pie,
-} from "react-chartjs-2";
+import { Bar, Line, Doughnut, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -20,11 +15,7 @@ import {
   Legend,
   Filler,
 } from "chart.js/auto";
-import {
-  TrendingUp,
-  RefreshCw,
-  Loader2,
-} from "lucide-react";
+import { TrendingUp, RefreshCw, Loader2 } from "lucide-react";
 import {
   getBookingTrends,
   getBookingDistribution,
@@ -43,7 +34,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 const chartOptions = {
@@ -73,10 +64,10 @@ const lineOptions = {
 const AdminAnalytics = () => {
   const [bookingTrends, setBookingTrends] = useState([]);
   const [revenueTrends, setRevenueTrends] = useState([]);
-  const [statusDistribution, setStatusDistribution] = useState({});
-  const [typeDistribution, setTypeDistribution] = useState({});
-  const [paymentMethodBreakdown, setPaymentMethodBreakdown] = useState({});
-  const [vehicleDistribution, setVehicleDistribution] = useState({});
+  const [statusDistribution, setStatusDistribution] = useState([]);
+  const [typeDistribution, setTypeDistribution] = useState([]);
+  const [paymentMethodBreakdown, setPaymentMethodBreakdown] = useState([]);
+  const [vehicleDistribution, setVehicleDistribution] = useState([]);
   const [cancellationTrends, setCancellationTrends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -86,30 +77,37 @@ const AdminAnalytics = () => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     try {
-      const [trendsRes, distributionRes, revenueRes, cancellationRes] = await Promise.all([
-        getBookingTrends({ period }),
-        getBookingDistribution(),
-        getRevenueStats(),
-        getCancellationStats(),
-      ]);
+      const [trendsRes, distributionRes, revenueRes, cancellationRes] =
+        await Promise.all([
+          getBookingTrends({ period }),
+          getBookingDistribution(),
+          getRevenueStats(),
+          getCancellationStats(),
+        ]);
 
-      if (trendsRes.data.success) {
-        setBookingTrends(trendsRes.data.data.bookingTrends || []);
-        setCancellationTrends(trendsRes.data.data.cancellationTrends || []);
+      if (trendsRes?.data.success) {
+        setBookingTrends(trendsRes?.data.data.bookingTrends || []);
+        setCancellationTrends(trendsRes?.data.data.cancellationTrends || []);
       }
-      if (distributionRes.data.success) {
-        const dist = distributionRes.data.data;
-        setStatusDistribution(dist.status || {});
-        setTypeDistribution(dist.type || {});
-        setPaymentMethodBreakdown(dist.paymentMethod || {});
-        setVehicleDistribution(dist.vehicleType || {});
+      if (distributionRes?.data.success) {
+        const dist = distributionRes?.data.data;
+        const toArray = (obj) =>
+          obj && typeof obj === "object" && !Array.isArray(obj)
+            ? Object.entries(obj).map(([key, value]) => ({ _id: key, count: value }))
+            : Array.isArray(obj)
+              ? obj
+              : [];
+        setStatusDistribution(toArray(dist?.status));
+        setTypeDistribution(toArray(dist?.type));
+        setPaymentMethodBreakdown(toArray(dist?.paymentMethod));
+        setVehicleDistribution(toArray(dist?.vehicleType));
       }
-      if (revenueRes.data.success) {
-        setRevenueTrends(revenueRes.data.data.monthly || []);
+      if (revenueRes?.data.success) {
+        setRevenueTrends(revenueRes?.data.data.monthly || []);
       }
-      if (cancellationRes.data.success) {
+      if (cancellationRes?.data.success) {
         if (!cancellationTrends.length) {
-          setCancellationTrends(cancellationRes.data.data.trends || []);
+          setCancellationTrends(cancellationRes?.data.data.trends || []);
         }
       }
     } catch (err) {
@@ -125,11 +123,11 @@ const AdminAnalytics = () => {
   }, [period]);
 
   const bookingTrendChartData = {
-    labels: bookingTrends.map(t => t.label || t.date),
+    labels: bookingTrends?.map((t) => t.label || t.date),
     datasets: [
       {
         label: "Bookings",
-        data: bookingTrends.map(t => t.count || t.total),
+        data: bookingTrends?.map((t) => t.count || t.total),
         borderColor: "rgba(59, 130, 246, 1)",
         backgroundColor: "rgba(59, 130, 246, 0.1)",
         fill: true,
@@ -138,11 +136,11 @@ const AdminAnalytics = () => {
   };
 
   const revenueTrendChartData = {
-    labels: revenueTrends.map(t => t.month || t.label),
+    labels: revenueTrends?.map((t) => t.month || t.label),
     datasets: [
       {
         label: "Revenue (NPR)",
-        data: revenueTrends.map(t => t.amount || t.revenue),
+        data: revenueTrends?.map((t) => t.amount || t.revenue),
         backgroundColor: "rgba(16, 185, 129, 0.6)",
         borderColor: "rgba(16, 185, 129, 1)",
         borderWidth: 1,
@@ -151,10 +149,10 @@ const AdminAnalytics = () => {
   };
 
   const statusDistChartData = {
-    labels: statusDistribution.map(s => s._id || "Unknown"),
+    labels: statusDistribution?.map((s) => s._id || "Unknown"),
     datasets: [
       {
-        data: statusDistribution.map(s => s.count),
+        data: statusDistribution?.map((s) => s.count),
         backgroundColor: [
           "rgba(251, 191, 36, 0.7)",
           "rgba(59, 130, 246, 0.7)",
@@ -169,10 +167,10 @@ const AdminAnalytics = () => {
   };
 
   const typeDistChartData = {
-    labels: typeDistribution.map(t => t._id || "Unknown"),
+    labels: typeDistribution?.map((t) => t._id || "Unknown"),
     datasets: [
       {
-        data: typeDistribution.map(t => t.count),
+        data: typeDistribution?.map((t) => t.count),
         backgroundColor: ["rgba(59, 130, 246, 0.7)", "rgba(168, 85, 247, 0.7)"],
         borderWidth: 2,
         borderColor: "#fff",
@@ -181,10 +179,10 @@ const AdminAnalytics = () => {
   };
 
   const paymentMethodChartData = {
-    labels: paymentMethodBreakdown.map(p => p._id || "Unknown"),
+    labels: paymentMethodBreakdown?.map((p) => p._id || "Unknown"),
     datasets: [
       {
-        data: paymentMethodBreakdown.map(p => p.count),
+        data: paymentMethodBreakdown?.map((p) => p.count),
         backgroundColor: ["rgba(34, 197, 94, 0.7)", "rgba(59, 130, 246, 0.7)"],
         borderWidth: 2,
         borderColor: "#fff",
@@ -193,11 +191,11 @@ const AdminAnalytics = () => {
   };
 
   const vehicleDistChartData = {
-    labels: vehicleDistribution.map(v => v._id || "Unknown"),
+    labels: vehicleDistribution?.map((v) => v._id || "Unknown"),
     datasets: [
       {
         label: "Count",
-        data: vehicleDistribution.map(v => v.count),
+        data: vehicleDistribution?.map((v) => v.count),
         backgroundColor: [
           "rgba(59, 130, 246, 0.6)",
           "rgba(168, 85, 247, 0.6)",
@@ -210,11 +208,11 @@ const AdminAnalytics = () => {
   };
 
   const cancellationTrendChartData = {
-    labels: cancellationTrends.map(t => t.label || t.date),
+    labels: cancellationTrends?.map((t) => t.label || t.date),
     datasets: [
       {
         label: "Cancellations",
-        data: cancellationTrends.map(t => t.count || t.total),
+        data: cancellationTrends?.map((t) => t.count || t.total),
         borderColor: "rgba(239, 68, 68, 1)",
         backgroundColor: "rgba(239, 68, 68, 0.1)",
         fill: true,
@@ -234,8 +232,12 @@ const AdminAnalytics = () => {
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-500 mt-1">Comprehensive platform analytics and insights.</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Analytics Dashboard
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Comprehensive platform analytics and insights.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1">
@@ -250,8 +252,15 @@ const AdminAnalytics = () => {
               </Button>
             ))}
           </div>
-          <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchData(true)}
+            disabled={refreshing}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -316,7 +325,10 @@ const AdminAnalytics = () => {
           <CardContent>
             <div className="h-72 flex justify-center">
               <div className="w-64">
-                <Doughnut data={paymentMethodChartData} options={chartOptions} />
+                <Doughnut
+                  data={paymentMethodChartData}
+                  options={chartOptions}
+                />
               </div>
             </div>
           </CardContent>
