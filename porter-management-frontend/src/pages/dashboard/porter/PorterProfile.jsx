@@ -24,7 +24,7 @@ import PageLayout from "@/components/common/PageLayout";
 import { useGetPorterByUser } from "@/apis/hooks/portersHooks";
 import { useAuthStore } from "@/store/auth.store";
 import { getCloudinaryUrl } from "@/utils/helper";
-import { porterRetgistrationHooks } from "@/apis/hooks/porterRegistratioHooks";
+import { porterRegistrationHooks } from "@/apis/hooks/porterRegistrationHooks";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -108,7 +108,7 @@ const PorterProfile = () => {
   const { data, isLoading, isError } = useGetPorterByUser();
 
   const { mutateAsync: updateContact, isPending: isSaving } =
-    porterRetgistrationHooks.useUpdatePorterContactMutation();
+    porterRegistrationHooks.useUpdatePorterContactMutation();
 
   // Edit dialog state
   const [editOpen, setEditOpen] = useState(false);

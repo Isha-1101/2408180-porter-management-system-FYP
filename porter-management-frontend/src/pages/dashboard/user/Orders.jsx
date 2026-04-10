@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserBookingsService } from "@/apis/services/porterBookingsService";
-import { submitRating, getBookingRating } from "@/apis/services/ratingService";
+import { useSubmitRating, useGetBookingRating } from "@/apis/hooks/ratingHooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,15 +100,31 @@ const STATUS_CONFIG = {
     cls: "bg-yellow-100 text-yellow-800 border-yellow-200",
     icon: <Clock className="w-3 h-3" />,
   },
-  WAITING_TEAM_LEAD: {
+  // Team booking statuses
+  PENDING_TEAM_REVIEW: {
     label: "Finding Team",
     cls: "bg-violet-100 text-violet-800 border-violet-200",
     icon: <Clock className="w-3 h-3" />,
   },
-  WAITING_PORTER_RESPONSE: {
+  PENDING_MEMBER_RESPONSE: {
     label: "Team Responding",
     cls: "bg-orange-100 text-orange-800 border-orange-200",
+    icon: <Users className="w-3 h-3" />,
+  },
+  AWAITING_OWNER_CONFIRMATION: {
+    label: "Awaiting Owner",
+    cls: "bg-blue-100 text-blue-800 border-blue-200",
     icon: <Clock className="w-3 h-3" />,
+  },
+  DECLINED: {
+    label: "Declined",
+    cls: "bg-red-100 text-red-800 border-red-200",
+    icon: <XCircle className="w-3 h-3" />,
+  },
+  CLOSED: {
+    label: "Closed",
+    cls: "bg-gray-100 text-gray-700 border-gray-200",
+    icon: <CheckCircle className="w-3 h-3" />,
   },
 };
 
@@ -124,9 +140,9 @@ const getStatusConfig = (s) =>
 // ────────────────────────────────────
 // Team booking statuses the user can track live
 const TRACKABLE_TEAM_STATUSES = [
-  "SEARCHING",
-  "WAITING_TEAM_LEAD",
-  "WAITING_PORTER_RESPONSE",
+  "PENDING_TEAM_REVIEW",
+  "PENDING_MEMBER_RESPONSE",
+  "AWAITING_OWNER_CONFIRMATION",
   "CONFIRMED",
   "IN_PROGRESS",
 ];
@@ -280,21 +296,10 @@ const BookingCard = ({ booking, onRate, onTrack }) => {
 // Rate Button (fetches existing rating)
 // ────────────────────────────────────
 const RateButton = ({ bookingId, porterId, onRate }) => {
-  const [existingRating, setExistingRating] = useState(null);
-  const [checked, setChecked] = useState(false);
+  const { data: ratingData, isLoading } = useGetBookingRating(bookingId);
+  const existingRating = ratingData?.data?.data?.review;
 
-  useEffect(() => {
-    getBookingRating(bookingId)
-      .then((res) => {
-        if (res.data.success) {
-          setExistingRating(res.data.data.review);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setChecked(true));
-  }, [bookingId]);
-
-  if (!checked) return null;
+  if (isLoading) return null;
 
   if (existingRating) {
     return (
@@ -324,34 +329,34 @@ const RateButton = ({ bookingId, porterId, onRate }) => {
 const RatingModal = ({ open, onClose, target, onSubmitSuccess }) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const { mutateAsync: submitRatingMutation, isPending: loading } = useSubmitRating({
+    onSuccess: () => {
+      onSubmitSuccess();
+      onClose();
+      setRating(0);
+      setComment("");
+    },
+    onError: (err) => {
+      setError(
+        err.response?.data?.message || "Failed to submit rating. Try again.",
+      );
+    },
+  });
 
   const handleSubmit = async () => {
     if (rating === 0) {
       setError("Please select a star rating.");
       return;
     }
-    setLoading(true);
     setError(null);
-    try {
-      await submitRating({
-        bookingId: target.bookingId,
-        porterId: target.porterId,
-        rating,
-        comment,
-      });
-      onSubmitSuccess();
-      onClose();
-      setRating(0);
-      setComment("");
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to submit rating. Try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
+    await submitRatingMutation({
+      bookingId: target.bookingId,
+      porterId: target.porterId,
+      rating,
+      comment,
+    });
   };
 
   return (
@@ -433,8 +438,10 @@ const ACTIVE_STATUSES = [
   "IN_PROGRESS",
   "WAITING_PORTER",
   "SEARCHING",
-  "WAITING_TEAM_LEAD",
-  "WAITING_PORTER_RESPONSE",
+  // Team booking active statuses
+  "PENDING_TEAM_REVIEW",
+  "PENDING_MEMBER_RESPONSE",
+  "AWAITING_OWNER_CONFIRMATION",
 ];
 
 // ────────────────────────────────────

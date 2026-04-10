@@ -10,12 +10,13 @@ import {
 } from "../controllers/book-porter/individual-booking-controller.js";
 import {
   createTeamBooking,
-  teamLeadAcceptBooking,
-  teamMemberRespond,
-  teamLeadConfirm,
-  teamLeadRejectBooking,
-  completeTeamBooking,
-  getTeamBookingSelection,
+  teamOwnerReviewBooking,
+  teamMemberRespondToBooking,
+  teamOwnerConfirmBooking,
+  teamOwnerCancelBooking,
+  teamOwnerMarkComplete,
+  startTeamBooking,
+  getTeamBookingStatus,
 } from "../controllers/book-porter/team-booking-controller.js";
 import {
   getUserBookings,
@@ -127,56 +128,59 @@ router.post("/individual/:id/update-payment-method", ...userOnly, updatePaymentM
 
 /**
  * @route   POST /api/bookings/team
- * @desc    Create team porter booking
+ * @desc    Create team porter booking (notifies all eligible teams)
  * @access  Private (User)
  */
 router.post("/team", ...userOnly, createTeamBooking);
 
 /**
- * @route   POST /api/bookings/team/:id/team-lead/accept
- * @desc    Team lead accepts booking request
- * @access  Private (Team Lead Porter)
+ * @route   GET /api/bookings/team/:id
+ * @desc    Get team booking status with member responses
+ * @access  Private (User or assigned Porter)
  */
-router.post("/team/:id/team-lead/accept", ...porterOnly, teamLeadAcceptBooking);
+router.get("/team/:id", ...protect, getTeamBookingStatus);
 
 /**
- * @route   GET /api/bookings/team/:id/selection
- * @desc    Get live selection status (who accepted/rejected)
- * @access  Private (Porter)
+ * @route   POST /api/bookings/team/:id/review
+ * @desc    Team owner reviews booking (forward to team or decline)
+ * @access  Private (Team Owner Porter)
  */
-router.get("/team/:id/selection", ...porterOnly, getTeamBookingSelection);
+router.post("/team/:id/review", ...porterOnly, teamOwnerReviewBooking);
 
 /**
- * @route   POST /api/bookings/team/:id/team-lead/confirm
- * @desc    Team lead confirms booking after enough porters responded
- * @access  Private (Team Lead Porter)
+ * @route   POST /api/bookings/team/:id/member/respond
+ * @desc    Team member responds to forwarded booking (accept/decline)
+ * @access  Private (Team Member Porter)
  */
-router.post("/team/:id/team-lead/confirm", ...porterOnly, teamLeadConfirm);
+router.post("/team/:id/member/respond", ...porterOnly, teamMemberRespondToBooking);
 
 /**
- * @route   POST /api/bookings/team/:id/team-lead/reject
- * @desc    Team lead rejects booking
- * @access  Private (Team Lead Porter)
+ * @route   POST /api/bookings/team/:id/owner/confirm
+ * @desc    Team owner confirms booking after quorum reached
+ * @access  Private (Team Owner Porter)
  */
-router.post("/team/:id/team-lead/reject", ...porterOnly, teamLeadRejectBooking);
+router.post("/team/:id/owner/confirm", ...porterOnly, teamOwnerConfirmBooking);
 
 /**
- * @route   POST /api/bookings/team/:id/porter/:porterId/respond
- * @desc    Team member responds to porter selection
- * @access  Private (Porter)
+ * @route   POST /api/bookings/team/:id/owner/cancel
+ * @desc    Team owner cancels booking
+ * @access  Private (Team Owner Porter)
  */
-router.post(
-  "/team/:id/porter/:porterId/respond",
-  ...porterOnly,
-  teamMemberRespond,
-);
+router.post("/team/:id/owner/cancel", ...porterOnly, teamOwnerCancelBooking);
+
+/**
+ * @route   POST /api/bookings/team/:id/start
+ * @desc    Team owner starts the team booking job (CONFIRMED -> IN_PROGRESS)
+ * @access  Private (Team Owner Porter)
+ */
+router.post("/team/:id/start", ...porterOnly, startTeamBooking);
 
 /**
  * @route   POST /api/bookings/team/:id/complete
- * @desc    Complete team booking
- * @access  Private (Team Lead Porter)
+ * @desc    Team owner marks booking as complete
+ * @access  Private (Team Owner Porter)
  */
-router.post("/team/:id/complete", ...porterOnly, completeTeamBooking);
+router.post("/team/:id/complete", ...porterOnly, teamOwnerMarkComplete);
 
 // ============================================
 // COMMON BOOKING ROUTES

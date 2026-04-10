@@ -8,7 +8,7 @@ import VehicleInfo, { isVehicleInfoValid } from "./component/porter-register/por
 import DocumentInfo, { isDocumentInfoValid } from "./component/porter-register/porter-document-info.jsx";
 import SidebarSteps from "./component/porter-register/side-bar-steps";
 import ReviewPage from "./component/porter-register/porter-review-page.jsx";
-import { porterRetgistrationHooks } from "@/apis/hooks/porterRegistratioHooks.jsx";
+import { porterRegistrationHooks } from "@/apis/hooks/porterRegistrationHooks";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { usePorterRegistration } from "./providers/PorterRegistrationProvider.jsx";
@@ -40,7 +40,7 @@ const PorterRegister = () => {
 
   //getting registrationId when page loads
   const { mutateAsync: startRegistration } =
-    porterRetgistrationHooks.useRegstrationStartMutation();
+    porterRegistrationHooks.useRegstrationStartMutation();
 
   const startRegistrations = async () => {
     try {
@@ -73,7 +73,7 @@ const PorterRegister = () => {
 
   //mutation for registration
   const { mutateAsync: savePersonalInfo, isPending: isSavingPersonalInfo } =
-    porterRetgistrationHooks.useSavePorterBasicInfoMutation();
+    porterRegistrationHooks.useSavePorterBasicInfoMutation();
 
   const handleSaveStep1 = async () => {
     const payload = new FormData();
@@ -105,7 +105,7 @@ const PorterRegister = () => {
   };
 
   const { mutateAsync: saveVehicleInfo, isPending: isSavingVehicleInfo } =
-    porterRetgistrationHooks.useSavePorterVehicleInfoMutation();
+    porterRegistrationHooks.useSavePorterVehicleInfoMutation();
 
   const handleSaveStep2 = async () => {
     console.log("Saving vehicle info with data:", formData.vehicle);
@@ -120,7 +120,7 @@ const PorterRegister = () => {
   };
 
   const { mutateAsync: saveDocumentInfo, isPending: isSavingDocumentInfo } =
-    porterRetgistrationHooks.useSavePorterDocumentsInfoMutation();
+    porterRegistrationHooks.useSavePorterDocumentsInfoMutation();
 
   const handleSaveStep3 = async () => {
     const payload = new FormData();
@@ -141,7 +141,7 @@ const PorterRegister = () => {
   };
 
   const { mutateAsync: submitPorterRegistration, isPending: isSubmitting } =
-    porterRetgistrationHooks.useSubmitPorterRegistrationMutation();
+    porterRegistrationHooks.useSubmitPorterRegistrationMutation();
   const handleFinalSavePorterInformation = async () => {
     try {
       await submitPorterRegistration(registrationId);

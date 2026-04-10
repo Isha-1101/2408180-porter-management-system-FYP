@@ -42,7 +42,8 @@ const PorterBooking = () => {
   // ── Form state ────────────────────────────────────────────────────────────
   const [porterType, setPorterType] = useState("individual");
   const [weight, setWeight] = useState("");
-  const [teamSize, setTeamSize] = useState("");
+  const [portersRequired, setPortersRequired] = useState("");
+  const [workDescription, setWorkDescription] = useState("");
   const [requirements, setRequirements] = useState("");
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
@@ -124,12 +125,10 @@ const PorterBooking = () => {
     }
 
     if (porterType === "team") {
-      if (!teamSize || Number(teamSize) < 1) return "Number of porters must be at least 1.";
-      if (!hasVehicle && (!weight || Number(weight) < 5)) return "Weight must be at least 5 kg.";
-      if (!hasVehicle && !purpose) return "Please select a purpose of booking.";
+      if (!portersRequired || Number(portersRequired) < 1) return "Number of porters required must be at least 1.";
+      if (!workDescription || workDescription.trim() === "") return "Work description is required.";
+      if (!weight || Number(weight) < 5) return "Weight must be at least 5 kg.";
       if (hasVehicle && !vehicleType) return "Please select a vehicle type.";
-      if (hasVehicle && numberOfVehicles && Number(numberOfVehicles) < 1)
-        return "Number of vehicles must be at least 1.";
       if (bookingDate) {
         const selected = new Date(bookingDate);
         const today = new Date();
@@ -154,17 +153,12 @@ const PorterBooking = () => {
           pickup: { lat: pickup.lat, lng: pickup.lng, address: pickup.address || "" },
           drop: { lat: dropoff.lat, lng: dropoff.lng, address: dropoff.address || "" },
           weightKg: Number(weight),
-          teamSize: Number(teamSize),
-          requirements: requirements || null,
+          portersRequired: Number(portersRequired),
+          workDescription: workDescription || null,
           bookingDate: bookingDate || null,
           bookingTime: bookingTime || null,
           hasVehicle,
           vehicleType: hasVehicle ? vehicleType : null,
-          numberOfVehicles: hasVehicle ? Number(numberOfVehicles) : null,
-          purpose_of_booking: purpose || "transportation",
-          noOfFloors: numberOfFloors ? Number(numberOfFloors) : null,
-          hasLift,
-          no_of_trips: numberOfTrips ? Number(numberOfTrips) : null,
         });
         navigate("/dashboard/booking/team-tracking", {
           state: { bookingId: res?.bookingId || res?.data?.bookingId },
@@ -279,15 +273,12 @@ const PorterBooking = () => {
                 {/* Team-only fields */}
                 {porterType === "team" && (
                   <TeamFields
-                    teamSize={teamSize} onTeamSizeChange={setTeamSize}
+                    portersRequired={portersRequired} onPortersRequiredChange={setPortersRequired}
                     weight={weight} onWeightChange={setWeight}
-                    purpose={purpose} onPurposeChange={setPurpose}
-                    numberOfFloors={numberOfFloors} onNumberOfFloorsChange={setNumberOfFloors}
-                    hasLift={hasLift} onHasLiftToggle={() => setHasLift(!hasLift)}
-                    numberOfTrips={numberOfTrips} onNumberOfTripsChange={setNumberOfTrips}
-                    requirements={requirements} onRequirementsChange={setRequirements}
+                    workDescription={workDescription} onWorkDescriptionChange={setWorkDescription}
                     bookingDate={bookingDate} onBookingDateChange={setBookingDate}
                     bookingTime={bookingTime} onBookingTimeChange={setBookingTime}
+                    requirements={requirements} onRequirementsChange={setRequirements}
                   />
                 )}
 

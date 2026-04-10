@@ -2,16 +2,17 @@
  * @file TeamOwnerDashboard.jsx
  * @description Dedicated dashboard for porter team owners (role="owner").
  *
- * Shows incoming team pre-booking requests (status=WAITING_TEAM_LEAD).
- * Receives real-time notifications via SSE ("new-booking-request") and socket.
+ * Shows incoming team booking requests (status=PENDING_TEAM_REVIEW).
+ * Receives real-time notifications via Socket.io ("team-booking-request").
  *
  * Team owner can:
- *   - Accept → auto-notifies ALL team workers, navigates to TeamLeadConfirmBooking.
- *   - Reject → marks their request as rejected.
- *   - View "My Schedule" tab to see upcoming bookings already committed to.
+ *   - Forward to Team → notifies all team members, status → PENDING_MEMBER_RESPONSE
+ *   - Decline → status → DECLINED, user notified
+ *   - View "My Schedule" tab for upcoming bookings
+ *   - View "My Team" tab for member management
  */
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -28,15 +29,19 @@ import {
   Route,
   Layers,
   Calendar,
+  Send,
+  Play,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
 import { useGetPorterBookings } from "../../../apis/hooks/porterBookingsHooks";
 import {
-  useTeamLeadAcceptBooking,
-  useTeamLeadRejectBooking,
+  useTeamOwnerReviewBooking,
+  useGetTeamDashboard,
+  useGetTeamPendingBookings,
+  useStartTeamBooking,
+  useGetTeamBookingHistory,
 } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
-import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
 import { AddressLine } from "../../../components/common/AddressLine";
 import {
@@ -52,67 +57,104 @@ import { Badge } from "../../../components/ui/badge";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 const PURPOSE_LABEL = {
   transportation: { emoji: "🚚", label: "Transportation" },
   delivery: { emoji: "📦", label: "Delivery" },
 };
 
 const STATUS_BADGE = {
-  WAITING_PORTER_RESPONSE: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  PENDING_MEMBER_RESPONSE: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  AWAITING_OWNER_CONFIRMATION: "bg-blue-100 text-blue-700 border-blue-200",
   CONFIRMED: "bg-green-100 text-green-700 border-green-200",
-  IN_PROGRESS: "bg-blue-100 text-blue-700 border-blue-200",
+  IN_PROGRESS: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  COMPLETED: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  DECLINED: "bg-red-100 text-red-700 border-red-200",
+  CANCELLED: "bg-gray-100 text-gray-600 border-gray-200",
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function TeamOwnerDashboard() {
   const { porter, isLoading: porterLoading } = usePorter();
-  const token = useAuthStore((s) => s.access_token);
   const navigate = useNavigate();
   const sseRef = useRef(null);
 
   const [liveRequests, setLiveRequests] = useState([]);
-  const [activeTab, setActiveTab] = useState("requests"); // "requests" | "schedule"
+  const [activeTab, setActiveTab] = useState("requests");
 
-  // ── API data ────────────────────────────────────────────────────────────────
   const {
     data: apiData,
     isLoading: bookingsLoading,
     refetch,
   } = useGetPorterBookings();
 
-  // ── Mutations ────────────────────────────────────────────────────────────────
-  const { mutateAsync: teamLeadAccept, isPending: accepting } =
-    useTeamLeadAcceptBooking();
-  const { mutateAsync: teamLeadReject, isPending: rejecting } =
-    useTeamLeadRejectBooking();
+  const { data: teamDashboard } = useGetTeamDashboard();
+  const {
+    data: pendingBookings,
+    refetch: refetchPendingBookings,
+  } = useGetTeamPendingBookings();
 
-  // Merge live socket requests with API pending requests
+  // Fetch active/upcoming team bookings for the schedule tab
+  const { data: teamBookingHistoryRaw, isLoading: scheduleLoading } = useGetTeamBookingHistory();
+
+  const { mutateAsync: teamOwnerReview, isPending: reviewing } =
+    useTeamOwnerReviewBooking();
+
+  const { mutateAsync: startTeamBooking, isPending: startingJob } =
+    useStartTeamBooking();
+
   const apiRequests = apiData?.pendingRequests || [];
-  const upcomingTeamBookings = apiData?.upcomingTeamBookings || [];
+
+  // Active team bookings for schedule tab — filter server-side history to active statuses
+  const ACTIVE_TEAM_STATUSES = [
+    "PENDING_MEMBER_RESPONSE",
+    "AWAITING_OWNER_CONFIRMATION",
+    "CONFIRMED",
+    "IN_PROGRESS",
+  ];
+  const upcomingTeamBookings = (teamBookingHistoryRaw || []).filter((b) =>
+    ACTIVE_TEAM_STATUSES.includes(b.status)
+  );
+
+  // Build the requests list:
+  //  1. Start from API-sourced pending bookings (survives refresh)
+  //  2. Merge in any live socket requests not yet in the API list
+  //     (in-flight notifications that arrived before the API caught up)
+  const apiPendingBookings = Array.isArray(pendingBookings) ? pendingBookings : [];
 
   const teamLeadRequests = [
+    // API bookings formatted as request objects
+    ...apiPendingBookings.map((b) => ({
+      _id: b._id,
+      bookingId: b._id,
+      booking: b,
+      pickup: b.pickup,
+      drop: b.drop,
+      weightKg: b.weightKg,
+      portersRequired: b.teamSize,
+      workDescription: b.workDescription,
+      bookingDate: b.bookingDate,
+      bookingTime: b.bookingTime,
+      hasVehicle: b.hasVehicle,
+      vehicleType: b.vehicleType,
+      customerName: b.userId?.name,
+      _isLive: false,
+    })),
+    // Live socket requests not yet reflected in API (deduped)
     ...liveRequests.filter(
-      (lr) => !apiRequests.some((ar) => ar.bookingId?._id === lr.bookingId),
-    ),
-    ...apiRequests.filter(
-      (r) => r.notificationType === "TEAM_LEAD" || r.isTeamLead === true,
+      (lr) =>
+        !apiPendingBookings.some(
+          (b) => String(b._id) === String(lr.bookingId)
+        )
     ),
   ];
 
-  // ── Socket location reporting ─────────────────────────────────────────────
   useEffect(() => {
     if (porter?._id) {
       socket.emit("join-porter-room", porter._id);
     }
   }, [porter?._id]);
 
-  // ── SSE + Socket listening ─────────────────────────────────────────────────
   useEffect(() => {
-    const onBookingRequest = (data) => {
-      if (data.notificationType !== "TEAM_LEAD" && !data.isTeamLead) return;
+    const onTeamBookingRequest = (data) => {
       setLiveRequests((prev) => {
         const exists = prev.some(
           (r) => r.bookingId === data.bookingId?.toString(),
@@ -123,62 +165,36 @@ export default function TeamOwnerDashboard() {
       refetch();
     };
 
-    socket.on("booking-request", onBookingRequest);
-
-    sseRef.current = createSSEConnection(
-      "/bookings/sse/porter",
-      {
-        "new-booking-request": (data) => {
-          if (data.notificationType !== "TEAM_LEAD" && !data.isTeamLead) return;
-          setLiveRequests((prev) => {
-            const exists = prev.some(
-              (r) => r.bookingId === String(data.bookingId),
-            );
-            if (exists) return prev;
-            return [{ ...data, _isLive: true, _sse: true }, ...prev];
-          });
-          refetch();
-        },
-      },
-      token,
-    );
+    socket.on("team-booking-request", onTeamBookingRequest);
 
     return () => {
-      socket.off("booking-request", onBookingRequest);
+      socket.off("team-booking-request", onTeamBookingRequest);
       sseRef.current?.close();
     };
-  }, [refetch, token]);
+  }, [refetch]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
-  const handleAccept = async (bookingId) => {
+  const handleForward = async (bookingId) => {
     try {
-      const res = await teamLeadAccept(bookingId);
-      const bookingData = res?.data?.booking;
-      const requiredMembers =
-        res?.data?.requiredMembers || bookingData?.teamSize || 1;
-      navigate("/dashboard/porters/team-lead/confirm-booking", {
-        state: {
-          bookingId: bookingData?._id || bookingId,
-          requiredMembers,
-          booking: bookingData,
-        },
-      });
-    } catch {
-      /* toasted by hook */
-    }
-  };
-
-  const handleReject = async (bookingId) => {
-    try {
-      await teamLeadReject(bookingId);
-      setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
+      await teamOwnerReview({ bookingId, action: "forward" });
+      setLiveRequests((prev) => prev.filter((r) => String(r.bookingId) !== String(bookingId)));
       refetch();
+      refetchPendingBookings();
     } catch {
       /* toasted by hook */
     }
   };
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  const handleDecline = async (bookingId) => {
+    try {
+      await teamOwnerReview({ bookingId, action: "decline" });
+      setLiveRequests((prev) => prev.filter((r) => String(r.bookingId) !== String(bookingId)));
+      refetch();
+      refetchPendingBookings();
+    } catch {
+      /* toasted by hook */
+    }
+  };
+
   if (porterLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -190,7 +206,6 @@ export default function TeamOwnerDashboard() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Page header */}
@@ -201,10 +216,10 @@ export default function TeamOwnerDashboard() {
             Team Owner Dashboard
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage pre-booking requests and your upcoming schedule.
+            Manage booking requests, team members, and schedule.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
+        <Button variant="outline" size="sm" onClick={() => { refetch(); refetchPendingBookings(); }}>
           <RefreshCw
             className={`h-4 w-4 mr-2 ${bookingsLoading ? "animate-spin" : ""}`}
           />
@@ -212,15 +227,13 @@ export default function TeamOwnerDashboard() {
         </Button>
       </div>
 
-      {/* Team info banner */}
-      {porter && (
+      {/* Stats banner */}
+      {teamDashboard && (
         <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="py-3 px-4 flex flex-wrap items-center gap-4 text-sm">
+          <CardContent className="py-3 px-4 flex flex-wrap items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
-                {String(porter?.user?.name || "T")
-                  .charAt(0)
-                  .toUpperCase()}
+                {String(teamDashboard.team?._id || "T").charAt(0).toUpperCase()}
               </div>
               <div>
                 <p className="font-semibold text-gray-800">
@@ -230,11 +243,19 @@ export default function TeamOwnerDashboard() {
               </div>
             </div>
             <Separator orientation="vertical" className="h-8 hidden sm:block" />
-            <div className="text-xs text-gray-600">
-              <span className="font-medium">Team ID:</span>{" "}
-              <span className="font-mono">
-                #{String(porter?.teamId).slice(-6).toUpperCase()}
-              </span>
+            <div className="flex gap-6">
+              <div className="text-center">
+                <p className="text-lg font-bold text-primary">{teamDashboard.stats.totalMembers}</p>
+                <p className="text-xs text-gray-500">Members</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-blue-600">{teamDashboard.stats.activeJobs}</p>
+                <p className="text-xs text-gray-500">Active Jobs</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-green-600">{teamDashboard.stats.completedJobs}</p>
+                <p className="text-xs text-gray-500">Completed</p>
+              </div>
             </div>
             <Badge className="bg-green-100 text-green-700 border-green-200 ml-auto">
               Online
@@ -244,7 +265,7 @@ export default function TeamOwnerDashboard() {
       )}
 
       {/* Tab bar */}
-      <div className="flex bg-gray-100 p-1 rounded-lg w-full max-w-sm">
+      <div className="flex bg-gray-100 p-1 rounded-lg w-full max-w-md">
         <button
           onClick={() => setActiveTab("requests")}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-semibold transition-all ${
@@ -277,6 +298,22 @@ export default function TeamOwnerDashboard() {
             </span>
           )}
         </button>
+        <button
+          onClick={() => setActiveTab("team")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "team"
+              ? "bg-white text-primary shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          My Team
+          {teamDashboard?.members?.length > 0 && (
+            <span className="ml-1 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {teamDashboard.members.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ── REQUESTS TAB ── */}
@@ -286,7 +323,7 @@ export default function TeamOwnerDashboard() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                Pre-Booking Requests
+                Booking Requests
                 {teamLeadRequests.length > 0 && (
                   <Badge variant="destructive" className="animate-pulse">
                     {teamLeadRequests.length} pending
@@ -295,7 +332,7 @@ export default function TeamOwnerDashboard() {
               </CardTitle>
             </div>
             <CardDescription>
-              Accept a request to auto-notify all your team workers.
+              Review incoming booking requests. Forward to your team or decline.
             </CardDescription>
           </CardHeader>
 
@@ -315,8 +352,7 @@ export default function TeamOwnerDashboard() {
                     No pending requests
                   </p>
                   <p className="text-xs text-gray-500">
-                    New pre-booking requests for your team will appear here in
-                    real time.
+                    New booking requests will appear here in real time.
                   </p>
                 </div>
               ) : (
@@ -333,12 +369,12 @@ export default function TeamOwnerDashboard() {
                     const weightKg = isLive
                       ? request.weight ?? request.weightKg
                       : request.bookingId?.weightKg;
-                    const teamSize = isLive
-                      ? request.teamSize
+                    const portersRequired = isLive
+                      ? request.portersRequired
                       : request.bookingId?.teamSize;
-                    const requirements = isLive
-                      ? request.requirements
-                      : request.bookingId?.requirements;
+                    const workDescription = isLive
+                      ? request.workDescription
+                      : request.bookingId?.workDescription;
                     const bookingDate = isLive
                       ? request.bookingDate
                       : request.bookingId?.bookingDate;
@@ -351,23 +387,6 @@ export default function TeamOwnerDashboard() {
                     const vehicleType = isLive
                       ? request.vehicleType
                       : request.bookingId?.vehicleType;
-                    const numberOfVehicles = isLive
-                      ? request.numberOfVehicles
-                      : request.bookingId?.numberOfVehicles;
-                    const purpose = isLive
-                      ? request.purpose_of_booking
-                      : request.bookingId?.purpose_of_booking;
-                    const noOfFloors = isLive
-                      ? request.noOfFloors
-                      : request.bookingId?.noOfFloors;
-                    const hasLift = isLive
-                      ? request.hasLift
-                      : request.bookingId?.hasLift;
-                    const no_of_trips = isLive
-                      ? request.no_of_trips
-                      : request.bookingId?.no_of_trips;
-                    const distanceKm = request.distanceKm;
-                    const purposeInfo = PURPOSE_LABEL[purpose];
 
                     return (
                       <Card
@@ -379,18 +398,13 @@ export default function TeamOwnerDashboard() {
                             <div className="flex items-center gap-2 flex-wrap">
                               {isLive && (
                                 <Badge className="bg-red-100 text-red-700 border-red-200 text-xs animate-pulse">
-                                  🔴 Live
+                                  Live
                                 </Badge>
                               )}
                               <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
                                 <Users className="w-3 h-3 mr-1" />
-                                Pre-Booking
+                                Team Booking
                               </Badge>
-                              {purposeInfo && (
-                                <Badge variant="outline" className="text-xs">
-                                  {purposeInfo.emoji} {purposeInfo.label}
-                                </Badge>
-                              )}
                               <Badge
                                 variant="outline"
                                 className="text-xs font-mono"
@@ -398,17 +412,16 @@ export default function TeamOwnerDashboard() {
                                 #{String(bookingId).slice(-6).toUpperCase()}
                               </Badge>
                             </div>
-                            {distanceKm != null && (
+                            {request.distanceKm != null && (
                               <div className="flex items-center gap-1 text-xs text-gray-500">
                                 <MapPin className="h-3 w-3" />
-                                {Number(distanceKm).toFixed(1)} km away
+                                {Number(request.distanceKm).toFixed(1)} km away
                               </div>
                             )}
                           </div>
                         </CardHeader>
 
                         <CardContent className="p-4 pt-2 space-y-3">
-                          {/* Locations */}
                           <div className="space-y-2">
                             <div>
                               <p className="text-xs text-gray-500 mb-1">Pickup</p>
@@ -422,7 +435,6 @@ export default function TeamOwnerDashboard() {
                             </div>
                           </div>
 
-                          {/* Details grid */}
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                             {weightKg && (
                               <div className="flex items-center gap-1 text-gray-600">
@@ -430,10 +442,10 @@ export default function TeamOwnerDashboard() {
                                 <span>{weightKg} kg</span>
                               </div>
                             )}
-                            {teamSize && (
+                            {portersRequired && (
                               <div className="flex items-center gap-1 text-gray-600">
                                 <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                <span>{teamSize} workers needed</span>
+                                <span>{portersRequired} porters needed</span>
                               </div>
                             )}
                             {bookingDate && (
@@ -455,35 +467,15 @@ export default function TeamOwnerDashboard() {
                                 <Truck className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                                 <span className="capitalize">
                                   {vehicleType}
-                                  {numberOfVehicles ? ` ×${numberOfVehicles}` : ""}
                                 </span>
-                              </div>
-                            )}
-                            {noOfFloors > 0 && (
-                              <div className="flex items-center gap-1 text-gray-600">
-                                <Layers className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                <span>{noOfFloors} floor(s)</span>
-                              </div>
-                            )}
-                            {no_of_trips > 0 && (
-                              <div className="flex items-center gap-1 text-gray-600">
-                                <Route className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                <span>{no_of_trips} trip(s)</span>
                               </div>
                             )}
                           </div>
 
-                          {/* Lift badge */}
-                          {hasLift && (
-                            <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded border border-green-100 inline-block">
-                              ✓ Elevator / lift available
-                            </p>
-                          )}
-
-                          {requirements && (
+                          {workDescription && (
                             <div className="bg-purple-50 rounded-lg p-2 text-xs text-gray-600 border border-purple-100">
-                              <span className="font-medium">Requirements: </span>
-                              {requirements}
+                              <span className="font-medium">Work: </span>
+                              {workDescription}
                             </div>
                           )}
                         </CardContent>
@@ -494,10 +486,10 @@ export default function TeamOwnerDashboard() {
                               variant="outline"
                               size="sm"
                               className="w-28"
-                              disabled={rejecting || accepting}
-                              onClick={() => handleReject(bookingId)}
+                              disabled={reviewing}
+                              onClick={() => handleDecline(bookingId)}
                             >
-                              {rejecting ? (
+                              {reviewing ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
@@ -508,15 +500,15 @@ export default function TeamOwnerDashboard() {
                             </Button>
                             <Button
                               size="sm"
-                              disabled={accepting || rejecting}
-                              onClick={() => handleAccept(bookingId)}
+                              disabled={reviewing}
+                              onClick={() => handleForward(bookingId)}
                             >
-                              {accepting ? (
+                              {reviewing ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
-                                  <CheckCircle className="mr-1 h-3 w-3" />
-                                  Accept &amp; Notify Team
+                                  <Send className="mr-1 h-3 w-3" />
+                                  Forward to Team
                                 </>
                               )}
                             </Button>
@@ -541,7 +533,7 @@ export default function TeamOwnerDashboard() {
               My Upcoming Bookings
             </CardTitle>
             <CardDescription>
-              Bookings your team has committed to, sorted by date. Check this before accepting new requests to avoid conflicts.
+              Bookings your team has committed to, sorted by date.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -558,13 +550,12 @@ export default function TeamOwnerDashboard() {
                   </div>
                   <p className="text-sm font-medium text-gray-900">No upcoming bookings</p>
                   <p className="text-xs text-gray-500">
-                    Bookings you accept will appear here, sorted by date.
+                    Bookings you confirm will appear here.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {upcomingTeamBookings.map((booking) => {
-                    const purposeInfo = PURPOSE_LABEL[booking.purpose_of_booking];
                     const statusClass =
                       STATUS_BADGE[booking.status] ||
                       "bg-gray-100 text-gray-600";
@@ -582,11 +573,6 @@ export default function TeamOwnerDashboard() {
                               >
                                 {booking.status.replace(/_/g, " ")}
                               </Badge>
-                              {purposeInfo && (
-                                <Badge variant="outline" className="text-xs">
-                                  {purposeInfo.emoji} {purposeInfo.label}
-                                </Badge>
-                              )}
                               <Badge variant="outline" className="text-xs font-mono">
                                 #{String(booking._id).slice(-6).toUpperCase()}
                               </Badge>
@@ -609,7 +595,6 @@ export default function TeamOwnerDashboard() {
                         </CardHeader>
 
                         <CardContent className="p-4 pt-2 space-y-3">
-                          {/* Customer info */}
                           {booking.userId?.name && (
                             <p className="text-xs text-gray-500">
                               Customer:{" "}
@@ -622,13 +607,11 @@ export default function TeamOwnerDashboard() {
                             </p>
                           )}
 
-                          {/* Pickup / drop */}
                           <div className="space-y-1">
                             <AddressLine location={booking.pickup} dot="green" />
                             <AddressLine location={booking.drop} dot="red" />
                           </div>
 
-                          {/* Meta */}
                           <div className="flex flex-wrap gap-3 text-xs text-gray-600">
                             {booking.teamSize && (
                               <div className="flex items-center gap-1">
@@ -646,38 +629,117 @@ export default function TeamOwnerDashboard() {
                               <div className="flex items-center gap-1 capitalize">
                                 <Truck className="h-3.5 w-3.5 text-gray-400" />
                                 {booking.vehicleType}
-                                {booking.numberOfVehicles
-                                  ? ` ×${booking.numberOfVehicles}`
-                                  : ""}
                               </div>
                             )}
                           </div>
 
-                          {booking.requirements && (
+                          {booking.workDescription && (
                             <div className="bg-gray-50 rounded p-2 text-xs text-gray-600 border">
-                              <span className="font-medium">Requirements: </span>
-                              {booking.requirements}
+                              <span className="font-medium">Work: </span>
+                              {booking.workDescription}
                             </div>
                           )}
                         </CardContent>
 
                         <CardFooter className="p-4 pt-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              navigate(
-                                "/dashboard/porters/team-lead/confirm-booking",
-                                { state: { bookingId: booking._id, booking } },
-                              )
-                            }
-                          >
-                            View Details
-                          </Button>
+                          <div className="flex gap-2 w-full justify-end">
+                            {booking.status === "CONFIRMED" && (
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                disabled={startingJob}
+                                onClick={async () => {
+                                  try {
+                                    await startTeamBooking(booking._id);
+                                    refetch();
+                                  } catch {
+                                    // Error handled by hook
+                                  }
+                                }}
+                              >
+                                {startingJob ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Play className="mr-1 h-3 w-3" />
+                                    Start Job
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                navigate(
+                                  "/dashboard/porters/team-lead/confirm-booking",
+                                  { state: { bookingId: booking._id, booking } },
+                                )
+                              }
+                            >
+                              View Details
+                            </Button>
+                          </div>
                         </CardFooter>
                       </Card>
                     );
                   })}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── MY TEAM TAB ── */}
+      {activeTab === "team" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              My Team Members
+            </CardTitle>
+            <CardDescription>
+              Current team members with their contact info and join date.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-28rem)] min-h-[300px] pr-2">
+              {!teamDashboard?.members || teamDashboard.members.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Users className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">No team members yet</p>
+                  <p className="text-xs text-gray-500">
+                    Invite individual porters to join your team from the Team page.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {teamDashboard.members.map((member) => (
+                    <Card key={member._id} className="hover:shadow-md transition-all">
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {member.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">{member.name}</p>
+                            <p className="text-xs text-gray-500">{member.phone}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right text-xs text-gray-500">
+                            <p>Joined: {new Date(member.joinedAt).toLocaleDateString()}</p>
+                            <Badge className={`mt-1 ${member.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                              {member.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               )}
             </ScrollArea>
