@@ -3,15 +3,12 @@
  * @description User-side page that tracks the live status of a team porter booking.
  *
  * Flow stages displayed:
- *   SEARCHING → WAITING_TEAM_LEAD → TEAM_LEAD_SELECTING
- *   → WAITING_PORTER_RESPONSE → CONFIRMED → COMPLETED
+ *   PENDING_TEAM_REVIEW → PENDING_MEMBER_RESPONSE → AWAITING_OWNER_CONFIRMATION
+ *   → CONFIRMED → IN_PROGRESS → COMPLETED → CLOSED
  *
  * Real-time updates via:
- *   • React Query polling every 10 s (useGetBookingById)
- *   • SSE "booking-status-update" events
- *
- * The page also allows the user to cancel while the booking is still
- * in a cancellable state (uses existing useCancelBooking hook).
+ *   • React Query polling every 10 s (useGetTeamBookingStatus)
+ *   • Socket.io events: team-booking-declined, team-booking-confirmed, team-booking-completed, team-booking-cancelled
  */
 
 import React, { useEffect, useRef, useState } from "react";
@@ -22,13 +19,16 @@ import {
   Clock,
   Loader2,
   MapPin,
-  Navigation,
   Package,
   Users,
   XCircle,
   CalendarDays,
   Truck,
   MessageSquare,
+  Send,
+  Hourglass,
+  CheckSquare,
+  CreditCard,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,138 +41,159 @@ import {
   useGetBookingById,
   useCancelBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
-import { createSSEConnection } from "../../../utils/sse";
+import { useGetTeamBookingStatus } from "../../../apis/hooks/porterTeamHooks";
+import socket from "../../../utils/socket";
 import { useAuthStore } from "@/store/auth.store";
 import ChatBox from "@/components/chat/ChatBox";
 
-// ─── Status step definitions (order matters) ─────────────────────────────────
 const TEAM_BOOKING_STEPS = [
   {
-    key: "SEARCHING",
-    label: "Searching",
-    description: "Looking for available teams near you",
+    key: "PENDING_TEAM_REVIEW",
+    label: "Pending Review",
+    description: "Waiting for a team to review your request",
+    icon: Hourglass,
   },
   {
-    key: "WAITING_TEAM_LEAD",
-    label: "Notifying Team Leads",
-    description: "Waiting for a team lead to accept",
+    key: "PENDING_MEMBER_RESPONSE",
+    label: "Team Responding",
+    description: "Team members are confirming their availability",
+    icon: Users,
   },
   {
-    key: "TEAM_LEAD_SELECTING",
-    label: "Team Lead Selecting",
-    description: "Team lead is selecting members",
-  },
-  {
-    key: "WAITING_PORTER_RESPONSE",
-    label: "Waiting for Porters",
-    description: "Team members are confirming availability",
+    key: "AWAITING_OWNER_CONFIRMATION",
+    label: "Awaiting Owner",
+    description: "Enough members accepted, waiting for team owner confirmation",
+    icon: Clock,
   },
   {
     key: "CONFIRMED",
     label: "Confirmed",
-    description: "Team confirmed and on their way",
+    description: "Your team has been confirmed",
+    icon: CheckSquare,
+  },
+  {
+    key: "IN_PROGRESS",
+    label: "In Progress",
+    description: "The team is on their way",
+    icon: Truck,
   },
   {
     key: "COMPLETED",
     label: "Completed",
-    description: "Booking completed successfully",
+    description: "Job completed — please proceed with payment",
+    icon: CheckCircle2,
+  },
+  {
+    key: "CLOSED",
+    label: "Closed",
+    description: "Booking closed — payment confirmed",
+    icon: CreditCard,
   },
 ];
 
-/** Statuses where cancellation is still permitted */
 const CANCELLABLE_STATUSES = [
-  "SEARCHING",
-  "WAITING_TEAM_LEAD",
-  "TEAM_LEAD_SELECTING",
+  "PENDING_TEAM_REVIEW",
+  "PENDING_MEMBER_RESPONSE",
 ];
 
-// ─── Helper: determine the active step index ─────────────────────────────────
 const getActiveStepIndex = (status) =>
   TEAM_BOOKING_STEPS.findIndex((s) => s.key === status);
 
-// ─── Badge colour map ─────────────────────────────────────────────────────────
 const STATUS_BADGE = {
-  SEARCHING: "bg-blue-100 text-blue-700 border-blue-200",
-  WAITING_TEAM_LEAD: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  TEAM_LEAD_SELECTING: "bg-purple-100 text-purple-700 border-purple-200",
-  WAITING_PORTER_RESPONSE: "bg-orange-100 text-orange-700 border-orange-200",
+  PENDING_TEAM_REVIEW: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  PENDING_MEMBER_RESPONSE: "bg-orange-100 text-orange-700 border-orange-200",
+  AWAITING_OWNER_CONFIRMATION: "bg-blue-100 text-blue-700 border-blue-200",
   CONFIRMED: "bg-green-100 text-green-700 border-green-200",
-  COMPLETED: "bg-green-100 text-green-700 border-green-200",
-  CANCELLED: "bg-red-100 text-red-700 border-red-200",
+  IN_PROGRESS: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  COMPLETED: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  CLOSED: "bg-gray-100 text-gray-700 border-gray-200",
+  DECLINED: "bg-red-100 text-red-700 border-red-200",
+  CANCELLED: "bg-gray-200 text-gray-600 border-gray-300",
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const TeamBookingTracking = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bookingId: paramBookingId } = useParams();
+  const { bookingId: paramId } = useParams();
   const token = useAuthStore((s) => s.access_token);
+  const userId = useAuthStore((s) => s.user?._id || s.user?.id);
 
-  // bookingId is passed via navigation state OR URL param (from Orders page)
-  const bookingId = location.state?.bookingId || paramBookingId;
+  const bookingIdFromState = location.state?.bookingId;
+  const bookingId = paramId || bookingIdFromState;
 
-  // Local status override (updated via SSE before next poll)
-  const [liveStatus, setLiveStatus] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [localStatus, setLocalStatus] = useState(null);
 
-  const sseRef = useRef(null);
+  const { data: bookingData, isLoading } = useGetBookingById(bookingId);
+  const { data: teamStatusData } = useGetTeamBookingStatus(bookingId);
+  const { mutateAsync: cancelBooking, isPending: cancelling } = useCancelBooking();
 
-  // ── Data fetching (polls every 10 s) ───────────────────────────────────────
-  const {
-    data: bookingData,
-    isLoading,
-    isError,
-    refetch,
-  } = useGetBookingById(bookingId);
-  const booking = bookingData?.booking;
-  console.log(booking);
-  const { mutateAsync: cancelBooking, isPending: cancelling } =
-    useCancelBooking();
-
-  // Merge polled status with any SSE-pushed update
-  const currentStatus = liveStatus || booking?.status || "SEARCHING";
-  const activeStepIdx = getActiveStepIndex(currentStatus);
+  const booking = bookingData || null;
+  const currentStatus = localStatus || booking?.status || "PENDING_TEAM_REVIEW";
+  const activeStep = getActiveStepIndex(currentStatus);
   const isCancellable = CANCELLABLE_STATUSES.includes(currentStatus);
 
-  // ── SSE — listen for real-time status updates ──────────────────────────────
+  // Join the user's own socket room (backend emits to user:${userId})
   useEffect(() => {
-    if (!bookingId || !token) return;
+    if (userId) {
+      socket.emit("join-user-room", userId);
+    }
+  }, [userId]);
 
-    sseRef.current = createSSEConnection(
-      "/bookings/sse/user",
-      {
-        "booking-status-update": (data) => {
-          // Only handle events for our booking
-          if (String(data.bookingId) === String(bookingId)) {
-            setLiveStatus(data.status);
-            refetch();
-          }
-        },
-      },
-      token,
-    );
+  useEffect(() => {
+    const onDeclined = (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        setLocalStatus("DECLINED");
+      }
+    };
+    const onConfirmed = (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        setLocalStatus("CONFIRMED");
+      }
+    };
+    const onStarted = (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        setLocalStatus("IN_PROGRESS");
+      }
+    };
+    const onCompleted = (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        setLocalStatus("COMPLETED");
+      }
+    };
+    const onCancelled = (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        setLocalStatus("CANCELLED");
+      }
+    };
+
+    socket.on("team-booking-declined", onDeclined);
+    socket.on("team-booking-confirmed", onConfirmed);
+    socket.on("team-booking-started", onStarted);
+    socket.on("team-booking-completed", onCompleted);
+    socket.on("team-booking-cancelled", onCancelled);
 
     return () => {
-      sseRef.current?.close();
+      socket.off("team-booking-declined", onDeclined);
+      socket.off("team-booking-confirmed", onConfirmed);
+      socket.off("team-booking-started", onStarted);
+      socket.off("team-booking-completed", onCompleted);
+      socket.off("team-booking-cancelled", onCancelled);
     };
-  }, [bookingId, token, refetch]);
+  }, [bookingId]);
 
-  // ── Redirect if no bookingId provided ─────────────────────────────────────
-  if (!bookingId) {
-    return (
-      <div className="container mx-auto p-6 flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
-        <XCircle className="w-12 h-12 text-red-400" />
-        <p className="text-gray-600 font-medium">No booking found.</p>
-        <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
-      </div>
-    );
-  }
+  const handleCancel = async () => {
+    try {
+      await cancelBooking(bookingId);
+      setLocalStatus("CANCELLED");
+    } catch {
+      /* toasted by hook */
+    }
+  };
 
-  // ── Loading skeleton ───────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-3">
           <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
           <p className="text-gray-500">Loading booking details…</p>
@@ -181,315 +202,226 @@ const TeamBookingTracking = () => {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────────
-  if (isError || !booking) {
+  if (!booking && !bookingId) {
     return (
-      <div className="container mx-auto p-6 flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <XCircle className="w-12 h-12 text-red-400" />
-        <p className="text-gray-600 font-medium">
-          Could not load booking details. Please try again.
-        </p>
-        <Button variant="outline" onClick={() => refetch()}>
-          Retry
-        </Button>
+      <div className="container mx-auto p-6">
+        <BackButton />
+        <Card className="mt-4">
+          <CardContent className="py-16 text-center">
+            <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900">No booking found</h2>
+            <p className="text-sm text-gray-500 mt-2">Please check your booking link.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // ── Cancel handler ─────────────────────────────────────────────────────────
-  const handleCancel = async () => {
-    try {
-      await cancelBooking(bookingId);
-      navigate("/dashboard");
-    } catch {
-      /* error toasted by hook */
-    }
-  };
+  const memberStats = teamStatusData?.memberStats;
+  const assignedPorters = teamStatusData?.booking?.assignedPorters || booking?.assignedPorters || [];
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="container mx-auto p-4 md:p-6 min-h-[calc(100vh-4rem)] flex flex-col gap-4">
-      {/* ── Header ── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <BackButton />
-        <h1 className="text-xl font-bold">Team Booking Tracking</h1>
-        <Badge
-          variant="outline"
-          className={`ml-auto text-xs px-3 py-1 rounded-full border ${
-            STATUS_BADGE[currentStatus] || "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {currentStatus.replace(/_/g, " ")}
-        </Badge>
-        <Badge variant="outline" className="text-xs">
-          #{String(bookingId).slice(-6).toUpperCase()}
-        </Badge>
-      </div>
+    <div className="container mx-auto p-6 space-y-6 max-w-3xl">
+      <BackButton />
 
-      {/* ── Main grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
-        {/* Progress stepper */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                Booking Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {currentStatus === "CANCELLED" ? (
-                /* Cancelled state: full-width */
-                <div className="text-center py-6 space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-                    <XCircle className="w-6 h-6 text-red-500" />
-                  </div>
-                  <p className="font-semibold text-red-700">
-                    Booking Cancelled
-                  </p>
-                  {booking.cancellationReason && (
-                    <p className="text-xs text-gray-500">
-                      {booking.cancellationReason}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <ol className="relative ml-2 space-y-4">
-                  {TEAM_BOOKING_STEPS.map((step, idx) => {
-                    const done = idx < activeStepIdx;
-                    const active = idx === activeStepIdx;
-                    return (
-                      <li key={step.key} className="flex items-start gap-3">
-                        {/* Step icon */}
-                        <div
-                          className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${
-                            done
-                              ? "bg-primary border-primary text-white"
-                              : active
-                                ? "border-primary bg-primary/10 text-primary animate-pulse"
-                                : "border-gray-200 bg-gray-50 text-gray-300"
-                          }`}
-                        >
-                          {done ? (
-                            <CheckCircle2 className="w-3 h-3" />
-                          ) : active ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Circle className="w-3 h-3" />
-                          )}
-                        </div>
-                        {/* Step text */}
-                        <div className="pt-0.5">
-                          <p
-                            className={`text-sm font-medium ${
-                              done || active ? "text-gray-900" : "text-gray-400"
-                            }`}
-                          >
-                            {step.label}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {step.description}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      {/* Status header */}
+      <Card className="border-l-4 border-l-primary">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Team Booking Tracking</CardTitle>
+            <Badge className={STATUS_BADGE[currentStatus] || "bg-gray-100 text-gray-600"}>
+              {currentStatus.replace(/_/g, " ")}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Progress stepper */}
+          <div className="relative">
+            {TEAM_BOOKING_STEPS.map((step, index) => {
+              const Icon = step.icon;
+              const isCompleted = activeStep > index;
+              const isActive = activeStep === index;
+              const isFuture = activeStep < index;
 
-        {/* Booking details + actions */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          {/* Journey card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Journey Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-green-500" />
-                    Pickup
-                  </p>
-                  <span className="text-sm font-medium line-clamp-2">
-                    {booking.pickup.address}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                    <Navigation className="w-3 h-3 text-red-500" />
-                    Drop-off
-                  </p>
-                  <span className="text-sm font-medium line-clamp-2">
-                    {booking.drop.address}
-                  </span>
-                </div>
-              </div>
-              <Separator />
-              {/* Booking meta */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                <div>
-                  <p className="text-gray-500 text-xs">Team Size</p>
-                  <p className="font-semibold flex items-center gap-1">
-                    <Users className="w-3 h-3 text-primary" />
-                    {booking.teamSize} porters
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Weight</p>
-                  <p className="font-semibold flex items-center gap-1">
-                    <Package className="w-3 h-3 text-primary" />
-                    {booking.weightKg} kg
-                  </p>
-                </div>
-                {booking.purpose_of_booking && (
-                  <div>
-                    <p className="text-gray-500 text-xs">Purpose</p>
-                    <p className="font-semibold capitalize flex items-center gap-1">
-                      {booking.purpose_of_booking === "delivery" ? "📦" : "🚚"}{" "}
-                      {booking.purpose_of_booking}
-                    </p>
-                  </div>
-                )}
-                {booking.bookingDate && (
-                  <div>
-                    <p className="text-gray-500 text-xs">Date</p>
-                    <p className="font-semibold flex items-center gap-1">
-                      <CalendarDays className="w-3 h-3 text-primary" />
-                      {new Date(booking.bookingDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-                {booking.bookingTime && (
-                  <div>
-                    <p className="text-gray-500 text-xs">Time</p>
-                    <p className="font-semibold flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-primary" />
-                      {booking.bookingTime}
-                    </p>
-                  </div>
-                )}
-                {booking.hasVehicle && booking.vehicleType && (
-                  <div>
-                    <p className="text-gray-500 text-xs">Vehicle</p>
-                    <p className="font-semibold flex items-center gap-1 capitalize">
-                      <Truck className="w-3 h-3 text-primary" />
-                      {booking.vehicleType}
-                      {booking.numberOfVehicles ? ` ×${booking.numberOfVehicles}` : ""}
-                    </p>
-                  </div>
-                )}
-                {booking.noOfFloors != null && booking.noOfFloors > 0 && (
-                  <div>
-                    <p className="text-gray-500 text-xs">Floors</p>
-                    <p className="font-semibold">{booking.noOfFloors} floor(s)</p>
-                  </div>
-                )}
-                {booking.no_of_trips != null && booking.no_of_trips > 0 && (
-                  <div>
-                    <p className="text-gray-500 text-xs">Trips</p>
-                    <p className="font-semibold">{booking.no_of_trips} trip(s)</p>
-                  </div>
-                )}
-              </div>
-              {/* Has lift badge */}
-              {booking.hasLift && (
-                <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
-                  ✓ Elevator / Lift available at pickup
-                </div>
-              )}
-              {booking.requirements && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Special Requirements</p>
-                  <p className="text-sm text-gray-700">
-                    {booking.requirements}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-
-          {/* Confirmed team info (shown once CONFIRMED) */}
-          {currentStatus === "CONFIRMED" &&
-            booking.assignedPorters?.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
-                      Assigned Team ({booking.assignedPorters.length} porters)
-                    </div>
-                    <button
-                      onClick={() => setIsChatOpen(!isChatOpen)}
-                      className="p-2 rounded-full bg-primary text-white shadow-sm hover:bg-primary/90 flex items-center justify-center transition-colors"
+              return (
+                <div key={step.key} className="flex items-start gap-3 mb-4 last:mb-0">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        isCompleted
+                          ? "bg-green-500 text-white"
+                          : isActive
+                          ? "bg-primary text-white animate-pulse"
+                          : "bg-gray-200 text-gray-400"
+                      }`}
                     >
-                      <MessageSquare className="w-4 h-4" />
-                    </button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-green-700 font-medium">
-                    ✓ Your team has been confirmed and is on their way!
-                  </p>
-                </CardContent>
-              </Card>
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        <Icon className="w-4 h-4" />
+                      )}
+                    </div>
+                    {index < TEAM_BOOKING_STEPS.length - 1 && (
+                      <div
+                        className={`w-0.5 h-8 ${
+                          isCompleted ? "bg-green-500" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
+                  </div>
+                  <div className="pt-1">
+                    <p
+                      className={`text-sm font-medium ${
+                        isFuture ? "text-gray-400" : "text-gray-900"
+                      }`}
+                    >
+                      {step.label}
+                    </p>
+                    <p className="text-xs text-gray-500">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Member response stats (if available) */}
+      {memberStats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Team Response Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-green-600">{memberStats.acceptedCount}</p>
+                <p className="text-xs text-gray-500">Accepted</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-yellow-600">{memberStats.pendingCount}</p>
+                <p className="text-xs text-gray-500">Pending</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-red-600">{memberStats.declinedCount}</p>
+                <p className="text-xs text-gray-500">Declined</p>
+              </div>
+            </div>
+            <p className="text-sm text-center mt-3 text-gray-600">
+              {memberStats.acceptedCount} / {memberStats.requiredCount} required
+              {memberStats.quorumReached && (
+                <span className="ml-2 text-green-600 font-medium">✓ Quorum reached!</span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Booking details */}
+      {booking && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Booking Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">Pickup</p>
+              <AddressLine location={booking.pickup} dot="green" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">Drop-off</p>
+              <AddressLine location={booking.drop} dot="red" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {booking.weightKg && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Package className="w-4 h-4 text-gray-400" />
+                  <span>{booking.weightKg} kg</span>
+                </div>
+              )}
+              {booking.teamSize && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  <span>{booking.teamSize} porters</span>
+                </div>
+              )}
+              {booking.bookingDate && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <CalendarDays className="w-4 h-4 text-gray-400" />
+                  <span>{new Date(booking.bookingDate).toLocaleDateString()}</span>
+                </div>
+              )}
+              {booking.hasVehicle && booking.vehicleType && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Truck className="w-4 h-4 text-gray-400" />
+                  <span className="capitalize">{booking.vehicleType}</span>
+                </div>
+              )}
+            </div>
+
+            {booking.workDescription && (
+              <div className="bg-gray-50 rounded p-3 text-sm text-gray-600 border">
+                <span className="font-medium">Work: </span>
+                {booking.workDescription}
+              </div>
             )}
 
-          {/* Completed state */}
-          {currentStatus === "COMPLETED" && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="pt-6 text-center space-y-2">
-                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-7 h-7 text-green-600" />
+            {/* Assigned porters (after confirmation) */}
+            {assignedPorters.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Assigned Porters:</p>
+                <div className="flex flex-wrap gap-2">
+                  {assignedPorters.map((ap, i) => (
+                    <Badge key={ap.porterId?._id || i} variant="outline" className="text-xs">
+                      {ap.porterId?.userId?.name || `Porter ${i + 1}`}
+                    </Badge>
+                  ))}
                 </div>
-                <p className="font-bold text-green-800 text-lg">
-                  Booking Completed!
-                </p>
-                <p className="text-sm text-green-700">
-                  Thank you for using our service.
-                </p>
-                <Button
-                  className="mt-3 w-full max-w-xs"
-                  onClick={() => navigate("/dashboard/orders")}
-                >
-                  View Order History
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Cancel button (only while cancellable) */}
-          {isCancellable && (
-            <Button
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50 self-start"
-              disabled={cancelling}
-              onClick={handleCancel}
-            >
-              {cancelling ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <XCircle className="w-4 h-4 mr-2" />
-              )}
-              {cancelling ? "Cancelling…" : "Cancel Booking"}
-            </Button>
-          )}
-        </div>
+      {/* Actions */}
+      <div className="flex gap-3 justify-end">
+        {isCancellable && (
+          <Button
+            variant="destructive"
+            disabled={cancelling}
+            onClick={handleCancel}
+          >
+            {cancelling ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <XCircle className="w-4 h-4 mr-2" />
+            )}
+            Cancel Booking
+          </Button>
+        )}
+        {currentStatus === "COMPLETED" && (
+          <Button onClick={() => navigate("/dashboard/bookings/payment", { state: { bookingId } })}>
+            <CreditCard className="w-4 h-4 mr-2" />
+            Proceed to Payment
+          </Button>
+        )}
+        <Button variant="outline" onClick={() => setIsChatOpen(true)}>
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Chat
+        </Button>
       </div>
 
-      {/* Floating Chat Box */}
-      {isChatOpen && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
-          <ChatBox
-            bookingId={bookingId}
-            currentUserModel="User"
-            onClose={() => setIsChatOpen(false)}
-          />
-        </div>
+      {/* Chat */}
+      {isChatOpen && bookingId && (
+        <ChatBox
+          bookingId={bookingId}
+          userId={booking?.userId?._id}
+          onClose={() => setIsChatOpen(false)}
+        />
       )}
     </div>
   );

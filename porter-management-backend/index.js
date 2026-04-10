@@ -37,6 +37,11 @@ io.on("connection", (socket) => {
     console.log(`Porter ${porterId} joined room porter:${porterId}`);
   });
 
+  socket.on("join-user-room", (userId) => {
+    socket.join(`user:${userId}`);
+    console.log(`User ${userId} joined room user:${userId}`);
+  });
+
   socket.on("porter-location", async (data) => {
     const { porterId, lat, lng } = data;
     // console.log("Received location:", { porterId, lat, lng });

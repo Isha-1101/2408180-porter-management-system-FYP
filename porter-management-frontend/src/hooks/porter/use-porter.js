@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useGetPorterByUser } from "../../apis/hooks/portersHooks";
 import { usePorterStore } from "../../store/porter.store";
-import { porterRetgistrationHooks } from "../../apis/hooks/porterRegistratioHooks";
+import { porterRegistrationHooks } from "../../apis/hooks/porterRegistrationHooks";
 
 export const usePorter = () => {
   const setPorter = usePorterStore((state) => state.setPorter);
@@ -21,7 +21,7 @@ export const usePorter = () => {
     isError: isRegistrationError,
     error: registrationError,
     refetch: refetchRegistration,
-  } = porterRetgistrationHooks.usegetPorterRegistrationByUser();
+  } = porterRegistrationHooks.usegetPorterRegistrationByUser();
 
   useEffect(() => {
     if (porterData?.data?.porter !== undefined) {

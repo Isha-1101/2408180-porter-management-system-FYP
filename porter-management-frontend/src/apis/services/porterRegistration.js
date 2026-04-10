@@ -49,7 +49,7 @@ const updatePorterContact = ({ phone, address }) => {
   });
 };
 
-export const porterRestrationService = {
+export const porterRegistrationService = {
   porterRegistrationStart,
   savePorterBasicInfo,
   savePorterVehicleInfo,

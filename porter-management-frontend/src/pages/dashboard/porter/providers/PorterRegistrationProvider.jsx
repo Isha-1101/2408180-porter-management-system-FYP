@@ -5,7 +5,7 @@ import {
   useContext,
   createContext,
 } from "react";
-import { porterRetgistrationHooks } from "@/apis/hooks/porterRegistratioHooks.jsx";
+import { porterRegistrationHooks } from "@/apis/hooks/porterRegistrationHooks";
 export const PorterRegistrationContext = createContext(null);
 
 export const PorterRegistrationProvider = ({ children }) => {
@@ -46,10 +46,10 @@ export const PorterRegistrationProvider = ({ children }) => {
      API Hooks
   ======================= */
   const { mutateAsync: startRegistration } =
-    porterRetgistrationHooks.useRegstrationStartMutation();
+    porterRegistrationHooks.useRegstrationStartMutation();
 
   const { mutateAsync: fetchRegistration } =
-    porterRetgistrationHooks.useGetPorterRegistredInformationMutation();
+    porterRegistrationHooks.useGetPorterRegistredInformationMutation();
 
 
   /* ========================

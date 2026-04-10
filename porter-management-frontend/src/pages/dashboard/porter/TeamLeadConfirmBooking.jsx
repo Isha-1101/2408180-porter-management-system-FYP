@@ -1,16 +1,14 @@
 /**
  * @file TeamLeadConfirmBooking.jsx
- * @description Porter dashboard page where a team owner monitors live
- *              accept/reject responses from their auto-notified team workers
- *              and confirms the booking once enough have accepted.
+ * @description Porter dashboard page where a team owner monitors member responses
+ *              after forwarding a booking, and confirms once quorum is reached.
  *
  * Receives via React Router state:
- *   { bookingId, requiredMembers, booking }
+ *   { bookingId, booking }
  *
- * Polls GET /api/bookings/team/:id/selection every 8 s (via useGetTeamBookingSelection).
- * Also receives SSE "porter-responded" events for instant updates.
- * Calls POST /api/bookings/team/:id/team-lead/confirm on confirmation.
- * Calls POST /api/bookings/team/:id/complete on completion.
+ * Polls GET /api/bookings/team/:id every 10 s (via useGetTeamBookingStatus).
+ * Listens for Socket.IO events: "team-member-responded", "team-quorum-reached".
+ * Actions: confirm booking, cancel booking, mark as complete.
  */
 
 import React, { useEffect, useRef, useState } from "react";
@@ -25,6 +23,8 @@ import {
   ThumbsDown,
   RefreshCw,
   MessageSquare,
+  Ban,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,19 +39,20 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { BackButton } from "../../../components/common/BackButton";
 import { AddressLine } from "../../../components/common/AddressLine";
-import { useGetBookingById } from "../../../apis/hooks/porterBookingsHooks";
 import {
-  useTeamLeadConfirmBooking,
+  useGetTeamBookingStatus,
+  useTeamOwnerConfirmBooking,
+  useTeamOwnerCancelBooking,
   useCompleteTeamBooking,
-  useGetTeamBookingSelection,
+  useStartTeamBooking,
 } from "../../../apis/hooks/porterTeamHooks";
-import { createSSEConnection } from "../../../utils/sse";
+import socket from "../../../utils/socket";
 import { useAuthStore } from "@/store/auth.store";
 import ChatBox from "@/components/chat/ChatBox";
 
 // ─── Status display for each team member ─────────────────────────────────────
 
-const PORTER_STATUS_DISPLAY = {
+const MEMBER_STATUS_DISPLAY = {
   PENDING: {
     label: "Waiting",
     className: "bg-yellow-100 text-yellow-700 border-yellow-200 animate-pulse",
@@ -62,7 +63,7 @@ const PORTER_STATUS_DISPLAY = {
     className: "bg-green-100 text-green-700 border-green-200",
     icon: ThumbsUp,
   },
-  REJECTED: {
+  DECLINED: {
     label: "Declined",
     className: "bg-red-100 text-red-700 border-red-200",
     icon: ThumbsDown,
@@ -76,44 +77,46 @@ const TeamLeadConfirmBooking = () => {
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.access_token);
 
-  const {
-    bookingId,
-    requiredMembers: initialRequired = 1,
-    booking: initialBooking,
-  } = location.state || {};
+  const { bookingId, booking: initialBooking } = location.state || {};
 
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const sseRef = useRef(null);
+  const socketRef = useRef(null);
 
   // ── React Query ────────────────────────────────────────────────────────────
-  const { data: booking, isLoading: bookingLoading } = useGetBookingById(bookingId);
-
   const {
-    data: selectionData,
-    isLoading: selectionLoading,
-    refetch: refetchSelection,
-  } = useGetTeamBookingSelection(bookingId);
+    data: booking,
+    isLoading: bookingLoading,
+    refetch: refetchBooking,
+  } = useGetTeamBookingStatus(bookingId);
 
-  const { mutateAsync: confirmBooking, isPending: confirming } = useTeamLeadConfirmBooking();
+  const { mutateAsync: confirmBooking, isPending: confirming } = useTeamOwnerConfirmBooking();
+  const { mutateAsync: cancelBooking, isPending: cancelling } = useTeamOwnerCancelBooking();
   const { mutateAsync: completeTeamBooking, isPending: completing } = useCompleteTeamBooking();
+  const { mutateAsync: startTeamBooking, isPending: starting } = useStartTeamBooking();
 
-  // ── SSE — get instant updates when a porter responds ──────────────────────
+  // ── Socket.IO — instant updates when a member responds or quorum is reached ─
   useEffect(() => {
     if (!bookingId || !token) return;
 
-    sseRef.current = createSSEConnection(
-      "/bookings/sse/porter",
-      {
-        "porter-responded": () => refetchSelection(),
-        "booking-status-update": (data) => {
-          if (String(data.bookingId) === String(bookingId)) refetchSelection();
-        },
-      },
-      token,
-    );
+    socketRef.current = socket;
 
-    return () => sseRef.current?.close();
-  }, [bookingId, token, refetchSelection]);
+    socketRef.current.on("team-member-responded", (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        refetchBooking();
+      }
+    });
+
+    socketRef.current.on("team-quorum-reached", (data) => {
+      if (String(data.bookingId) === String(bookingId)) {
+        refetchBooking();
+      }
+    });
+
+    return () => {
+      socketRef.current?.off("team-member-responded");
+      socketRef.current?.off("team-quorum-reached");
+    };
+  }, [bookingId, token, refetchBooking]);
 
   // ── Guard ──────────────────────────────────────────────────────────────────
   if (!bookingId) {
@@ -128,7 +131,7 @@ const TeamLeadConfirmBooking = () => {
     );
   }
 
-  if (selectionLoading || bookingLoading) {
+  if (bookingLoading) {
     return (
       <div className="container mx-auto p-6 flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-3">
@@ -141,19 +144,40 @@ const TeamLeadConfirmBooking = () => {
 
   // ── Derived values ─────────────────────────────────────────────────────────
   const currentBooking = booking || initialBooking;
-  const currentStatus = currentBooking?.status || "WAITING_PORTER_RESPONSE";
-  const requiredMembers = selectionData?.requiredMembers || initialRequired;
-  const acceptedCount = selectionData?.acceptedCount ?? 0;
-  const rejectedCount = selectionData?.rejectedCount ?? 0;
-  const pendingCount = selectionData?.pendingCount ?? 0;
-  const canConfirm = selectionData?.canConfirm ?? false;
-  const selectedPorters = selectionData?.selection?.selectedPorters || [];
+  const currentStatus = currentBooking?.status || "PENDING_MEMBER_RESPONSE";
+  const memberResponses = currentBooking?.memberResponses || [];
+  const requiredMembers = currentBooking?.teamSize || 1;
+
+  const acceptedCount = memberResponses.filter(
+    (m) => m.response === "ACCEPTED"
+  ).length;
+  const declinedCount = memberResponses.filter(
+    (m) => m.response === "DECLINED"
+  ).length;
+  const pendingCount = memberResponses.filter(
+    (m) => m.response === "PENDING"
+  ).length;
+
+  const quorumReached = acceptedCount >= requiredMembers;
+  const awaitingOwnerConfirmation = currentStatus === "AWAITING_OWNER_CONFIRMATION";
+  const canConfirm = quorumReached && awaitingOwnerConfirmation;
+  const canCancel = ["PENDING_MEMBER_RESPONSE", "AWAITING_OWNER_CONFIRMATION"].includes(currentStatus);
+  const canComplete = currentStatus === "IN_PROGRESS";
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleConfirm = async () => {
     try {
       await confirmBooking(bookingId);
-      refetchSelection();
+      refetchBooking();
+    } catch {
+      /* toasted by hook */
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      await cancelBooking(bookingId);
+      navigate("/dashboard/porters");
     } catch {
       /* toasted by hook */
     }
@@ -168,6 +192,15 @@ const TeamLeadConfirmBooking = () => {
     }
   };
 
+  const handleStart = async () => {
+    try {
+      await startTeamBooking(bookingId);
+      refetchBooking();
+    } catch {
+      /* toasted by hook */
+    }
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="container mx-auto p-4 md:p-6 min-h-[calc(100vh-4rem)] flex flex-col gap-4">
@@ -175,9 +208,9 @@ const TeamLeadConfirmBooking = () => {
       <div className="flex items-center gap-3 flex-wrap">
         <BackButton />
         <div>
-          <h1 className="text-xl font-bold">Team Booking — Awaiting Responses</h1>
+          <h1 className="text-xl font-bold">Team Booking — Monitor Responses</h1>
           <p className="text-sm text-gray-500">
-            Workers have been automatically notified. Monitor their responses below.
+            Track your team members&apos; responses and confirm once quorum is reached.
           </p>
         </div>
         <Badge variant="outline" className="ml-auto text-xs px-3 py-1 rounded-full">
@@ -186,7 +219,7 @@ const TeamLeadConfirmBooking = () => {
         <Badge variant="outline" className="text-xs">
           #{String(bookingId).slice(-6).toUpperCase()}
         </Badge>
-        <Button variant="outline" size="icon" onClick={() => refetchSelection()}>
+        <Button variant="outline" size="icon" onClick={() => refetchBooking()}>
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -283,7 +316,6 @@ const TeamLeadConfirmBooking = () => {
             </CardContent>
           </Card>
 
-
           {/* Response Counters */}
           <Card>
             <CardContent className="pt-4 space-y-3">
@@ -295,19 +327,25 @@ const TeamLeadConfirmBooking = () => {
                 </div>
                 <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-100">
                   <p className="text-2xl font-bold text-yellow-700">{pendingCount}</p>
-                  <p className="text-xs text-yellow-600 mt-1">Pending</p>
+                  <p className="text-xs text-yellow-600 mt-1">Waiting</p>
                 </div>
                 <div className="bg-red-50 rounded-lg p-3 border border-red-100">
-                  <p className="text-2xl font-bold text-red-700">{rejectedCount}</p>
+                  <p className="text-2xl font-bold text-red-700">{declinedCount}</p>
                   <p className="text-xs text-red-600 mt-1">Declined</p>
                 </div>
               </div>
-              {canConfirm && (
+              <div className="bg-primary/5 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-primary">
+                  {acceptedCount} / {requiredMembers}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Accepted out of required</p>
+              </div>
+              {quorumReached && (
                 <p className="text-xs text-green-700 font-medium text-center bg-green-50 p-2 rounded-lg">
-                  ✓ Enough members accepted — ready to confirm!
+                  ✓ Quorum reached — ready to confirm!
                 </p>
               )}
-              {!canConfirm && currentStatus === "WAITING_PORTER_RESPONSE" && (
+              {!quorumReached && currentStatus === "PENDING_MEMBER_RESPONSE" && (
                 <p className="text-xs text-gray-500 text-center">
                   Need {Math.max(0, requiredMembers - acceptedCount)} more acceptance(s)
                 </p>
@@ -316,39 +354,39 @@ const TeamLeadConfirmBooking = () => {
           </Card>
         </div>
 
-        {/* Right: Porter response list + action */}
+        {/* Right: Member response list + actions */}
         <div className="lg:col-span-2">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
-                Team Members ({selectedPorters.length})
+                Team Members ({memberResponses.length})
               </CardTitle>
               <CardDescription>
-                Live updates via SSE + polling every 8 seconds.
+                Live updates via Socket.IO + polling every 10 seconds.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
-              {selectedPorters.length === 0 ? (
+              {memberResponses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-gray-400 space-y-2">
                   <Users className="w-10 h-10 opacity-30" />
-                  <p className="font-medium text-sm">Loading team responses…</p>
+                  <p className="font-medium text-sm">Waiting for team member responses…</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {selectedPorters.map((entry, idx) => {
-                    const porter = entry.porterId;
-                    const status = entry.status || "PENDING";
-                    const display = PORTER_STATUS_DISPLAY[status] || PORTER_STATUS_DISPLAY.PENDING;
+                  {memberResponses.map((entry, idx) => {
+                    const status = entry.response || "PENDING";
+                    const display = MEMBER_STATUS_DISPLAY[status] || MEMBER_STATUS_DISPLAY.PENDING;
                     const Icon = display.icon;
+                    const porter = entry.porterId;
                     const name =
                       porter?.userId?.name ||
-                      `Porter #${String(porter?._id || porter).slice(-4).toUpperCase()}`;
+                      `Porter #${String(porter?._id || idx).slice(-4).toUpperCase()}`;
                     const phone = porter?.userId?.phone;
 
                     return (
                       <div
-                        key={idx}
+                        key={entry._id || idx}
                         className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 transition-all"
                       >
                         {/* Avatar */}
@@ -358,21 +396,19 @@ const TeamLeadConfirmBooking = () => {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">{name}</p>
                           {phone && <p className="text-xs text-gray-500">{phone}</p>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {porter?.maxWeightKg && (
-                            <span className="text-xs text-gray-400">
-                              up to {porter.maxWeightKg} kg
-                            </span>
+                          {entry.respondedAt && status !== "PENDING" && (
+                            <p className="text-xs text-gray-400">
+                              {new Date(entry.respondedAt).toLocaleTimeString()}
+                            </p>
                           )}
-                          <Badge
-                            variant="outline"
-                            className={`flex items-center gap-1 text-xs ${display.className}`}
-                          >
-                            <Icon className="w-3 h-3" />
-                            {display.label}
-                          </Badge>
                         </div>
+                        <Badge
+                          variant="outline"
+                          className={`flex items-center gap-1 text-xs ${display.className}`}
+                        >
+                          <Icon className="w-3 h-3" />
+                          {display.label}
+                        </Badge>
                       </div>
                     );
                   })}
@@ -382,24 +418,20 @@ const TeamLeadConfirmBooking = () => {
 
             {/* Action footer */}
             <CardFooter className="border-t pt-4 flex-col gap-3">
-              {/* WAITING_PORTER_RESPONSE: confirm once enough accepted */}
-              {currentStatus === "WAITING_PORTER_RESPONSE" && (
+              {/* PENDING_MEMBER_RESPONSE: waiting for quorum, can cancel */}
+              {currentStatus === "PENDING_MEMBER_RESPONSE" && (
                 <div className="flex gap-2 w-full">
                   <Button
-                    className="flex-1 h-11 font-semibold"
-                    disabled={!canConfirm || confirming}
-                    onClick={handleConfirm}
+                    className="flex-1 h-11 font-semibold bg-red-600 hover:bg-red-700"
+                    disabled={cancelling}
+                    onClick={handleCancel}
                   >
-                    {confirming ? (
+                    {cancelling ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : (
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      <Ban className="w-4 h-4 mr-2" />
                     )}
-                    {confirming
-                      ? "Confirming…"
-                      : canConfirm
-                        ? "Confirm Booking"
-                        : `Need ${Math.max(0, requiredMembers - acceptedCount)} more acceptance(s)`}
+                    {cancelling ? "Cancelling…" : "Cancel Booking"}
                   </Button>
                   {bookingId && (
                     <Button
@@ -413,8 +445,73 @@ const TeamLeadConfirmBooking = () => {
                 </div>
               )}
 
-              {/* CONFIRMED: show completion button */}
+              {/* AWAITING_OWNER_CONFIRMATION: quorum reached, can confirm or cancel */}
+              {currentStatus === "AWAITING_OWNER_CONFIRMATION" && (
+                <div className="flex gap-2 w-full">
+                  <Button
+                    className="flex-1 h-11 font-semibold"
+                    disabled={confirming}
+                    onClick={handleConfirm}
+                  >
+                    {confirming ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    )}
+                    {confirming ? "Confirming…" : "Confirm Booking"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-11 font-semibold text-red-600 hover:text-red-700 hover:bg-red-50"
+                    disabled={cancelling}
+                    onClick={handleCancel}
+                  >
+                    {cancelling ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Ban className="w-4 h-4 mr-2" />
+                    )}
+                    Cancel
+                  </Button>
+                  {bookingId && (
+                    <Button
+                      onClick={() => setIsChatOpen(!isChatOpen)}
+                      className="h-11 w-11 px-0 shrink-0"
+                      title="Chat with user"
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* CONFIRMED: waiting for work to start */}
               {currentStatus === "CONFIRMED" && (
+                <div className="flex gap-2 w-full">
+                  <Button
+                    className="flex-1 h-11 font-semibold bg-green-600 hover:bg-green-700"
+                    disabled={starting}
+                    onClick={handleStart}
+                  >
+                    {starting ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Play className="w-4 h-4 mr-2" />
+                    )}
+                    {starting ? "Starting…" : "Start Job"}
+                  </Button>
+                  <Button
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className="h-11 w-11 px-0 shrink-0"
+                    title="Chat with user"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                  </Button>
+                </div>
+              )}
+
+              {/* IN_PROGRESS: show completion button */}
+              {currentStatus === "IN_PROGRESS" && (
                 <div className="flex gap-2 w-full">
                   <Button
                     className="flex-1 h-11 font-semibold bg-green-600 hover:bg-green-700"
@@ -426,7 +523,7 @@ const TeamLeadConfirmBooking = () => {
                     ) : (
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                     )}
-                    {completing ? "Completing…" : "Mark as Completed"}
+                    {completing ? "Completing…" : "Mark as Complete"}
                   </Button>
                   <Button
                     onClick={() => setIsChatOpen(!isChatOpen)}

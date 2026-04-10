@@ -1,41 +1,33 @@
-/**
- * @file porterTeamHooks.jsx
- * @description React Query hooks for team-porter management and team booking
- *              lifecycle (team lead + team member flows).
- *
- * Pattern: each hook wraps a service function with useMutation / useQuery,
- * providing consistent loading states, error toasts, and cache invalidation.
- */
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import {
-  // Team management (registration)
   requestPorterUserRegistration,
   getRequestedPorterByTeam,
   getPorterByTeam,
-  // Team booking — user side
+  getTeamDashboard,
+  getTeamBookingHistory,
+  getTeamPendingBookings,
+  searchIndividualPorters,
+  invitePorterToTeam,
+  respondToTeamInvitation,
+  getPendingTeamJoinRequests,
+  getMyPendingInvitations,
+  removeTeamMember,
+  browseAvailableTeams,
   createTeamBookingService,
-  // Team booking — team lead side
-  teamLeadAcceptBookingService,
-  teamLeadRejectBookingService,
-  teamLeadSelectPortersService,
-  teamLeadConfirmBookingService,
+  getTeamBookingStatusService,
+  teamOwnerReviewBookingService,
+  teamOwnerConfirmBookingService,
+  teamOwnerCancelBookingService,
   completeTeamBookingService,
-  // Team booking — team member side
+  startTeamBookingService,
   teamMemberRespondService,
-  // Team booking — selection status
-  getTeamBookingSelectionService,
 } from "../services/teamBookingService";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEAM MANAGEMENT HOOKS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Hook for a team lead to invite a porter user to join their team.
- * Invalidates the porterByTeam cache on success.
- */
 export const useRequestPorterUserRegistration = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -55,10 +47,6 @@ export const useRequestPorterUserRegistration = () => {
   });
 };
 
-/**
- * Query hook to fetch all pending registration requests for a team.
- * @param {string|undefined} teamId
- */
 export const useGetAllRequestedPorterByTeam = (teamId) =>
   useQuery({
     queryKey: ["requestedPorterByTeam", teamId],
@@ -69,10 +57,6 @@ export const useGetAllRequestedPorterByTeam = (teamId) =>
     enabled: !!teamId,
   });
 
-/**
- * Query hook to fetch all active porters for a team.
- * @param {string|undefined} teamId
- */
 export const useGetPorterByTeam = (teamId) =>
   useQuery({
     queryKey: ["porterByTeam", teamId],
@@ -83,20 +67,146 @@ export const useGetPorterByTeam = (teamId) =>
     enabled: !!teamId,
   });
 
+export const useGetTeamDashboard = () =>
+  useQuery({
+    queryKey: ["team-dashboard"],
+    queryFn: async () => {
+      const response = await getTeamDashboard();
+      return response?.data?.data;
+    },
+  });
+
+export const useGetTeamBookingHistory = (status) =>
+  useQuery({
+    queryKey: ["team-booking-history", status],
+    queryFn: async () => {
+      const response = await getTeamBookingHistory(status);
+      return response?.data?.data;
+    },
+  });
+
+export const useGetTeamPendingBookings = () =>
+  useQuery({
+    queryKey: ["team-pending-bookings"],
+    queryFn: async () => {
+      const response = await getTeamPendingBookings();
+      return response?.data?.data;
+    },
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEAM JOIN REQUEST HOOKS (US-005)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const useSearchIndividualPorters = (query, enabled = true) =>
+  useQuery({
+    queryKey: ["search-individual-porters", query],
+    queryFn: async () => {
+      const response = await searchIndividualPorters(query);
+      return response?.data?.data;
+    },
+    enabled: enabled && (!!query?.name || !!query?.phone),
+  });
+
+export const useInvitePorterToTeam = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (porterId) => {
+      const response = await invitePorterToTeam(porterId);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Invitation sent to porter!");
+      queryClient.invalidateQueries({ queryKey: ["search-individual-porters"] });
+      queryClient.invalidateQueries({ queryKey: ["join-requests"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to send invitation",
+      );
+    },
+  });
+};
+
+export const useRespondToTeamInvitation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ requestId, action, reason }) => {
+      const response = await respondToTeamInvitation(requestId, action, reason);
+      return response?.data;
+    },
+    onSuccess: (_, { action }) => {
+      toast.success(
+        action === "ACCEPTED"
+          ? "Invitation accepted! Awaiting admin approval."
+          : "Invitation declined."
+      );
+      queryClient.invalidateQueries({ queryKey: ["my-invitations"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to respond to invitation",
+      );
+    },
+  });
+};
+
+export const useGetPendingTeamJoinRequests = () =>
+  useQuery({
+    queryKey: ["join-requests"],
+    queryFn: async () => {
+      const response = await getPendingTeamJoinRequests();
+      return response?.data?.data;
+    },
+  });
+
+export const useGetMyPendingInvitations = () =>
+  useQuery({
+    queryKey: ["my-invitations"],
+    queryFn: async () => {
+      const response = await getMyPendingInvitations();
+      return response?.data?.data;
+    },
+  });
+
+export const useRemoveTeamMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (porterId) => {
+      const response = await removeTeamMember(porterId);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Member removed from team");
+      queryClient.invalidateQueries({ queryKey: ["team-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["porterByTeam"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to remove member",
+      );
+    },
+  });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BROWSE TEAMS HOOK (User)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const useBrowseAvailableTeams = (portersRequired) =>
+  useQuery({
+    queryKey: ["browse-teams", portersRequired],
+    queryFn: async () => {
+      const response = await browseAvailableTeams(portersRequired);
+      return response?.data?.data;
+    },
+    enabled: !!portersRequired,
+  });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TEAM BOOKING — USER SIDE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Hook for a user to create a new team porter booking.
- * On success returns the bookingId so the caller can navigate to
- * the tracking page.
- *
- * @returns {{
- *   mutateAsync: (payload) => Promise<{ bookingId: string, data: object }>,
- *   isPending: boolean
- * }}
- */
 export const useCreateTeamBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -105,7 +215,6 @@ export const useCreateTeamBooking = () => {
       return response?.data;
     },
     onSuccess: () => {
-      // Refresh the user's bookings list
       queryClient.invalidateQueries({ queryKey: ["user-bookings"] });
     },
     onError: (error) => {
@@ -116,104 +225,55 @@ export const useCreateTeamBooking = () => {
   });
 };
 
+export const useGetTeamBookingStatus = (bookingId) =>
+  useQuery({
+    queryKey: ["team-booking-status", bookingId],
+    queryFn: async () => {
+      const response = await getTeamBookingStatusService(bookingId);
+      return response?.data?.data;
+    },
+    enabled: !!bookingId,
+    refetchInterval: 10000,
+  });
+
 // ─────────────────────────────────────────────────────────────────────────────
-// TEAM BOOKING — TEAM LEAD HOOKS
+// TEAM BOOKING — TEAM OWNER SIDE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Hook for a team lead to accept a booking request.
- * Returns { booking, availableMembers, requiredMembers } for navigation.
- *
- * @returns {import("@tanstack/react-query").UseMutationResult}
- */
-export const useTeamLeadAcceptBooking = () => {
+export const useTeamOwnerReviewBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bookingId, action }) => {
+      const response = await teamOwnerReviewBookingService(bookingId, action);
+      return response?.data;
+    },
+    onSuccess: (_, { action }) => {
+      toast.success(
+        action === "forward"
+          ? "Booking forwarded to team members!"
+          : "Booking declined."
+      );
+      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["team-pending-bookings"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to review booking",
+      );
+    },
+  });
+};
+
+export const useTeamOwnerConfirmBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (bookingId) => {
-      const response = await teamLeadAcceptBookingService(bookingId);
-      return response?.data;  // { success, data: { booking, selection, workersNotified, requiredMembers } }
+      const response = await teamOwnerConfirmBookingService(bookingId);
+      return response?.data;
     },
     onSuccess: () => {
-      toast.success("Booking accepted! Workers have been automatically notified.");
-      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
-    },
-    onError: (error) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to accept team booking",
-      );
-    },
-  });
-};
-
-/**
- * Hook for a team lead to reject a booking request.
- */
-export const useTeamLeadRejectBooking = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (bookingId) => {
-      const response = await teamLeadRejectBookingService(bookingId);
-      return response?.data;
-    },
-    onSuccess: () => {
-      toast.success("Booking request declined.");
-      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
-    },
-    onError: (error) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to reject team booking",
-      );
-    },
-  });
-};
-
-/**
- * Hook for a team lead to submit their selected porter IDs.
- * Invalidates the specific booking query on success.
- *
- * @returns {import("@tanstack/react-query").UseMutationResult}
- *   mutationFn receives { bookingId: string, selectedPorterIds: string[] }
- */
-export const useTeamLeadSelectPorters = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ bookingId, selectedPorterIds }) => {
-      const response = await teamLeadSelectPortersService(
-        bookingId,
-        selectedPorterIds,
-      );
-      return response?.data;
-    },
-    onSuccess: (_, { bookingId }) => {
-      toast.success("Porters selected. Waiting for their responses.");
-      queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
-    },
-    onError: (error) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to select porters",
-      );
-    },
-  });
-};
-
-/**
- * Hook for a team lead to confirm the booking after enough members accepted.
- * Invalidates porter-bookings and the specific booking on success.
- *
- * @returns {import("@tanstack/react-query").UseMutationResult}
- *   mutationFn receives bookingId: string
- */
-export const useTeamLeadConfirmBooking = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (bookingId) => {
-      const response = await teamLeadConfirmBookingService(bookingId);
-      return response?.data;
-    },
-    onSuccess: (_, bookingId) => {
       toast.success("Booking confirmed successfully!");
       queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
     },
     onError: (error) => {
       toast.error(
@@ -223,9 +283,25 @@ export const useTeamLeadConfirmBooking = () => {
   });
 };
 
-/**
- * Hook for a team lead to mark the team booking as completed.
- */
+export const useTeamOwnerCancelBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId) => {
+      const response = await teamOwnerCancelBookingService(bookingId);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Booking cancelled");
+      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to cancel booking",
+      );
+    },
+  });
+};
+
 export const useCompleteTeamBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -245,32 +321,42 @@ export const useCompleteTeamBooking = () => {
   });
 };
 
+export const useStartTeamBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId) => {
+      const response = await startTeamBookingService(bookingId);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Team booking started!");
+      queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["team-booking-status"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to start team booking",
+      );
+    },
+  });
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
-// TEAM BOOKING — TEAM MEMBER HOOKS
+// TEAM BOOKING — TEAM MEMBER SIDE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Hook for a selected team member to accept or reject a booking invitation.
- *
- * @returns {import("@tanstack/react-query").UseMutationResult}
- *   mutationFn receives { bookingId: string, porterId: string, accepted: boolean }
- */
 export const useTeamMemberRespond = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ bookingId, porterId, accepted }) => {
-      const response = await teamMemberRespondService(
-        bookingId,
-        porterId,
-        accepted,
-      );
-      return response?.data;
+    mutationFn: async ({ bookingId, response }) => {
+      const resp = await teamMemberRespondService(bookingId, response);
+      return resp?.data;
     },
-    onSuccess: (_, { accepted }) => {
+    onSuccess: (_, { response }) => {
       toast.success(
-        accepted
+        response === "ACCEPTED"
           ? "You've accepted the team booking!"
-          : "You've declined the team booking.",
+          : "You've declined the team booking."
       );
       queryClient.invalidateQueries({ queryKey: ["porter-bookings"] });
     },
@@ -281,26 +367,3 @@ export const useTeamMemberRespond = () => {
     },
   });
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TEAM BOOKING — SELECTION STATUS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Hook for the team lead to poll live selection status.
- * Returns accepted/rejected/pending counts and each porter's status.
- *
- * @param {string|undefined} bookingId
- * @param {object} options   Extra useQuery options (e.g. { enabled, refetchInterval })
- */
-export const useGetTeamBookingSelection = (bookingId, options = {}) =>
-  useQuery({
-    queryKey: ["team-selection", bookingId],
-    queryFn: async () => {
-      const response = await getTeamBookingSelectionService(bookingId);
-      return response?.data?.data;
-    },
-    enabled: !!bookingId,
-    refetchInterval: 8000, // poll every 8 seconds
-    ...options,
-  });

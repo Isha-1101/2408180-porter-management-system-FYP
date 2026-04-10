@@ -445,13 +445,33 @@ export const getPorterBookings = async (req, res) => {
 
     const total = await PorterBooking.countDocuments(query);
 
-    // Also get pending requests for this porter
-    const pendingRequests = await BookintgPorterRequest.find({
+    // Also get pending requests for this porter (individual jobs)
+    const individualPendingRequests = await BookintgPorterRequest.find({
       porterId,
       status: "PENDING",
     })
       .populate("bookingId")
       .limit(10);
+
+    // Also get pending team requests forwarded to this worker
+    const teamPendingBookings = await PorterBooking.find({
+      status: "PENDING_MEMBER_RESPONSE",
+      "memberResponses": {
+        $elemMatch: { porterId: porterId, response: "PENDING" },
+      },
+    }).limit(10);
+
+    // Format team requests to match the BookintgPorterRequest schema for the frontend
+    const formattedTeamRequests = teamPendingBookings.map((b) => ({
+      _id: b._id,
+      bookingId: b, // populated doc style
+      porterId: porterId,
+      status: "PENDING",
+      bookingType: "team",
+      distanceKm: null,
+    }));
+
+    const pendingRequests = [...individualPendingRequests, ...formattedTeamRequests];
 
     // For team owners: fetch upcoming accepted/confirmed team bookings (sorted by date)
     // so the team owner can see their schedule before accepting new requests

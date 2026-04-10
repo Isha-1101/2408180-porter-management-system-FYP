@@ -5,7 +5,14 @@ import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, ArrowRight, Lock, Smartphone, ArrowLeft } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Lock,
+  Smartphone,
+  ArrowLeft,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import Logo from "../../components/common/Logo";
 
@@ -25,13 +32,14 @@ export default function Login() {
   const errors = {
     phone: !formData.phone
       ? "Enter a registered number"
-      : /^(98|97)\d{8}$/.test(formData.phone)
-      ? ""
-      : "Enter a registered number",
+      : /^(98|97|99|96)\d{8}$/.test(formData.phone)
+        ? ""
+        : "Enter a registered number",
     password: !formData.password ? "Password is required" : "",
   };
 
-  const isFormValid = formData.phone && formData.password && !errors.phone && !errors.password;
+  const isFormValid =
+    formData.phone && formData.password && !errors.phone && !errors.password;
 
   const handleChange = (e) => {
     setFormData({
@@ -194,7 +202,9 @@ export default function Login() {
                     </button>
                   </div>
                   {touched.password && errors.password && (
-                    <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.password}
+                    </p>
                   )}
                 </div>
 

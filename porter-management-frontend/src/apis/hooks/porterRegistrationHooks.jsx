@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { porterRestrationService } from "../services/porterRegistration";
+import { porterRegistrationService } from "../services/porterRegistration";
 import { useAuthStore } from "../../store/auth.store";
+
 const useRegstrationStartMutation = () => {
   return useMutation({
     mutationFn: (registrationType) =>
-      porterRestrationService.porterRegistrationStart(registrationType),
+      porterRegistrationService.porterRegistrationStart(registrationType),
   });
 };
 
@@ -12,7 +13,7 @@ const useSavePorterBasicInfoMutation = () => {
   return useMutation({
     mutationFn: ({ registrationId, data }) => {
       console.log(data);
-      return porterRestrationService.savePorterBasicInfo(registrationId, data);
+      return porterRegistrationService.savePorterBasicInfo(registrationId, data);
     },
   });
 };
@@ -21,7 +22,7 @@ const useSavePorterVehicleInfoMutation = () => {
   return useMutation({
     mutationFn: ({ registrationId, data }) => {
       console.log(data);
-      return porterRestrationService.savePorterVehicleInfo(
+      return porterRegistrationService.savePorterVehicleInfo(
         registrationId,
         data,
       );
@@ -33,24 +34,25 @@ const useSavePorterDocumentsInfoMutation = () => {
   return useMutation({
     mutationFn: ({ registrationId, data }) => {
       console.log(data);
-      return porterRestrationService.savePorterDocumentsInfo(
+      return porterRegistrationService.savePorterDocumentsInfo(
         registrationId,
         data,
       );
     },
   });
 };
+
 const useGetPorterRegistredInformationMutation = () => {
   return useMutation({
     mutationFn: (registrationId) =>
-      porterRestrationService.getPorterRegistredInformation(registrationId),
+      porterRegistrationService.getPorterRegistredInformation(registrationId),
   });
 };
 
 const useSubmitPorterRegistrationMutation = () => {
   return useMutation({
     mutationFn: (registrationId) => {
-      return porterRestrationService.submitPorterRegistration(registrationId);
+      return porterRegistrationService.submitPorterRegistration(registrationId);
     },
   });
 };
@@ -59,7 +61,7 @@ const usegetPorterRegistrationByUser = () => {
   const { user } = useAuthStore();
   return useQuery({
     queryKey: ["porter-registration-by-user", user?.id],
-    queryFn: () => porterRestrationService.getPorterRegistrationByUser(),
+    queryFn: () => porterRegistrationService.getPorterRegistrationByUser(),
     enabled: user?.role === "porter",
   });
 };
@@ -68,14 +70,14 @@ const useUpdatePorterContactMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ phone, address }) =>
-      porterRestrationService.updatePorterContact({ phone, address }),
+      porterRegistrationService.updatePorterContact({ phone, address }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["porterByUser"] });
     },
   });
 };
 
-export const porterRetgistrationHooks = {
+export const porterRegistrationHooks = {
   useRegstrationStartMutation,
   useSavePorterBasicInfoMutation,
   useSavePorterVehicleInfoMutation,
