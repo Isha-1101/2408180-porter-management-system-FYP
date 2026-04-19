@@ -19,8 +19,9 @@ import {
 import { usePorter } from "../../../../hooks/porter/use-porter";
 
 const getNavItems = (role) => {
-  const { porter } = usePorter();
+  const { porter, porterRegistrationData } = usePorter();
   const isPorterATeamOwner = porter?.porterType === "team";
+  const registrationStatus = porterRegistrationData?.[0]?.status;
 
   const userItems = [
     {
@@ -57,8 +58,8 @@ const getNavItems = (role) => {
       end: true,
     },
     {
-      label: "Porter Registration",
-      to: "/dashboard/porters/register",
+      label: registrationStatus === "submitted" ? "Application Status" : "Porter Registration",
+      to: registrationStatus === "submitted" ? "/dashboard/porters/pending" : "/dashboard/porters/register",
       icon: <ClipboardCheck className="w-5 h-5" />,
       end: true,
     },

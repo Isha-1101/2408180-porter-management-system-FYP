@@ -44,13 +44,11 @@ const validate = (data) => ({
     ? ""
     : "Enter a valid ID number",
 
-  porterPhoto: !data?.porterPhoto
-    ? "Please upload a valid photo"
-    : data.porterPhoto instanceof File
+  porterPhoto: data?.porterPhoto && data.porterPhoto instanceof File
     ? /\.(jpg|jpeg|png|gif)$/i.test(data.porterPhoto.name)
       ? ""
       : "Please upload a valid photo"
-    : "",                          // already-saved string URL → ok
+    : "",                          // optional or already-saved string URL
 
   identityCardImageFront: !data?.identityCardImageFront
     ? "Please upload required ID images"
@@ -212,7 +210,7 @@ const PersonalInfo = ({ data, onChange }) => {
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              Click the camera icon to upload a photo
+              Click the camera icon to upload a photo <span className="text-xs text-gray-400 font-normal italic">(Optional)</span>
             </p>
             <p className="text-xs text-muted-foreground">
               Recommended: 500×500 px, JPG, PNG or GIF
@@ -323,10 +321,7 @@ const PersonalInfo = ({ data, onChange }) => {
                 <SelectValue placeholder="Select ID Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="citizenship">Citizenship</SelectItem>
-                <SelectItem value="passport">Passport</SelectItem>
-                <SelectItem value="national_id">National ID</SelectItem>
-                <SelectItem value="driving_license">Driving License</SelectItem>
+                <SelectItem value="verification_id">Verification ID</SelectItem>
               </SelectContent>
             </Select>
             <FieldMsg

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ const ReviewPage = ({
   isLoading,
   registrationId,
 }) => {
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not specified";
@@ -134,7 +136,11 @@ const ReviewPage = ({
 
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Registration ID Type</p>
-                  <p className="font-medium text-base capitalize">{data.basicInfo?.identityType?.replace("_", " ") || "Not provided"}</p>
+                  <p className="font-medium text-base">
+                    {data.basicInfo?.identityType === "verification_id" 
+                      ? "Verification ID" 
+                      : (data.basicInfo?.identityType?.replace("_", " ") || "Not provided")}
+                  </p>
                 </div>
 
                 <div className="space-y-1">
@@ -347,38 +353,27 @@ const ReviewPage = ({
       <Card className="border-t-4 border-t-primary">
         <CardContent className="p-6">
           <div className="space-y-4">
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
               <input
                 type="checkbox"
-                id="terms"
-                className="mt-1"
-                defaultChecked
+                id="agreement"
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                checked={isAgreed}
+                onChange={(e) => setIsAgreed(e.target.checked)}
               />
-              <label htmlFor="terms" className="text-sm">
-                I confirm that all information provided is accurate and
-                complete. I agree to the terms of service and privacy
-                policy.
-              </label>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                id="verification"
-                className="mt-1"
-                defaultChecked
-              />
-              <label htmlFor="verification" className="text-sm">
-                I understand that my documents will be verified within 24-48
-                hours.
+              <label htmlFor="agreement" className="text-sm leading-relaxed text-gray-700 cursor-pointer select-none">
+                I confirm that all information provided is accurate and complete. I agree to the
+                <span className="text-primary font-medium mx-1">Terms of Service</span> and
+                <span className="text-primary font-medium mx-1">Privacy Policy</span>, and I
+                understand that my documents will be verified within 24-48 hours.
               </label>
             </div>
 
             <Button
-              className="w-full gap-2 py-6 text-lg"
+              className="w-full gap-2 py-6 text-lg transition-all"
               size="lg"
               onClick={onSave}
-              disabled={isLoading}
+              disabled={isLoading || !isAgreed}
             >
               <Save className="h-5 w-5" />
               {isLoading ? "Processing..." : "Submit Registration"}

@@ -44,7 +44,7 @@ const PorterPendingGuard = memo(({ children }) => {
   }
 
   const registration = porterRegistrationData;
-  const registrationStatus = registration[0]?.status;
+  const registrationStatus = registration?.[0]?.status;
   const hasPorterProfile = !!porter;
 
   // No registration or error → go register

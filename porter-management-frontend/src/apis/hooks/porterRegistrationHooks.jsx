@@ -50,9 +50,13 @@ const useGetPorterRegistredInformationMutation = () => {
 };
 
 const useSubmitPorterRegistrationMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (registrationId) => {
       return porterRegistrationService.submitPorterRegistration(registrationId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["porter-registration-by-user"] });
     },
   });
 };

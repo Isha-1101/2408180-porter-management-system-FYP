@@ -510,8 +510,8 @@ const PorterRegistrations = () => {
                         { label: "Full Name", value: detailReg.basicInfo.fullName },
                         { label: "Phone", value: detailReg.basicInfo.phone },
                         { label: "Address", value: detailReg.basicInfo.address },
-                        { label: "Identity Type", value: detailReg.basicInfo.identityType },
                         { label: "Identity Number", value: detailReg.basicInfo.identityNumber },
+                        { label: "Identity Type", value: detailReg.basicInfo.identityType === "verification_id" ? "Verification ID" : detailReg.basicInfo.identityType?.replace("_", " ") },
                         { label: "Experience", value: detailReg.basicInfo.experienceYears ? `${detailReg.basicInfo.experienceYears} yr(s)` : null },
                       ].filter(i => i.value).map((item, idx) => (
                         <div key={idx} className="bg-white rounded-lg border p-3">

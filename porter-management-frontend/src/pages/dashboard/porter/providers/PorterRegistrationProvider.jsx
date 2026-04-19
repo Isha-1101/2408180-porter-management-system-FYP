@@ -21,7 +21,8 @@ export const PorterRegistrationProvider = ({ children }) => {
       email: user?.email || "",
       address: "",
       porterPhoto: null,
-      identityType: "",
+      porterType: "individual", // default to individual
+      identityType: "verification_id",
       identityNumber: "",
       identityCardImageFront: null,
       identityCardImageBack: null,

@@ -146,7 +146,7 @@ const PorterRegister = () => {
   const handleFinalSavePorterInformation = async () => {
     try {
       await submitPorterRegistration(registrationId);
-      navigate("/dashboard/porter/pending");
+      navigate("/dashboard/porters/pending");
     } catch (error) {
       console.error("Final save porter information failed", error);
     }
@@ -285,12 +285,13 @@ const PorterRegister = () => {
                   <ChevronLeft size={16} /> Previous
                 </Button>
 
-                <Button
-                  disabled={step === 5}
-                  onClick={handleNextStep}
-                >
-                  Next <ChevronRight size={16} />
-                </Button>
+                {step !== 5 && (
+                  <Button
+                    onClick={handleNextStep}
+                  >
+                    Next <ChevronRight size={16} />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
