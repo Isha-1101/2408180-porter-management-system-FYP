@@ -407,12 +407,13 @@ After completion, user selects payment method:
 | POST | `/bookings/individual/:id/confirm-and-search` | User | Confirm payment & search |
 | POST | `/bookings/individual/:id/update-payment-method` | User | Update payment after completion |
 | POST | `/bookings/team` | User | Create team booking |
-| POST | `/bookings/team/:id/team-lead/accept` | Porter | Team lead accepts |
-| POST | `/bookings/team/:id/team-lead/reject` | Porter | Team lead rejects |
-| POST | `/bookings/team/:id/team-lead/confirm` | Porter | Team lead confirms |
-| POST | `/bookings/team/:id/porter/:porterId/respond` | Porter | Team member responds |
-| POST | `/bookings/team/:id/complete` | Porter | Complete team booking |
-| GET | `/bookings/team/:id/selection` | Porter | Get selection status |
+| POST | `/bookings/team/:id/review` | Owner | Forward/Decline booking |
+| POST | `/bookings/team/:id/owner/confirm` | Owner | Confirm booking |
+| POST | `/bookings/team/:id/owner/cancel` | Owner | Cancel booking |
+| POST | `/bookings/team/:id/start` | Owner | Start job (CONFIRMED → IN_PROGRESS) |
+| POST | `/bookings/team/:id/member/respond` | Member | Accept/Decline forwarded booking |
+| POST | `/bookings/team/:id/complete` | Owner | Complete team booking |
+| GET | `/bookings/team/:id` | All | Get team booking status |
 | GET | `/bookings/user` | User | Get user's bookings |
 | GET | `/bookings/porter` | Porter | Get porter's bookings |
 | GET | `/bookings/:id` | Authenticated | Get booking details |

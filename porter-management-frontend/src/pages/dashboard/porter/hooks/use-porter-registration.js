@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { porterRetgistrationHooks } from "../../../../apis/hooks/porterRegistratioHooks";
+import { porterRegistrationHooks } from "../../../../apis/hooks/porterRegistrationHooks";
 
 export const usePorter = () => {
   const [registrationId, setRegistrationId] = useState(null);
@@ -37,7 +37,7 @@ export const usePorter = () => {
   const [setRegistrationResponse, setRegistrationResponseData] = useState(null);
 
   const { mutateAsync: getRegistrationData } =
-    porterRetgistrationHooks.useGetPorterRegistredInformationMutation();
+    porterRegistrationHooks.useGetPorterRegistredInformationMutation();
 
   useEffect(() => {
     if (registrationId) {

@@ -13,10 +13,10 @@ import TeamCreation from "../pages/dashboard/team/TeamCreation";
 import TeamOwnerDashboard from "../pages/dashboard/porter/TeamOwnerDashboard";
 import TeamLeadSelectPorters from "../pages/dashboard/porter/TeamLeadSelectPorters";
 import TeamLeadConfirmBooking from "../pages/dashboard/porter/TeamLeadConfirmBooking";
+import TeamMemberBookingResponse from "../pages/dashboard/porter/TeamMemberBookingResponse";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
 import PorterTeamGuard from "../guards/PorterTeamGuard";
 
-// Wrapper component with provider
 const PorterProviderWrapper = () => (
   <PorterRegistrationProvider>
     <Outlet />
@@ -30,22 +30,13 @@ const porterRoutes = [
     children: [
       {
         path: "register",
-        element: (
-          // <PorterRegisterGuard>
-          <PorterRegister />
-          // </PorterRegisterGuard>
-        ),
+        element: <PorterRegister />,
       },
       {
         path: "pending",
-        element: (
-          // <PorterPendingGuard>
-          <PorterPending />
-          // </PorterPendingGuard>
-        ),
+        element: <PorterPending />,
       },
       {
-        // element: <PorterGuards />,
         children: [
           {
             index: true,
@@ -75,22 +66,21 @@ const porterRoutes = [
             path: "booking-history",
             element: <PorterBookingHistory />,
           },
-
-          // ── Team owner dashboard ────────────────────────────────────────
           {
             path: "team-owner",
             element: <TeamOwnerDashboard />,
           },
-          // ── Team lead flow ──────────────────────────────────────────────
-          // Legacy: select-porters (kept for backward compat)
           {
             path: "team-lead/select-porters",
             element: <TeamLeadSelectPorters />,
           },
-          // Monitor member responses and confirm/complete the booking
           {
             path: "team-lead/confirm-booking",
             element: <TeamLeadConfirmBooking />,
+          },
+          {
+            path: "team-member/respond",
+            element: <TeamMemberBookingResponse />,
           },
         ],
       },

@@ -47,6 +47,11 @@ const bookingSchema = new mongoose.Schema(
       default: null,
     },
 
+    workDescription: {
+      type: String,
+      default: null,
+    },
+
     bookingDate: {
       type: Date,
       default: null,
@@ -98,6 +103,9 @@ const bookingSchema = new mongoose.Schema(
       enum: [
         "SEARCHING",
         "WAITING_PORTER",
+        "PENDING_TEAM_REVIEW",
+        "PENDING_MEMBER_RESPONSE",
+        "AWAITING_OWNER_CONFIRMATION",
         "WAITING_TEAM_LEAD",
         "TEAM_LEAD_SELECTING",
         "WAITING_PORTER_CONFIRMATION",
@@ -108,6 +116,8 @@ const bookingSchema = new mongoose.Schema(
         "ASSIGNED",
         "CANCELLED",
         "COMPLETED",
+        "DECLINED",
+        "CLOSED",
       ],
       default: "SEARCHING",
     },
@@ -137,6 +147,34 @@ const bookingSchema = new mongoose.Schema(
         },
       },
     ],
+
+    memberResponses: [
+      {
+        porterId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Porters",
+        },
+        response: {
+          type: String,
+          enum: ["ACCEPTED", "DECLINED", "PENDING"],
+          default: "PENDING",
+        },
+        respondedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+    ],
+
+    forwardedAt: {
+      type: Date,
+      default: null,
+    },
+
+    ownerConfirmedAt: {
+      type: Date,
+      default: null,
+    },
 
     totalPrice: {
       type: Number,

@@ -1,52 +1,58 @@
 import mongoose from "mongoose";
 
-const teamJoinRequestSchema = new mongoose.Schema(
+const TeamJoinRequestSchema = new mongoose.Schema(
   {
+    porterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Porters",
+      required: true,
+    },
     teamId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PorterTeam",
+      ref: "PorterTeams",
       required: true,
     },
-
-    invitedPorterId: {
+    invitedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Porters",
+      ref: "User",
       required: true,
     },
-
-    invitedByOwnerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Porters",
-      required: true,
-    },
-
     status: {
       type: String,
-      enum: ["PENDING", "ACCEPTED", "DECLINED", "ADMIN_APPROVED", "ADMIN_REJECTED", "CANCELLED"],
+      enum: ["PENDING", "ACCEPTED", "DECLINED"],
       default: "PENDING",
     },
-
-    adminApprovalStatus: {
-      type: String,
-      enum: ["NOT_REQUESTED", "PENDING", "APPROVED", "REJECTED"],
-      default: "NOT_REQUESTED",
-    },
-
-    declinedReason: {
+    responseReason: {
       type: String,
       default: null,
     },
-
     respondedAt: {
       type: Date,
       default: null,
     },
+    adminApprovalStatus: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED", null],
+      default: null,
+    },
+    adminApprovedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    adminApprovedAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  },
 );
 
-teamJoinRequestSchema.index({ teamId: 1, status: 1 });
-teamJoinRequestSchema.index({ invitedPorterId: 1, status: 1 });
-teamJoinRequestSchema.index({ invitedByOwnerId: 1, status: 1 });
+const TeamJoinRequest = mongoose.model(
+  "TeamJoinRequest",
+  TeamJoinRequestSchema,
+);
 
-export default mongoose.model("TeamJoinRequest", teamJoinRequestSchema);
+export default TeamJoinRequest;

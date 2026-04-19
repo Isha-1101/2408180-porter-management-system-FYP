@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { UserPlus, Mail, Phone, User, Loader2, Trash2 } from "lucide-react";
+import { UserPlus, Mail, Phone, User, Loader2, Trash2, Users, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,13 +22,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "react-hot-toast";
 import {
   useGetAllRequestedPorterByTeam,
   useGetPorterByTeam,
+  useGetTeamDashboard,
   useRequestPorterUserRegistration,
+  useRemoveTeamMember,
 } from "../../../apis/hooks/porterTeamHooks";
 import { usePorter } from "../../../hooks/porter/use-porter";
+
 const TeamCreation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,15 +61,10 @@ const TeamCreation = () => {
   const currentMembers = activeTab === "pending" ? requestedPorters : addedPorters;
   const isFetching = activeTab === "pending" ? porterByTeamIsFetching : addedPorterIsFetching;
 
-  //hook form
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
       const newMember = {
         userName: data.username,
@@ -73,23 +72,30 @@ const TeamCreation = () => {
         phone: data.phone,
       };
       const response = await requestPorterUserRegistration(newMember);
-      if (response.status !== 200)
+      if (response.status !== 200 && response.status !== 201) {
         throw new Error("Failed to add team member.");
+      }
       toast.success("Team member added successfully!");
       setIsOpen(false);
       reset();
     } catch (error) {
       console.error("Failed to add member:", error);
-      toast.error("Failed to add team member. Please try again.");
+      toast.error(error?.response?.data?.message || "Failed to add team member. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = (id) => {
-    setMembers(members.filter((member) => member.id !== id));
-    toast.success("Member removed successfully");
+  const handleRemoveMember = async (memberId) => {
+    try {
+      await removeTeamMember(memberId);
+      toast.success("Member removed successfully");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to remove member");
+    }
   };
+
+  const isLoading = teamDashboardFetching || requestedPorterFetching;
 
   return (
     <div className="w-full min-h-screen p-8 bg-gray-50">
@@ -126,48 +132,29 @@ const TeamCreation = () => {
             </Button>
           </DialogTrigger>
 
-          {/* Form Dialog */}
           <DialogContent className="sm:max-w-125">
             <DialogHeader>
-              <DialogTitle className="text-xl font-semibold">
-                Add Team Member
-              </DialogTitle>
-              <DialogDescription>
-                Fill in the details to add a new member to your team.
-              </DialogDescription>
+              <DialogTitle className="text-xl font-semibold">Add Team Member</DialogTitle>
+              <DialogDescription>Fill in the details to add a new member to your team.</DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
-              {/* Username Field */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="username"
-                  className="flex items-center gap-2 text-sm font-medium"
-                >
+                <Label htmlFor="username" className="flex items-center gap-2 text-sm font-medium">
                   <User className="h-4 w-4 text-primary" />
                   Username
                 </Label>
                 <Input
                   id="username"
                   placeholder="Enter username"
-                  {...register("username", {
-                    required: "Username is required",
-                  })}
+                  {...register("username", { required: "Username is required" })}
                   className="w-full"
                 />
-                {errors.username && (
-                  <p className="text-sm text-red-500">
-                    {errors.username.message}
-                  </p>
-                )}
+                {errors.username && <p className="text-sm text-red-500">{errors.username.message}</p>}
               </div>
 
-              {/* Email Field */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="flex items-center gap-2 text-sm font-medium"
-                >
+                <Label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
                   <Mail className="h-4 w-4 text-primary" />
                   Email
                 </Label>
@@ -177,24 +164,15 @@ const TeamCreation = () => {
                   placeholder="example@gmail.com"
                   {...register("email", {
                     required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
+                    pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: "Invalid email address" },
                   })}
                   className="w-full"
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
+                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
               </div>
 
-              {/* Phone Field */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="phone"
-                  className="flex items-center gap-2 text-sm font-medium"
-                >
+                <Label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium">
                   <Phone className="h-4 w-4 text-primary" />
                   Phone
                 </Label>
@@ -203,34 +181,19 @@ const TeamCreation = () => {
                   placeholder="9888888881"
                   {...register("phone", {
                     required: "Phone number is required",
-                    pattern: {
-                      value: /^[0-9]{10}$/,
-                      message: "Phone number must be 10 digits",
-                    },
+                    pattern: { value: /^[0-9]{10}$/, message: "Phone number must be 10 digits" },
                   })}
                   className="w-full"
                 />
-                {errors.phone && (
-                  <p className="text-sm text-red-500">{errors.phone.message}</p>
-                )}
+                {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
               </div>
 
               <DialogFooter className="pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isRequestPorterUserRegistrationLoading}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  {isRequestPorterUserRegistrationLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
+                <Button type="submit" disabled={isRequestPorterUserRegistrationLoading || isSubmitting} className="bg-primary hover:bg-primary/90">
+                  {isRequestPorterUserRegistrationLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Add Member
                 </Button>
               </DialogFooter>
@@ -252,13 +215,25 @@ const TeamCreation = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Email</TableHead>
-                <TableHead className="font-semibold">Phone</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="text-right font-semibold">
-                  Actions
-                </TableHead>
+                {activeTab === "members" ? (
+                  <>
+                    <TableHead className="font-semibold">Name</TableHead>
+                    <TableHead className="font-semibold">Email</TableHead>
+                    <TableHead className="font-semibold">Phone</TableHead>
+                    <TableHead className="font-semibold">Role</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Joined</TableHead>
+                    <TableHead className="text-right font-semibold">Actions</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead className="font-semibold">Name</TableHead>
+                    <TableHead className="font-semibold">Email</TableHead>
+                    <TableHead className="font-semibold">Phone</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Requested</TableHead>
+                  </>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -292,7 +267,7 @@ const TeamCreation = () => {
                 currentMembers.map((member) => (
                   <TableRow key={member._id} className="hover:bg-gray-50">
                     <TableCell className="font-medium capitalize">
-                      {member.userName}
+                      {request.userName || request.porterId?.userId?.name}
                     </TableCell>
                     <TableCell className="captialize">{member.email}</TableCell>
                     <TableCell className="captialize">{member.phone}</TableCell>

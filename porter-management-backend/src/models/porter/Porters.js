@@ -39,7 +39,7 @@ const PorterSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["active", "pending", "inactive", "banned"],
+      enum: ["active", "pending", "inactive", "banned", "approved"],
       default: "pending",
     },
 

@@ -21,8 +21,6 @@ import {
   useRejectPorterBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
 import {
-  useTeamLeadAcceptBooking,
-  useTeamLeadRejectBooking,
   useTeamMemberRespond,
 } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
@@ -83,13 +81,6 @@ export default function PorterDashboard() {
   const { mutateAsync: rejectBooking, isPending: rejecting } =
     useRejectPorterBooking();
 
-  // ── Team booking mutations (team lead role) ──────────────────────────────────
-  const { mutateAsync: teamLeadAccept, isPending: teamLeadAccepting } =
-    useTeamLeadAcceptBooking();
-  const { mutateAsync: teamLeadReject, isPending: teamLeadRejecting } =
-    useTeamLeadRejectBooking();
-
-  // ── Team member respond mutation ─────────────────────────────────────────────
   const { mutateAsync: teamMemberRespond, isPending: teamMemberResponding } =
     useTeamMemberRespond();
 
@@ -210,7 +201,20 @@ export default function PorterDashboard() {
       refetch();
     };
 
+    // Handler for team booking forwarded to team members
+    const onTeamBookingForwarded = (data) => {
+      setLiveRequests((prev) => {
+        const exists = prev.some(
+          (r) => r.bookingId === data.bookingId?.toString(),
+        );
+        if (exists) return prev;
+        return [{ ...data, _isLive: true, bookingType: "team" }, ...prev];
+      });
+      refetch();
+    };
+
     socket.on("booking-request", onBookingRequest);
+    socket.on("team-booking-forwarded", onTeamBookingForwarded);
 
     // SSE: also receive new booking requests server-pushed
     sseRef.current = createSSEConnection(
@@ -232,6 +236,7 @@ export default function PorterDashboard() {
 
     return () => {
       socket.off("booking-request", onBookingRequest);
+      socket.off("team-booking-forwarded", onTeamBookingForwarded);
       sseRef.current?.close();
     };
   }, [refetch, token]);
@@ -285,40 +290,10 @@ export default function PorterDashboard() {
     }
   };
 
-  // ── Team Lead: Accept → navigate directly to confirm-booking ──────────────
-  const handleTeamLeadAccept = async (bookingId) => {
+  // ── Team Member: Respond to forwarded booking ──────────────────────────────
+  const handleTeamMemberRespond = async (bookingId, response) => {
     try {
-      const res = await teamLeadAccept(bookingId);
-      // res.data = { booking, selection, workersNotified, requiredMembers }
-      const bookingData = res?.data?.booking;
-      const requiredMembers =
-        res?.data?.requiredMembers || bookingData?.teamSize || 1;
-      navigate("/dashboard/porters/team-lead/confirm-booking", {
-        state: {
-          bookingId: bookingData?._id || bookingId,
-          requiredMembers,
-          booking: bookingData,
-        },
-      });
-    } catch (err) {
-      // error toasted by hook
-    }
-  };
-
-  // ── Team Lead: Reject booking ───────────────────────────────────────────────
-  const handleTeamLeadReject = async (bookingId) => {
-    try {
-      await teamLeadReject(bookingId);
-      setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
-    } catch (err) {
-      // handled by hook
-    }
-  };
-
-  // ── Team Member: Respond to invitation ──────────────────────────────────────
-  const handleTeamMemberRespond = async (bookingId, porterId, accepted) => {
-    try {
-      await teamMemberRespond({ bookingId, porterId, accepted });
+      await teamMemberRespond({ bookingId, response });
       setLiveRequests((prev) => prev.filter((r) => r.bookingId !== bookingId));
     } catch (err) {
       // handled by hook
@@ -650,47 +625,6 @@ export default function PorterDashboard() {
                         {/* ── Action buttons (differ by request type) ─── */}
                         <CardFooter className="p-4 pt-0">
                           <div className="flex space-x-2 w-full justify-end">
-                            {/* ── Team Lead actions ── */}
-                            {isTeamLeadRequest && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-28"
-                                  disabled={
-                                    teamLeadRejecting || teamLeadAccepting
-                                  }
-                                  onClick={() =>
-                                    handleTeamLeadReject(bookingId)
-                                  }
-                                >
-                                  {teamLeadRejecting ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    "Decline"
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="w-32 bg-purple-600 hover:bg-purple-700"
-                                  disabled={
-                                    teamLeadAccepting || teamLeadRejecting
-                                  }
-                                  onClick={() =>
-                                    handleTeamLeadAccept(bookingId)
-                                  }
-                                >
-                                  {teamLeadAccepting ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <>
-                                      <CheckCircle className="mr-1 h-3 w-3" />
-                                      Accept & Select
-                                    </>
-                                  )}
-                                </Button>
-                              </>
-                            )}
 
                             {/* ── Team Member actions ── */}
                             {isTeamMemberRequest && (
@@ -703,8 +637,7 @@ export default function PorterDashboard() {
                                   onClick={() =>
                                     handleTeamMemberRespond(
                                       bookingId,
-                                      currentPorterId,
-                                      false,
+                                      "DECLINED",
                                     )
                                   }
                                 >
@@ -721,8 +654,7 @@ export default function PorterDashboard() {
                                   onClick={() =>
                                     handleTeamMemberRespond(
                                       bookingId,
-                                      currentPorterId,
-                                      true,
+                                      "ACCEPTED",
                                     )
                                   }
                                 >
