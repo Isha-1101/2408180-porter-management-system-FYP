@@ -60,8 +60,10 @@ const TeamCreation = () => {
 
   const { porter } = usePorter();
 
-  const { mutateAsync: requestPorterUserRegistration, isPending: isRequestPorterUserRegistrationLoading } =
-    useRequestPorterUserRegistration();
+  const {
+    mutateAsync: requestPorterUserRegistration,
+    isPending: isRequestPorterUserRegistrationLoading,
+  } = useRequestPorterUserRegistration();
   const { mutateAsync: removeTeamMember, isPending: isRemovingMember } =
     useRemoveTeamMember();
   const { mutateAsync: invitePorter, isPending: isInviting } =
@@ -85,7 +87,12 @@ const TeamCreation = () => {
   const requestedPorter = requestedPorterData?.data?.data || [];
   const searchedPorters = Array.isArray(searchResults) ? searchResults : [];
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   // ── Legacy: Register new user by email/phone ─────────────────────────────
   const onSubmit = async (data) => {
@@ -200,8 +207,7 @@ const TeamCreation = () => {
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2.5">
-                <UserPlus className="h-5 w-5" />
-                + Add Team Member
+                <UserPlus className="h-5 w-5" />+ Add Team Member
               </Button>
             </DialogTrigger>
 
@@ -216,24 +222,37 @@ const TeamCreation = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-5 py-4"
+              >
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="flex items-center gap-2 text-sm font-medium">
+                  <Label
+                    htmlFor="username"
+                    className="flex items-center gap-2 text-sm font-medium"
+                  >
                     <User className="h-4 w-4 text-primary" />
                     Username
                   </Label>
                   <Input
                     id="username"
                     placeholder="Enter username"
-                    {...register("username", { required: "Username is required" })}
+                    {...register("username", {
+                      required: "Username is required",
+                    })}
                   />
                   {errors.username && (
-                    <p className="text-sm text-red-500">{errors.username.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.username.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
+                  <Label
+                    htmlFor="email"
+                    className="flex items-center gap-2 text-sm font-medium"
+                  >
                     <Mail className="h-4 w-4 text-primary" />
                     Email
                   </Label>
@@ -250,12 +269,17 @@ const TeamCreation = () => {
                     })}
                   />
                   {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium">
+                  <Label
+                    htmlFor="phone"
+                    className="flex items-center gap-2 text-sm font-medium"
+                  >
                     <Phone className="h-4 w-4 text-primary" />
                     Phone
                   </Label>
@@ -271,20 +295,29 @@ const TeamCreation = () => {
                     })}
                   />
                   {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.phone.message}
+                    </p>
                   )}
                 </div>
 
                 <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsOpen(false)}
+                  >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isRequestPorterUserRegistrationLoading || isSubmitting}
+                    disabled={
+                      isRequestPorterUserRegistrationLoading || isSubmitting
+                    }
                     className="bg-primary hover:bg-primary/90"
                   >
-                    {(isRequestPorterUserRegistrationLoading || isSubmitting) && (
+                    {(isRequestPorterUserRegistrationLoading ||
+                      isSubmitting) && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     Add Member
@@ -411,8 +444,7 @@ const TeamCreation = () => {
                         const porterId = p._id;
                         const alreadyInvited = invitedIds.has(porterId);
                         const alreadyInTeam = !!p.teamId;
-                        const nameText =
-                          p.userId?.name || "—";
+                        const nameText = p.userId?.name || "—";
                         const phoneText = p.userId?.phone || "—";
 
                         return (
@@ -612,7 +644,9 @@ const TeamCreation = () => {
                     >
                       <div className="flex flex-col items-center gap-3">
                         <CheckCircle className="h-16 w-16 text-gray-300" />
-                        <p className="text-lg font-medium">No pending requests</p>
+                        <p className="text-lg font-medium">
+                          No pending requests
+                        </p>
                         <p className="text-sm">
                           All registration requests have been processed
                         </p>

@@ -31,6 +31,18 @@ export const rejectRegistration = (registrationId, data) => {
   );
 };
 
+export const getAllTeamMemberRequests = (params) => {
+  return axiosInstance.get("/admin/team-member-requests", { params });
+};
+
+export const approveTeamMemberRequest = (requestId) => {
+  return axiosInstance.post(`/admin/approve-porter-registration/${requestId}`);
+};
+
+export const rejectTeamMemberRequest = (requestId, data) => {
+  return axiosInstance.post(`/admin/team-member-requests/${requestId}/reject`, data);
+};
+
 export const getAllPorters = (params) => {
   return axiosInstance.get("/porters", { params });
 };
