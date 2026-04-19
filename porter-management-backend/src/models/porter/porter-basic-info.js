@@ -30,7 +30,7 @@ const PorterBasicInfoSchema = new mongoose.Schema(
       },
     ],
 
-    porterPhoto: { type: String, required: true },
+    porterPhoto: { type: String, required: false },
     experienceYears: { type: Number, default: 1 },
   },
   { timestamps: true },
