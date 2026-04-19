@@ -44,7 +44,7 @@ const PorterRegisterGuard = memo(({ children }) => {
   }
 
   const registration = porterRegistrationData;
-  const registrationStatus = registration[0]?.status;
+  const registrationStatus = registration?.[0]?.status;
   const hasPorterProfile = !!porter;
 
   // Registration submitted → go to pending

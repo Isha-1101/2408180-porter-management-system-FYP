@@ -44,7 +44,11 @@ const PorterGuards = memo(() => {
   }
 
   // Determine registration status
-  const registration = porterRegistrationData;
+  // The API returns registration as an array, get the latest one
+  const registrationList = porterRegistrationData;
+  const registration = Array.isArray(registrationList)
+    ? registrationList[0]
+    : registrationList;
   const registrationStatus = registration?.status;
   const hasPorterProfile = !!porter;
 

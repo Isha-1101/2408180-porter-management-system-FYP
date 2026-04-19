@@ -2,6 +2,7 @@ import express from "express";
 import { authenticate } from "../../middlewares/authMiddleware.js";
 import { authorizeRole } from "../../middlewares/roleMiddleware.js";
 import { isPorterRegisteredAsTeam } from "../../middlewares/porterRegisterdAsTeam.js";
+import { attachPorterId } from "../../middlewares/porterMiddleware.js";
 import {
   getPorterByTeamId,
   getTeamDashboard,
@@ -27,18 +28,12 @@ import {
 const teamRouter = express.Router();
 
 // ─── Team Management (Owner) ─────────────────────────────────────────────────
-teamRouter.get(
-  "/:teamId",
-  authenticate,
-  authorizeRole("porter"),
-  isPorterRegisteredAsTeam,
-  getPorterByTeamId,
-);
 
 teamRouter.get(
   "/dashboard",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   isPorterRegisteredAsTeam,
   getTeamDashboard,
 );
@@ -47,6 +42,7 @@ teamRouter.get(
   "/booking-history",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   isPorterRegisteredAsTeam,
   getTeamBookingHistory,
 );
@@ -55,6 +51,7 @@ teamRouter.get(
   "/pending-bookings",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   isPorterRegisteredAsTeam,
   getTeamPendingBookings,
 );
@@ -64,6 +61,7 @@ teamRouter.get(
   "/join-requests",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   isPorterRegisteredAsTeam,
   getPendingTeamJoinRequests,
 );
@@ -80,6 +78,7 @@ teamRouter.post(
   "/invite-porter",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   isPorterRegisteredAsTeam,
   invitePorterToTeam,
 );
@@ -88,6 +87,7 @@ teamRouter.post(
   "/invite/:requestId/respond",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   respondToTeamInvitation,
 );
 
@@ -95,6 +95,7 @@ teamRouter.get(
   "/my-invitations",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   getMyPendingInvitations,
 );
 
@@ -102,6 +103,7 @@ teamRouter.delete(
   "/member/:porterId",
   authenticate,
   authorizeRole("porter"),
+  attachPorterId,
   isPorterRegisteredAsTeam,
   removeTeamMember,
 );
@@ -127,6 +129,16 @@ teamRouter.post(
   authenticate,
   authorizeRole("porter"),
   registerRequestForPorter,
+);
+
+// ─── Wildcard Route (Must be last) ───────────────────────────────────────────
+teamRouter.get(
+  "/:teamId",
+  authenticate,
+  authorizeRole("porter"),
+  attachPorterId,
+  isPorterRegisteredAsTeam,
+  getPorterByTeamId,
 );
 
 export default teamRouter;

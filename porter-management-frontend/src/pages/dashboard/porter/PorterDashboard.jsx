@@ -13,6 +13,7 @@ import {
   Users,
   CalendarDays,
   Layers,
+  Mail,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
 import {
@@ -22,6 +23,7 @@ import {
 } from "../../../apis/hooks/porterBookingsHooks";
 import {
   useTeamMemberRespond,
+  useGetMyPendingInvitations,
 } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
 import { createSSEConnection } from "../../../utils/sse";
@@ -67,6 +69,12 @@ export default function PorterDashboard() {
 
   const intervalRef = useRef(null);
   const sseRef = useRef(null);
+
+  // Team invitations (for individual porters who have been invited to a team)
+  const { data: pendingInvitations } = useGetMyPendingInvitations();
+  const invitationCount = Array.isArray(pendingInvitations)
+    ? pendingInvitations.length
+    : 0;
 
   // Real API data
   const {
@@ -335,7 +343,32 @@ export default function PorterDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 space-y-4">
+      {/* Invitation Banner — shown only for individual porters with pending invitations */}
+      {invitationCount > 0 && (
+        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+              <Mail className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-blue-800">
+                You have {invitationCount} pending team invitation{invitationCount > 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-blue-600">
+                A team owner has invited you to join their team.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate("/dashboard/porters/invitations")}
+            className="shrink-0 text-xs font-semibold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            View &amp; Respond
+          </button>
+        </div>
+      )}
+
       <Card className="h-full">
         <CardHeader>
           <div className="flex items-center justify-between">

@@ -63,6 +63,7 @@ export const invitePorterToTeam = async (req, res) => {
   try {
     const { porterId } = req.body;
     const currentPorterId = req.user.porterId;
+    console.log(currentPorterId);
 
     if (!porterId) {
       await session.abortTransaction();

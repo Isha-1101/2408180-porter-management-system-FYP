@@ -8,23 +8,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Phone, MapPin, Camera, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { User, Phone, MapPin, Camera, CheckCircle, AlertCircle, Info, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCloudinaryUrl } from "@/utils/helper";
 
 // ── Validation rules (same as Sign Up page) ──────────────────────────────────
 const validate = (data) => ({
   fullName: !data?.fullName
-    ? "Only letters allowed, minimum 2 characters"
-    : /^[a-zA-Z]+(?: [a-zA-Z]+)*$/.test(data.fullName) && data.fullName.trim().length >= 2
+    ? "Name is required"
+    : data.fullName.trim().length >= 2
     ? ""
-    : "Only letters allowed, minimum 2 characters",
+    : "Name is required",
 
   phone: !data?.phone
     ? "Enter a valid 10-digit phone number"
     : /^(98|97)\d{8}$/.test(data.phone)
     ? ""
     : "Enter a valid 10-digit phone number",
+
+  email: !data?.email
+    ? "Email is required"
+    : "",
 
   address: !data?.address || data.address.trim().length < 5
     ? "Enter a valid address"
@@ -110,6 +114,7 @@ const PersonalInfo = ({ data, onChange }) => {
   const [touched, setTouched] = useState({
     fullName: false,
     phone: false,
+    email: false,
     address: false,
     identityType: false,
     identityNumber: false,
@@ -234,19 +239,9 @@ const PersonalInfo = ({ data, onChange }) => {
             <Input
               id="fullName"
               value={data?.fullName || ""}
-              onChange={(e) => handleTextChange("fullName", e.target.value)}
-              onBlur={() => touch("fullName")}
+              readOnly
               placeholder="Enter full name"
-              className={`w-full transition-colors ${fieldClass(
-                touched.fullName,
-                errors.fullName,
-                data?.fullName
-              )}`}
-            />
-            <FieldMsg
-              touched={touched.fullName}
-              error={errors.fullName}
-              value={data?.fullName}
+              className="w-full bg-gray-100 text-gray-600 cursor-not-allowed border-gray-300 focus:ring-0"
             />
           </div>
 
@@ -259,24 +254,24 @@ const PersonalInfo = ({ data, onChange }) => {
             <Input
               id="phone"
               value={data?.phone || ""}
-              maxLength={10}
-              onChange={(e) => {
-                // digits only
-                const digits = e.target.value.replace(/\D/g, "");
-                handleTextChange("phone", digits);
-              }}
-              onBlur={() => touch("phone")}
+              readOnly
               placeholder="98XXXXXXXX"
-              className={`w-full transition-colors ${fieldClass(
-                touched.phone,
-                errors.phone,
-                data?.phone
-              )}`}
+              className="w-full bg-gray-100 text-gray-600 cursor-not-allowed border-gray-300 focus:ring-0"
             />
-            <FieldMsg
-              touched={touched.phone}
-              error={errors.phone}
-              value={data?.phone}
+          </div>
+
+          {/* Email */}
+          <div className="space-y-1">
+            <Label htmlFor="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email Address *
+            </Label>
+            <Input
+              id="email"
+              value={data?.email || ""}
+              readOnly
+              placeholder="example@email.com"
+              className="w-full bg-gray-100 text-gray-600 cursor-not-allowed border-gray-300 focus:ring-0"
             />
           </div>
 

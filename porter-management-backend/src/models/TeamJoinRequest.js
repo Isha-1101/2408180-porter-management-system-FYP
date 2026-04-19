@@ -9,7 +9,7 @@ const TeamJoinRequestSchema = new mongoose.Schema(
     },
     teamId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PorterTeams",
+      ref: "PorterTeam",
       required: true,
     },
     invitedBy: {

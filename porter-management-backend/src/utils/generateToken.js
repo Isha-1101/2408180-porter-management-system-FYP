@@ -11,6 +11,6 @@ export const generateToken = (user) => {
     secrete_key,
     {
       expiresIn: "30d",
-    }
+    },
   );
 };

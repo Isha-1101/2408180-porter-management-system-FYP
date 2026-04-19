@@ -79,6 +79,7 @@ const PorterRegister = () => {
     const payload = new FormData();
     payload.append("fullName", formData.basicInfo.fullName);
     payload.append("phone", formData.basicInfo.phone);
+    payload.append("email", formData.basicInfo.email);
     payload.append("address", formData.basicInfo.address);
     payload.append("porterType", formData.basicInfo.porterType);
     if (formData.basicInfo.porterPhoto instanceof File) {

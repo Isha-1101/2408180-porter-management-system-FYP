@@ -695,13 +695,25 @@ export default function TeamOwnerDashboard() {
       {activeTab === "team" && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              My Team Members
-            </CardTitle>
-            <CardDescription>
-              Current team members with their contact info and join date.
-            </CardDescription>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  My Team Members
+                </CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  Current team members with their contact info and join date.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => navigate("/dashboard/porters/team")}
+                className="bg-primary hover:bg-primary/90 gap-2"
+              >
+                <Send className="h-4 w-4" />
+                Manage Team &amp; Invite
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[calc(100vh-28rem)] min-h-[300px] pr-2">
@@ -712,8 +724,16 @@ export default function TeamOwnerDashboard() {
                   </div>
                   <p className="text-sm font-medium text-gray-900">No team members yet</p>
                   <p className="text-xs text-gray-500">
-                    Invite individual porters to join your team from the Team page.
+                    Use the "Manage Team &amp; Invite" button above to recruit individual porters.
                   </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate("/dashboard/porters/team")}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Invite Porters
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">

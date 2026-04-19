@@ -6,16 +6,19 @@ import {
   createContext,
 } from "react";
 import { porterRegistrationHooks } from "@/apis/hooks/porterRegistrationHooks";
+import { useAuthStore } from "@/store/auth.store";
 export const PorterRegistrationContext = createContext(null);
 
 export const PorterRegistrationProvider = ({ children }) => {
+  const user = useAuthStore((state) => state.user);
   const [registrationId, setRegistrationId] = useState(null);
 
   const [formData, setFormData] = useState({
     registrationType: "",
     basicInfo: {
-      fullName: "",
-      phone: "",
+      fullName: user?.name || "",
+      phone: user?.phone || "",
+      email: user?.email || "",
       address: "",
       porterPhoto: null,
       identityType: "",
@@ -94,8 +97,9 @@ export const PorterRegistrationProvider = ({ children }) => {
       setFormData({
         registrationType: payload?.registration?.registrationType ?? "",
         basicInfo: {
-          fullName: payload?.basicInfo?.fullName ?? "",
-          phone: payload?.basicInfo?.phone ?? "",
+          fullName: payload?.basicInfo?.fullName ?? user?.name ?? "",
+          phone: payload?.basicInfo?.phone ?? user?.phone ?? "",
+          email: payload?.basicInfo?.email ?? user?.email ?? "",
           address: payload?.basicInfo?.address ?? "",
           porterType: payload?.basicInfo?.porterType ?? "",
           porterPhoto: payload?.basicInfo?.porterPhoto ?? null,

@@ -14,6 +14,7 @@ import TeamOwnerDashboard from "../pages/dashboard/porter/TeamOwnerDashboard";
 import TeamLeadSelectPorters from "../pages/dashboard/porter/TeamLeadSelectPorters";
 import TeamLeadConfirmBooking from "../pages/dashboard/porter/TeamLeadConfirmBooking";
 import TeamMemberBookingResponse from "../pages/dashboard/porter/TeamMemberBookingResponse";
+import PorterInvitations from "../pages/dashboard/porter/PorterInvitations";
 import { PorterRegistrationProvider } from "../pages/dashboard/porter/providers/PorterRegistrationProvider";
 import PorterTeamGuard from "../guards/PorterTeamGuard";
 
@@ -30,13 +31,22 @@ const porterRoutes = [
     children: [
       {
         path: "register",
-        element: <PorterRegister />,
+        element: (
+          <PorterRegisterGuard>
+            <PorterRegister />
+          </PorterRegisterGuard>
+        ),
       },
       {
         path: "pending",
-        element: <PorterPending />,
+        element: (
+          <PorterPendingGuard>
+            <PorterPending />
+          </PorterPendingGuard>
+        ),
       },
       {
+        element: <PorterGuards />,
         children: [
           {
             index: true,
@@ -81,6 +91,10 @@ const porterRoutes = [
           {
             path: "team-member/respond",
             element: <TeamMemberBookingResponse />,
+          },
+          {
+            path: "invitations",
+            element: <PorterInvitations />,
           },
         ],
       },
