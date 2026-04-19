@@ -3,7 +3,10 @@ import { authenticate } from "../../middlewares/authMiddleware.js";
 import { authorizeRole } from "../../middlewares/roleMiddleware.js";
 import { attachPorterId } from "../../middlewares/porterMiddleware.js";
 
-import { approvePorterRegisterRequest } from "../../controllers/porters/team/register-request-for-porter.js";
+import {
+  approvePorterRegisterRequest,
+  getAllRegisterRequestedPorter,
+} from "../../controllers/porters/team/register-request-for-porter.js";
 import {
   getAllRegistrations,
   rejectRegistration,
@@ -81,6 +84,52 @@ adminRouter.post(
 );
 adminRouter.get("/registrations", ...adminAuth, getAllRegistrations);
 adminRouter.post("/registrations/:id/reject", ...adminAuth, rejectRegistration);
+
+// --- Team Member Requests (team-owner added porters awaiting admin approval) ---
+adminRouter.get("/team-member-requests", ...adminAuth, async (req, res) => {
+  try {
+    const { RequestedUserPorter } = await import("../../models/porter/requested-user-porter.js");
+    const { status, page = 1, limit = 10 } = req.query;
+    const query = {};
+    // Frontend sends "submitted" for pending items — map it back to "pending"
+    if (status === "submitted" || status === "pending") query.status = "pending";
+    else if (status === "approved" || status === "rejected") query.status = status;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const data = await RequestedUserPorter.find(query)
+      .populate({ path: "teamId", populate: { path: "ownerId", select: "name" } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+    const total = await RequestedUserPorter.countDocuments(query);
+    return res.status(200).json({
+      success: true,
+      data,
+      pagination: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) },
+    });
+  } catch (err) {
+    console.error("Error fetching team member requests:", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+adminRouter.post("/team-member-requests/:id/reject", ...adminAuth, async (req, res) => {
+  try {
+    const { RequestedUserPorter } = await import("../../models/porter/requested-user-porter.js");
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+    const request = await RequestedUserPorter.findByIdAndUpdate(
+      id,
+      { status: "rejected", rejectionReason },
+      { new: true }
+    );
+    if (!request) return res.status(404).json({ success: false, message: "Request not found" });
+    return res.status(200).json({ success: true, message: "Request rejected", data: request });
+  } catch (err) {
+    console.error("Error rejecting team member request:", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 // --- Cash Refund Approval (from cancellation routes) ---
 import CancellationLog from "../../models/CancellationLog.js";
