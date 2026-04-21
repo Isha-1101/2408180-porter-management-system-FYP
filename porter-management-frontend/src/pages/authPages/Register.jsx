@@ -58,7 +58,7 @@ const Register = () => {
       : "Enter a valid email address",
     phone: !form.phone
       ? "Enter a valid 10-digit phone number"
-      : /^(98|97)\d{8}$/.test(form.phone)
+      : /^\d{10}$/.test(form.phone)
       ? ""
       : "Enter a valid 10-digit phone number",
     password: !form.password

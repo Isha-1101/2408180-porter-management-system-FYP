@@ -196,7 +196,12 @@ const BookingTracking = () => {
       toast.success("Payment method saved! Redirecting to orders...");
       
       setTimeout(() => {
-        navigate("/dashboard/orders");
+        const pId = acceptedPorter?._id || acceptedPorter?.id || fetchedBooking?.assignedPorterId?._id || fetchedBooking?.assignedPorterId;
+        navigate("/dashboard/orders", {
+          state: {
+            promptRatingFor: pId ? { bookingId, porterId: pId } : null
+          }
+        });
       }, 1500);
     } catch (error) {
       console.error("Error updating payment method:", error);

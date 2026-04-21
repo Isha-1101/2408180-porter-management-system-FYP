@@ -347,14 +347,6 @@ const PorterRegistrations = () => {
                             </Button>
                           </>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => openDetail(reg)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

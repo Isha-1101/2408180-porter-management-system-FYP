@@ -47,6 +47,9 @@ export const getPendingTeamJoinRequests = () =>
 export const getMyPendingInvitations = () =>
   axiosInstance.get("/team-porters/my-invitations");
 
+export const getInvitationHistory = () =>
+  axiosInstance.get("/team-porters/invitation-history");
+
 export const removeTeamMember = (porterId) =>
   axiosInstance.delete(`/team-porters/member/${porterId}`);
 

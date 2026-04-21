@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getUserBookingsService } from "@/apis/services/porterBookingsService";
 import { useSubmitRating, useGetBookingRating } from "@/apis/hooks/ratingHooks";
 import { Badge } from "@/components/ui/badge";
@@ -402,7 +402,7 @@ const RatingModal = ({ open, onClose, target, onSubmitSuccess }) => {
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={loading}>
-            Cancel
+            Rate Later
           </Button>
           <Button
             onClick={handleSubmit}
@@ -449,6 +449,7 @@ const ACTIVE_STATUSES = [
 // ────────────────────────────────────
 const Orders = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -459,6 +460,16 @@ const Orders = () => {
   // Rating modal state
   const [ratingTarget, setRatingTarget] = useState(null);
   const [isRatingOpen, setIsRatingOpen] = useState(false);
+
+  // Intercept completion redirect to auto-prompt rating
+  useEffect(() => {
+    if (location.state?.promptRatingFor) {
+      setRatingTarget(location.state.promptRatingFor);
+      setIsRatingOpen(true);
+      // Clean up state so refresh doesn't trigger it again
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchBookings = useCallback(
     async (currentPage = 1) => {

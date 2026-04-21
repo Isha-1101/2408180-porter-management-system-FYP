@@ -42,7 +42,9 @@ import {
   useGetTeamBookingHistory,
 } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
+import { createSSEConnection } from "../../../utils/sse";
 import { useAuthStore } from "@/store/auth.store";
+import { toast } from "react-hot-toast";
 import { AddressLine } from "../../../components/common/AddressLine";
 import {
   Card,
@@ -77,6 +79,7 @@ export default function TeamOwnerDashboard() {
   const navigate = useNavigate();
   const sseRef = useRef(null);
 
+  const token = useAuthStore((s) => s.access_token);
   const [liveRequests, setLiveRequests] = useState([]);
   const [activeTab, setActiveTab] = useState("requests");
 
@@ -167,11 +170,37 @@ export default function TeamOwnerDashboard() {
 
     socket.on("team-booking-request", onTeamBookingRequest);
 
+    // SSE: Listen for invitation responses (accepted/declined) from porters
+    sseRef.current = createSSEConnection(
+      "/bookings/sse/porter",
+      {
+        "invitation-response": (data) => {
+          // data: { requestId, action, porterId, porterName, reason }
+          const { action, porterName } = data;
+          if (action === "ACCEPTED") {
+            toast.success(`${porterName} has accepted your team invitation!`, {
+              duration: 5000,
+              icon: "✅",
+            });
+          } else {
+            toast.error(`${porterName} declined your team invitation.`, {
+              duration: 5000,
+              icon: "❌",
+            });
+          }
+          // Refresh team data
+          refetch();
+          refetchPendingBookings();
+        },
+      },
+      token,
+    );
+
     return () => {
       socket.off("team-booking-request", onTeamBookingRequest);
       sseRef.current?.close();
     };
-  }, [refetch]);
+  }, [refetch, refetchPendingBookings, token]);
 
   const handleForward = async (bookingId) => {
     try {

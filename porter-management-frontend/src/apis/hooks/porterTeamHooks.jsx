@@ -12,6 +12,7 @@ import {
   respondToTeamInvitation,
   getPendingTeamJoinRequests,
   getMyPendingInvitations,
+  getInvitationHistory,
   removeTeamMember,
   browseAvailableTeams,
   createTeamBookingService,
@@ -119,6 +120,7 @@ export const useInvitePorterToTeam = () => {
       toast.success("Invitation sent to porter!");
       queryClient.invalidateQueries({ queryKey: ["search-individual-porters"] });
       queryClient.invalidateQueries({ queryKey: ["join-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["invitation-history"] });
     },
     onError: (error) => {
       toast.error(
@@ -166,6 +168,15 @@ export const useGetMyPendingInvitations = () =>
     queryFn: async () => {
       const response = await getMyPendingInvitations();
       return response?.data?.data;
+    },
+  });
+
+export const useGetInvitationHistory = () =>
+  useQuery({
+    queryKey: ["invitation-history"],
+    queryFn: async () => {
+      const response = await getInvitationHistory();
+      return response?.data?.data; // { accepted: [], declined: [] }
     },
   });
 

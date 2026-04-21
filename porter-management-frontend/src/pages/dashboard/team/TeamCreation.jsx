@@ -9,9 +9,13 @@ import {
   Trash2,
   Users,
   CheckCircle,
+  CheckCircle2,
+  XCircle,
   Search,
   Send,
   X,
+  Clock,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,6 +48,8 @@ import {
   useRemoveTeamMember,
   useSearchIndividualPorters,
   useInvitePorterToTeam,
+  useGetPendingTeamJoinRequests,
+  useGetInvitationHistory,
 } from "../../../apis/hooks/porterTeamHooks";
 import { usePorter } from "../../../hooks/porter/use-porter";
 
@@ -75,6 +81,10 @@ const TeamCreation = () => {
     useGetAllRequestedPorterByTeam(porter?.teamId);
   const { data: porterByTeamData, isFetching: porterByTeamFetching } =
     useGetPorterByTeam(porter?.teamId);
+  const { data: pendingInvitees, isFetching: pendingInviteesFetching } =
+    useGetPendingTeamJoinRequests();
+  const { data: invitationHistoryData, isFetching: historyFetching } =
+    useGetInvitationHistory();
 
   // Search individual porters — only fires when searchQuery is explicitly set
   const {
@@ -86,6 +96,10 @@ const TeamCreation = () => {
   const members = teamDashboard?.members || [];
   const requestedPorter = requestedPorterData?.data?.data || [];
   const searchedPorters = Array.isArray(searchResults) ? searchResults : [];
+  const pendingJoinRequests = Array.isArray(pendingInvitees) ? pendingInvitees : [];
+  const acceptedInvitations = invitationHistoryData?.accepted || [];
+  const declinedInvitations = invitationHistoryData?.declined || [];
+  const historyCount = acceptedInvitations.length + declinedInvitations.length;
 
   const {
     register,
@@ -157,7 +171,7 @@ const TeamCreation = () => {
     }
   };
 
-  const isLoading = teamDashboardFetching || requestedPorterFetching;
+  const isLoading = teamDashboardFetching || requestedPorterFetching || pendingInviteesFetching || historyFetching;
 
   return (
     <div className="w-full min-h-screen p-8 bg-gray-50">
@@ -171,39 +185,59 @@ const TeamCreation = () => {
           >
             <Users className="h-5 w-5" />
             Team Members
-            {members.length > 0 && (
+            {(members.length + pendingJoinRequests.length) > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {members.length}
+                {members.length + pendingJoinRequests.length}
               </Badge>
             )}
           </Button>
 
           {/* Pending requests tab */}
-          <Button
-            className={`gap-2 font-medium px-5 py-2.5 ${activeTab === "requests" ? "bg-primary hover:bg-primary/90 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
-            onClick={() => setActiveTab("requests")}
-          >
-            <UserPlus className="h-5 w-5" />
-            Pending Requests
-            {requestedPorter.length > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {requestedPorter.length}
-              </Badge>
-            )}
-          </Button>
+          {porter?.role === "owner" && (
+            <Button
+              className={`gap-2 font-medium px-5 py-2.5 ${activeTab === "requests" ? "bg-primary hover:bg-primary/90 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              onClick={() => setActiveTab("requests")}
+            >
+              <UserPlus className="h-5 w-5" />
+              Pending Requests
+              {requestedPorter.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {requestedPorter.length}
+                </Badge>
+              )}
+            </Button>
+          )}
 
           {/* NEW: Invite Porters tab */}
-          <Button
-            className={`gap-2 font-medium px-5 py-2.5 ${activeTab === "invite" ? "bg-primary hover:bg-primary/90 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
-            onClick={() => setActiveTab("invite")}
-          >
-            <Send className="h-5 w-5" />
-            Invite Porters
-          </Button>
+          {porter?.role === "owner" && (
+            <Button
+              className={`gap-2 font-medium px-5 py-2.5 ${activeTab === "invite" ? "bg-primary hover:bg-primary/90 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              onClick={() => setActiveTab("invite")}
+            >
+              <Send className="h-5 w-5" />
+              Invite Porters
+            </Button>
+          )}
+
+          {/* NEW: Invitation History tab */}
+          {porter?.role === "owner" && (
+            <Button
+              className={`gap-2 font-medium px-5 py-2.5 ${activeTab === "history" ? "bg-primary hover:bg-primary/90 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+              onClick={() => setActiveTab("history")}
+            >
+              <History className="h-5 w-5" />
+              Invitation History
+              {historyCount > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {historyCount}
+                </Badge>
+              )}
+            </Button>
+          )}
         </div>
 
-        {/* Legacy: Add member via registration */}
-        {activeTab !== "invite" && (
+        {/* Legacy: Add member via registration — hidden on invite/history tabs */}
+        {porter?.role === "owner" && activeTab !== "invite" && activeTab !== "history" && (
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2 bg-primary hover:bg-primary/90 text-white font-medium px-6 py-2.5">
@@ -214,11 +248,12 @@ const TeamCreation = () => {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold">
-                  Add Team Member
+                  Invite Existing Porter
                 </DialogTitle>
                 <DialogDescription>
-                  Send a registration invitation to a new porter via email &
-                  phone.
+                  Enter the contact details of a registered porter to send them
+                  a team invitation. They will receive a notification to accept
+                  or decline.
                 </DialogDescription>
               </DialogHeader>
 
@@ -522,165 +557,281 @@ const TeamCreation = () => {
         </div>
       )}
 
-      {/* ── MEMBERS & REQUESTS TABS ── */}
+      {/* ── MEMBERS, REQUESTS & HISTORY TABS ── */}
       {activeTab !== "invite" && (
         <Card className="shadow-md">
-          <CardHeader className="bg-white border-b">
+          <CardHeader className="bg-white border-b flex flex-row items-center justify-between">
             <CardTitle className="text-xl font-semibold">
               {activeTab === "members"
                 ? "Team Members"
-                : "Pending Registration Requests"}
+                : activeTab === "requests"
+                  ? "Pending Registration Requests"
+                  : "Invitation History"}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {activeTab === "members" ? (
-                    <>
-                      <TableHead className="font-semibold">Name</TableHead>
-                      <TableHead className="font-semibold">Email</TableHead>
-                      <TableHead className="font-semibold">Phone</TableHead>
-                      <TableHead className="font-semibold">Role</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Joined</TableHead>
-                      <TableHead className="text-right font-semibold">
-                        Actions
-                      </TableHead>
-                    </>
+            {activeTab === "history" ? (
+              <div className="p-6 space-y-8">
+                {/* Accepted section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-green-700 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Accepted Invitations ({acceptedInvitations.length})
+                  </h3>
+                  {acceptedInvitations.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic ml-6">No accepted invitations yet.</p>
                   ) : (
-                    <>
-                      <TableHead className="font-semibold">Name</TableHead>
-                      <TableHead className="font-semibold">Email</TableHead>
-                      <TableHead className="font-semibold">Phone</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Requested</TableHead>
-                    </>
+                    <Table>
+                      <TableBody>
+                        {acceptedInvitations.map((inv) => (
+                          <TableRow key={inv._id}>
+                            <TableCell className="w-10">
+                              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-xs">
+                                {(inv.porterId?.userId?.name || "P").charAt(0).toUpperCase()}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {inv.porterId?.userId?.name}
+                            </TableCell>
+                            <TableCell className="text-gray-500">{inv.porterId?.userId?.email}</TableCell>
+                            <TableCell className="text-right text-xs text-gray-400">
+                              Accepted {new Date(inv.updatedAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
+                </div>
+
+                {/* Declined section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-red-700 flex items-center gap-2">
+                    <XCircle className="h-4 w-4" />
+                    Declined Invitations ({declinedInvitations.length})
+                  </h3>
+                  {declinedInvitations.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic ml-6">No declined invitations yet.</p>
+                  ) : (
+                    <Table>
+                      <TableBody>
+                        {declinedInvitations.map((inv) => (
+                          <TableRow key={inv._id}>
+                            <TableCell className="w-10">
+                              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-xs">
+                                {(inv.porterId?.userId?.name || "P").charAt(0).toUpperCase()}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium text-gray-700">
+                              {inv.porterId?.userId?.name}
+                            </TableCell>
+                            <TableCell className="text-gray-500">{inv.porterId?.userId?.email}</TableCell>
+                            <TableCell className="text-right text-xs text-gray-400">
+                              Declined {new Date(inv.updatedAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      colSpan={activeTab === "members" ? 7 : 5}
-                      className="text-center py-12"
-                    >
-                      <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-                    </TableCell>
+                    {activeTab === "members" ? (
+                      <>
+                        <TableHead className="font-semibold">Name</TableHead>
+                        <TableHead className="font-semibold">Email</TableHead>
+                        <TableHead className="font-semibold">Phone</TableHead>
+                        <TableHead className="font-semibold">Role</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Joined</TableHead>
+                        <TableHead className="text-right font-semibold">
+                          Actions
+                        </TableHead>
+                      </>
+                    ) : (
+                      <>
+                        <TableHead className="font-semibold">Name</TableHead>
+                        <TableHead className="font-semibold">Email</TableHead>
+                        <TableHead className="font-semibold">Phone</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Requested</TableHead>
+                      </>
+                    )}
                   </TableRow>
-                ) : activeTab === "members" ? (
-                  members.length === 0 ? (
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={activeTab === "members" ? 7 : 5}
+                        className="text-center py-12"
+                      >
+                        <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : activeTab === "members" ? (
+                    members.length === 0 && pendingJoinRequests.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="text-center py-12 text-gray-500"
+                        >
+                          <div className="flex flex-col items-center gap-3">
+                            <Users className="h-16 w-16 text-gray-300" />
+                            <p className="text-lg font-medium">
+                              No team members yet
+                            </p>
+                            <p className="text-sm">
+                              Use the &quot;Invite Porters&quot; tab to recruit individual
+                              porters
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      <>
+                        {/* ── Pending invitees (invited but not yet accepted) ── */}
+                        {pendingJoinRequests.map((req) => {
+                          const name = req.porterId?.userId?.name || "—";
+                          const email = req.porterId?.userId?.email || "—";
+                          const phone = req.porterId?.userId?.phone || "—";
+                          return (
+                            <TableRow
+                              key={req._id}
+                              className="hover:bg-amber-50 bg-amber-50/40"
+                            >
+                              <TableCell className="font-medium capitalize">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-sm">
+                                    {name.charAt(0).toUpperCase()}
+                                  </div>
+                                  {name}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-gray-500 italic">
+                                {email}
+                              </TableCell>
+                              <TableCell className="text-gray-500">
+                                {phone}
+                              </TableCell>
+                              <TableCell>
+                                <Badge className="bg-gray-100 text-gray-400">
+                                  —
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className="bg-amber-100 text-amber-700 border border-amber-200 flex items-center gap-1 w-fit">
+                                  <Clock className="h-3 w-3" />
+                                  Invitation Pending
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-gray-400 text-sm">
+                                {new Date(req.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell />
+                            </TableRow>
+                          );
+                        })}
+
+                        {/* ── Accepted members ── */}
+                        {members.map((member) => (
+                          <TableRow key={member._id} className="hover:bg-gray-50">
+                            <TableCell className="font-medium capitalize">
+                              {member.name}
+                            </TableCell>
+                            <TableCell>{member.email}</TableCell>
+                            <TableCell>{member.phone}</TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  member.role === "owner"
+                                    ? "bg-primary/10 text-primary"
+                                    : "bg-gray-100 text-gray-600"
+                                }
+                              >
+                                {member.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  member.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }
+                              >
+                                {member.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(member.joinedAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {member.role !== "owner" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={isRemovingMember}
+                                  onClick={() => handleRemoveMember(member._id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>
+                    )
+                  ) : requestedPorter.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
                         className="text-center py-12 text-gray-500"
                       >
                         <div className="flex flex-col items-center gap-3">
-                          <Users className="h-16 w-16 text-gray-300" />
+                          <CheckCircle className="h-16 w-16 text-gray-300" />
                           <p className="text-lg font-medium">
-                            No team members yet
+                            No pending requests
                           </p>
                           <p className="text-sm">
-                            Use the "Invite Porters" tab to recruit individual
-                            porters
+                            All registration requests have been processed
                           </p>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    members.map((member) => (
-                      <TableRow key={member._id} className="hover:bg-gray-50">
+                    requestedPorter.map((request) => (
+                      <TableRow key={request._id} className="hover:bg-gray-50">
                         <TableCell className="font-medium capitalize">
-                          {member.name}
+                          {request.userName || request.porterId?.userId?.name}
                         </TableCell>
-                        <TableCell>{member.email}</TableCell>
-                        <TableCell>{member.phone}</TableCell>
                         <TableCell>
-                          <Badge
-                            className={
-                              member.role === "owner"
-                                ? "bg-primary/10 text-primary"
-                                : "bg-gray-100 text-gray-600"
-                            }
-                          >
-                            {member.role}
-                          </Badge>
+                          {request.email || request.porterId?.userId?.email}
+                        </TableCell>
+                        <TableCell>
+                          {request.phone || request.porterId?.userId?.phone}
                         </TableCell>
                         <TableCell>
                           <Badge
-                            className={
-                              member.isActive
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }
+                            variant="outline"
+                            className="bg-orange-100 text-orange-700 border-orange-200"
                           >
-                            {member.isActive ? "Active" : "Inactive"}
+                            {request.status}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(member.joinedAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {member.role !== "owner" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={isRemovingMember}
-                              onClick={() => handleRemoveMember(member._id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          )}
+                          {new Date(request.createdAt).toLocaleDateString()}
                         </TableCell>
                       </TableRow>
                     ))
-                  )
-                ) : requestedPorter.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-12 text-gray-500"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <CheckCircle className="h-16 w-16 text-gray-300" />
-                        <p className="text-lg font-medium">
-                          No pending requests
-                        </p>
-                        <p className="text-sm">
-                          All registration requests have been processed
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  requestedPorter.map((request) => (
-                    <TableRow key={request._id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium capitalize">
-                        {request.userName || request.porterId?.userId?.name}
-                      </TableCell>
-                      <TableCell>
-                        {request.email || request.porterId?.userId?.email}
-                      </TableCell>
-                      <TableCell>
-                        {request.phone || request.porterId?.userId?.phone}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-orange-100 text-orange-700 border-orange-200"
-                        >
-                          {request.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(request.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       )}

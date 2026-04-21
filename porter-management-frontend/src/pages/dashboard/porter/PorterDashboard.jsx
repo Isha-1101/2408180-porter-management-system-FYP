@@ -24,6 +24,7 @@ import {
 import {
   useTeamMemberRespond,
   useGetMyPendingInvitations,
+  useRespondToTeamInvitation,
 } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
 import { createSSEConnection } from "../../../utils/sse";
@@ -55,6 +56,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../../components/ui/dialog";
+import { toast } from "react-hot-toast";
 
 export default function PorterDashboard() {
   const { porter, isLoading: porterLoading } = usePorter();
@@ -66,12 +76,13 @@ export default function PorterDashboard() {
   const [filter, setFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("distance");
   const [porterLocation, setPorterLocation] = useState(null);
+  const [inviteModalData, setInviteModalData] = useState(null);
 
   const intervalRef = useRef(null);
   const sseRef = useRef(null);
 
   // Team invitations (for individual porters who have been invited to a team)
-  const { data: pendingInvitations } = useGetMyPendingInvitations();
+  const { data: pendingInvitations, refetch: refetchInvitations } = useGetMyPendingInvitations();
   const invitationCount = Array.isArray(pendingInvitations)
     ? pendingInvitations.length
     : 0;
@@ -91,6 +102,9 @@ export default function PorterDashboard() {
 
   const { mutateAsync: teamMemberRespond, isPending: teamMemberResponding } =
     useTeamMemberRespond();
+
+  const { mutateAsync: respondToInvite, isPending: invitationResponding } =
+    useRespondToTeamInvitation();
 
   // Derive request list = pending requests from API + live socket requests merged
   const apiRequests = apiData?.pendingRequests || [];
@@ -238,6 +252,12 @@ export default function PorterDashboard() {
           });
           refetch();
         },
+        "team-invitation": (data) => {
+          // data: { requestId, teamId, invitedBy, message }
+          setInviteModalData(data);
+          refetchInvitations();
+          toast.success("New Team Invitation received!");
+        },
       },
       token,
     );
@@ -342,8 +362,73 @@ export default function PorterDashboard() {
     );
   }
 
+  const handleInvitationResponse = async (action) => {
+    if (!inviteModalData?.requestId) return;
+    try {
+      await respondToInvite({
+        requestId: inviteModalData.requestId,
+        action,
+      });
+      setInviteModalData(null);
+      refetchInvitations();
+    } catch (err) {
+      // error handled by hook toast
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-4">
+      {/* Real-time Team Invitation Modal */}
+      <Dialog
+        open={!!inviteModalData}
+        onOpenChange={(open) => !open && setInviteModalData(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Team Invitation
+            </DialogTitle>
+            <DialogDescription>
+              {inviteModalData?.message ||
+                "A team owner has invited you to join their porter team."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-blue-50 p-4 rounded-lg flex items-start gap-3 border border-blue-100">
+            <Mail className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-blue-800">
+                You've been recruited!
+              </p>
+              <p className="text-xs text-blue-600 mt-0.5">
+                Accepting this will link your account to the team. You can view
+                full details in the Invitations page.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => handleInvitationResponse("DECLINED")}
+              disabled={invitationResponding}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Decline
+            </Button>
+            <Button
+              onClick={() => handleInvitationResponse("ACCEPTED")}
+              disabled={invitationResponding}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {invitationResponding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Accept & Join"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Invitation Banner — shown only for individual porters with pending invitations */}
       {invitationCount > 0 && (
         <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 gap-3">

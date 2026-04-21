@@ -22,7 +22,7 @@ const validate = (data) => ({
 
   phone: !data?.phone
     ? "Enter a valid 10-digit phone number"
-    : /^(98|97)\d{8}$/.test(data.phone)
+    : /^\d{10}$/.test(data.phone)
     ? ""
     : "Enter a valid 10-digit phone number",
 
