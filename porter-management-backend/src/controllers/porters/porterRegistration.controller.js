@@ -15,11 +15,10 @@ export const startRegistration = async (req, res) => {
 
     const targetUserId = req.user.id;
 
-    // Check existing registration
+    // Check for any active or recent registration
     const existingRegistration = await PorterRegistration.findOne({
       userId: targetUserId,
-      status: { $ne: "submitted" },
-    });
+    }).sort({ createdAt: -1 });
 
     if (existingRegistration) {
       if (!existingRegistration.registrationId) {
@@ -29,15 +28,17 @@ export const startRegistration = async (req, res) => {
             "Existing registration found without registrationId. Please contact support.",
         });
       }
-    }
-    if (existingRegistration) {
-      return res.status(200).json({
-        success: true,
-        registrationId: existingRegistration.registrationId,
-        teamId: existingRegistration.teamId,
-        role: existingRegistration.role,
-        message: "Resuming existing registration",
-      });
+      
+      // If the registration is active or pending, don't create a new one
+      if (["draft", "in_progress", "submitted", "approved"].includes(existingRegistration.status)) {
+        return res.status(200).json({
+          success: true,
+          registrationId: existingRegistration.registrationId,
+          teamId: existingRegistration.teamId,
+          role: existingRegistration.role,
+          message: "Returning existing active registration",
+        });
+      }
     }
 
     let finalTeamId = null;

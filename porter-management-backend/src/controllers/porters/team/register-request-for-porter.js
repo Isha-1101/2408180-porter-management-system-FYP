@@ -8,8 +8,11 @@
 import bcrypt from "bcryptjs";
 import porterTeam from "../../../models/porter/porterTeam.js";
 import { RequestedUserPorter } from "../../../models/porter/requested-user-porter.js";
+import TeamJoinRequest from "../../../models/TeamJoinRequest.js";
 import User from "../../../models/User.js";
 import registerApproveMailController from "../../../utils/nodeMailer/controller/registerApproveMailController.js";
+import Porters from "../../../models/porter/Porters.js";
+import sseService from "../../../utils/sse-service.js";
 /**
  * Team requests to register a new porter
  * @param {Object} req - The request object
@@ -28,7 +31,44 @@ export const registerRequestForPorter = async (req, res) => {
     }
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
-      return res.status(404).json({ message: "User already exists" });
+      // Check if user is already a porter
+      const existingPorter = await Porters.findOne({ userId: existingUser._id });
+      if (existingPorter) {
+        if (existingPorter.teamId) {
+          return res.status(400).json({ message: "Once one porter is added in one team, it cannot be added in another team" });
+        }
+        
+        // Check if an invitation is already pending
+        const existingRequest = await TeamJoinRequest.findOne({
+          porterId: existingPorter._id,
+          teamId: team._id,
+          status: "PENDING",
+        });
+
+        if (existingRequest) {
+          return res.status(400).json({ message: "An invitation is already pending for this porter" });
+        }
+
+        // Create a join request instead of adding directly
+        const newJoinRequest = await TeamJoinRequest.create({
+          porterId: existingPorter._id,
+          teamId: team._id,
+          invitedBy: req.user.id,
+          status: "PENDING",
+        });
+
+        // Send real-time notification
+        sseService.sendToPorter(existingPorter._id, "team-invitation", {
+          requestId: newJoinRequest._id,
+          teamId: team._id,
+          invitedBy: req.user.id,
+          message: "You have been invited to join a team!"
+        });
+
+        return res.status(200).json({ message: "Invitation sent successfully! The porter will be added once they approve." });
+      }
+
+      return res.status(400).json({ message: "User already exists using this email or phone" });
     }
     const newRequest = new RequestedUserPorter({
       teamId: team._id,

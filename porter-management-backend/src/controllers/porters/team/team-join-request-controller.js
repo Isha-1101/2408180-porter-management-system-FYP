@@ -3,6 +3,7 @@ import Porters from "../../../models/porter/Porters.js";
 import PorterTeam from "../../../models/porter/porterTeam.js";
 import TeamJoinRequest from "../../../models/TeamJoinRequest.js";
 import User from "../../../models/User.js";
+import sseService from "../../../utils/sse-service.js";
 
 export const searchIndividualPorters = async (req, res) => {
   try {
@@ -133,6 +134,16 @@ export const invitePorterToTeam = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Send real-time notification to the invited porter
+    try {
+      sseService.sendToPorter(targetPorter._id, "team-invitation", {
+        requestId: joinRequest._id,
+        teamId: teamLead.teamId,
+      });
+    } catch (err) {
+      console.error("SSE Error:", err);
+    }
+
     return res.status(201).json({
       success: true,
       message: "Invitation sent successfully",
@@ -214,27 +225,42 @@ export const respondToTeamInvitation = async (req, res) => {
         porter.role = "worker";
         await porter.save({ session });
 
+        // Push into team.members[] so joinedAt & isActive are stored
+        team.members.push({
+          porterId: porter._id,
+          joinedAt: new Date(),
+          isActive: true,
+        });
         team.noOfMember += 1;
         team.noOfAvailableMember = (team.noOfAvailableMember || 0) + 1;
         await team.save({ session });
 
-        const teamOwner = await Porters.findOne({
-          teamId: team._id,
-          role: "owner",
-        }).session(session);
-        if (teamOwner) {
-          const teamOwnerUser = await User.findById(teamOwner.userId).session(
-            session,
-          );
-          if (teamOwnerUser) {
-            teamOwnerUser.teamId = team._id;
-            teamOwnerUser.registerdBy = "porter_team";
-            await teamOwnerUser.save({ session });
-          }
-        }
+        // Note: ownerUser and team details are usually set during team creation, 
+        // no need to re-save them every time a member joins.
       }
     }
 
+    // Send notification back to team leader (with porter name for toast)
+    try {
+      const currentPorter = await Porters.findById(currentPorterId).populate("userId", "name");
+      const teamLead = await Porters.findOne({
+        teamId: joinRequest.teamId,
+        role: "owner",
+      });
+      if (teamLead) {
+        sseService.sendToPorter(teamLead._id, "invitation-response", {
+          requestId: joinRequest._id,
+          action,
+          porterId: currentPorterId,
+          porterName: currentPorter?.userId?.name || "Porter",
+          reason,
+        });
+      }
+    } catch (e) {
+      console.error("SSE notification error (invitation-response):", e);
+    }
+
+    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
@@ -246,12 +272,14 @@ export const respondToTeamInvitation = async (req, res) => {
           : "Invitation declined.",
     });
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     session.endSession();
     console.error("Error responding to team invitation:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to respond to invitation",
+      message: error.message || "Failed to respond to invitation",
       error: error.message,
     });
   }
@@ -378,6 +406,7 @@ export const removeTeamMember = async (req, res) => {
       teamLead.teamId,
       {
         $inc: { noOfMember: -1, noOfAvailableMember: -1 },
+        $pull: { members: { porterId: porterId } },
       },
       { session },
     );
@@ -401,6 +430,49 @@ export const removeTeamMember = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to remove team member",
+      error: error.message,
+    });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Invitation History (for team owner — Accepted + Declined)
+// ─────────────────────────────────────────────────────────────────────────────
+export const getInvitationHistory = async (req, res) => {
+  try {
+    const currentPorterId = req.user.porterId;
+
+    const teamLead = await Porters.findById(currentPorterId);
+    if (!teamLead || teamLead.role !== "owner") {
+      return res.status(403).json({
+        success: false,
+        message: "Only team owners can view invitation history",
+      });
+    }
+
+    const history = await TeamJoinRequest.find({
+      teamId: teamLead.teamId,
+      status: { $in: ["ACCEPTED", "DECLINED"] },
+    })
+      .populate("porterId", "userId status")
+      .populate({
+        path: "porterId",
+        populate: { path: "userId", select: "name email phone" },
+      })
+      .sort({ respondedAt: -1 });
+
+    const accepted = history.filter((r) => r.status === "ACCEPTED");
+    const declined = history.filter((r) => r.status === "DECLINED");
+
+    return res.status(200).json({
+      success: true,
+      data: { accepted, declined },
+    });
+  } catch (error) {
+    console.error("Error fetching invitation history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch invitation history",
       error: error.message,
     });
   }

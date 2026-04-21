@@ -16,6 +16,7 @@ import {
   getPendingTeamJoinRequests,
   getMyPendingInvitations,
   removeTeamMember,
+  getInvitationHistory,
 } from "../../controllers/porters/team/team-join-request-controller.js";
 import {
   browseAvailableTeams,
@@ -97,6 +98,16 @@ teamRouter.get(
   authorizeRole("porter"),
   attachPorterId,
   getMyPendingInvitations,
+);
+
+// Invitation history (Accepted + Declined) — team owner only
+teamRouter.get(
+  "/invitation-history",
+  authenticate,
+  authorizeRole("porter"),
+  attachPorterId,
+  isPorterRegisteredAsTeam,
+  getInvitationHistory,
 );
 
 teamRouter.delete(
