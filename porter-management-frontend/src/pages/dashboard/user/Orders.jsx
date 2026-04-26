@@ -33,6 +33,7 @@ import {
   Eye,
 } from "lucide-react";
 import PageLayout from "../../../components/common/PageLayout";
+import { AddressLine } from "../../../components/common/AddressLine";
 
 // ────────────────────────────────────
 // Star Rating Component
@@ -204,15 +205,11 @@ const BookingCard = ({ booking, onRate, onTrack }) => {
             <div className="space-y-1.5 mb-3">
               <div className="flex items-start gap-2 text-sm">
                 <MapPin className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                <span className="text-gray-700 line-clamp-1">
-                  {booking.pickup?.address || "Pickup location"}
-                </span>
+                <AddressLine location={booking.pickup} className="flex-1 min-w-0" />
               </div>
               <div className="flex items-start gap-2 text-sm">
                 <MapPin className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
-                <span className="text-gray-700 line-clamp-1">
-                  {booking.drop?.address || "Drop location"}
-                </span>
+                <AddressLine location={booking.drop} className="flex-1 min-w-0" />
               </div>
             </div>
 

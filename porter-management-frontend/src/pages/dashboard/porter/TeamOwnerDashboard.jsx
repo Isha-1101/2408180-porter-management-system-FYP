@@ -391,31 +391,28 @@ export default function TeamOwnerDashboard() {
                     const bookingId = isLive
                       ? request.bookingId
                       : request.bookingId?._id || request._id;
-                    const pickup = isLive
-                      ? request.pickup
-                      : request.bookingId?.pickup;
-                    const drop = isLive ? request.drop : request.bookingId?.drop;
-                    const weightKg = isLive
-                      ? request.weight ?? request.weightKg
-                      : request.bookingId?.weightKg;
-                    const portersRequired = isLive
-                      ? request.portersRequired
-                      : request.bookingId?.teamSize;
-                    const workDescription = isLive
-                      ? request.workDescription
-                      : request.bookingId?.workDescription;
-                    const bookingDate = isLive
-                      ? request.bookingDate
-                      : request.bookingId?.bookingDate;
-                    const bookingTime = isLive
-                      ? request.bookingTime
-                      : request.bookingId?.bookingTime;
-                    const hasVehicle = isLive
-                      ? request.hasVehicle
-                      : request.bookingId?.hasVehicle;
-                    const vehicleType = isLive
-                      ? request.vehicleType
-                      : request.bookingId?.vehicleType;
+                    // For live requests: data is at the top level (e.g. request.pickup).
+                    // For API-sourced requests mapped in teamLeadRequests: pickup/drop etc.
+                    // are also hoisted to the top level (request.pickup), but bookingId is
+                    // just an ID string. Fall back gracefully for both shapes.
+                    const pickup =
+                      request.pickup ?? request.bookingId?.pickup;
+                    const drop =
+                      request.drop ?? request.bookingId?.drop;
+                    const weightKg =
+                      request.weightKg ?? request.weight ?? request.bookingId?.weightKg;
+                    const portersRequired =
+                      request.portersRequired ?? request.bookingId?.teamSize;
+                    const workDescription =
+                      request.workDescription ?? request.bookingId?.workDescription;
+                    const bookingDate =
+                      request.bookingDate ?? request.bookingId?.bookingDate;
+                    const bookingTime =
+                      request.bookingTime ?? request.bookingId?.bookingTime;
+                    const hasVehicle =
+                      request.hasVehicle ?? request.bookingId?.hasVehicle;
+                    const vehicleType =
+                      request.vehicleType ?? request.bookingId?.vehicleType;
 
                     return (
                       <Card

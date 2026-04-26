@@ -128,7 +128,9 @@ const TeamBookingTracking = () => {
   const { data: teamStatusData } = useGetTeamBookingStatus(bookingId);
   const { mutateAsync: cancelBooking, isPending: cancelling } = useCancelBooking();
 
-  const booking = bookingData || null;
+  // useGetBookingById returns response?.data?.data which is { booking, teamSelection }
+  // unwrap the actual booking document
+  const booking = bookingData?.booking || bookingData || null;
   const currentStatus = localStatus || booking?.status || "PENDING_TEAM_REVIEW";
   const activeStep = getActiveStepIndex(currentStatus);
   const isCancellable = CANCELLABLE_STATUSES.includes(currentStatus);
