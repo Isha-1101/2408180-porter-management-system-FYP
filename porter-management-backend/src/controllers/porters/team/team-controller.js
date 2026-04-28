@@ -209,3 +209,42 @@ export const getTeamPendingBookings = async (req, res) => {
     });
   }
 };
+
+export const getTeamQuorumReachedBookings = async (req, res) => {
+  try {
+    const ownerPorter = await Porters.findOne({
+      userId: req.user.id,
+      role: "owner",
+    });
+
+    if (!ownerPorter) {
+      return res.status(404).json({
+        success: false,
+        message: "Team owner not found",
+      });
+    }
+
+    const bookings = await PorterBooking.find({
+      assignedTeamId: ownerPorter.teamId,
+      status: "AWAITING_OWNER_CONFIRMATION",
+    })
+      .populate("userId", "name email phone")
+      .populate({
+        path: "memberResponses.porterId",
+        populate: { path: "userId", select: "name email phone" },
+      })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+    });
+  } catch (error) {
+    console.error("Error fetching quorum reached bookings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch quorum reached bookings",
+      error: error.message,
+    });
+  }
+};

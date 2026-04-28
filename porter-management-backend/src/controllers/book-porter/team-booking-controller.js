@@ -711,6 +711,81 @@ export const startTeamBooking = async (req, res) => {
   }
 };
 
+export const userStartTeamBooking = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const userId = req.user.id;
+
+    const booking = await PorterBooking.findById(bookingId);
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
+    }
+
+    if (booking.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only start bookings that belong to you",
+      });
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking must be CONFIRMED before starting the job",
+      });
+    }
+
+    booking.status = "IN_PROGRESS";
+    booking.startedAt = new Date();
+    await booking.save();
+
+    const io = getIO();
+
+    io.to(`user:${userId.toString()}`).emit("team-booking-started", {
+      bookingId: booking._id,
+      status: "IN_PROGRESS",
+      message: "Your team has started the job!",
+    });
+
+    if (booking.assignedPorters) {
+      for (const assignedPorter of booking.assignedPorters) {
+        io.to(`porter:${assignedPorter.porterId.toString()}`).emit("team-booking-started", {
+          bookingId: booking._id,
+          status: "IN_PROGRESS",
+          message: "The journey has started!",
+        });
+      }
+    }
+
+    const teamLead = await Porters.findOne({
+      teamId: booking.assignedTeamId,
+      role: "owner",
+    });
+    if (teamLead) {
+      io.to(`porter:${teamLead._id.toString()}`).emit("team-booking-started", {
+        bookingId: booking._id,
+        status: "IN_PROGRESS",
+        message: "The user has started the journey!",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Team booking started successfully",
+      data: { booking },
+    });
+  } catch (error) {
+    console.error("Error starting team booking:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to start team booking",
+      error: error.message,
+    });
+  }
+};
+
 export const teamOwnerMarkComplete = async (req, res) => {
   try {
     const bookingId = req.params.id;

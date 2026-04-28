@@ -16,6 +16,7 @@ import {
   teamOwnerCancelBooking,
   teamOwnerMarkComplete,
   startTeamBooking,
+  userStartTeamBooking,
   getTeamBookingStatus,
 } from "../controllers/book-porter/team-booking-controller.js";
 import {
@@ -181,6 +182,13 @@ router.post("/team/:id/start", ...porterOnly, startTeamBooking);
  * @access  Private (Team Owner Porter)
  */
 router.post("/team/:id/complete", ...porterOnly, teamOwnerMarkComplete);
+
+/**
+ * @route   POST /api/bookings/team/:id/user/start
+ * @desc    User starts the team booking journey (CONFIRMED -> IN_PROGRESS)
+ * @access  Private (User)
+ */
+router.post("/team/:id/user/start", ...userOnly, userStartTeamBooking);
 
 // ============================================
 // COMMON BOOKING ROUTES

@@ -8,6 +8,7 @@ import {
   getTeamDashboard,
   getTeamBookingHistory,
   getTeamPendingBookings,
+  getTeamQuorumReachedBookings,
 } from "../../controllers/porters/team/team-controller.js";
 import {
   searchIndividualPorters,
@@ -55,6 +56,15 @@ teamRouter.get(
   attachPorterId,
   isPorterRegisteredAsTeam,
   getTeamPendingBookings,
+);
+
+teamRouter.get(
+  "/quorum-reached-bookings",
+  authenticate,
+  authorizeRole("porter"),
+  attachPorterId,
+  isPorterRegisteredAsTeam,
+  getTeamQuorumReachedBookings,
 );
 
 // ─── Team Join Requests (US-005) ─────────────────────────────────────────────
