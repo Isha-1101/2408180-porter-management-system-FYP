@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageLayout from "../../../components/common/PageLayout";
-import { useGetPorterBookingHistory } from "../../../apis/hooks/portersHooks";
+import { useGetPorterBookings } from "../../../apis/hooks/porterBookingsHooks";
 
 const STATUS_CONFIG = {
   COMPLETED: {
@@ -53,14 +53,28 @@ const PorterBookingHistory = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useGetPorterBookingHistory({
-    status: statusFilter === "all" ? undefined : statusFilter,
-    page,
-    limit: 10,
-  });
+  const { data, isLoading } = useGetPorterBookings();
 
-  const bookings = data?.bookings || [];
-  const pagination = data?.pagination || {};
+  // Filter bookings based on status and current page
+  const allBookings = data?.bookings || [];
+  let filteredBookings = allBookings;
+  
+  if (statusFilter !== "all") {
+    filteredBookings = allBookings.filter(b => b.status === statusFilter);
+  }
+  
+  // Implement client-side pagination
+  const limit = 10;
+  const totalPages = Math.ceil(filteredBookings.length / limit);
+  const startIdx = (page - 1) * limit;
+  const bookings = filteredBookings.slice(startIdx, startIdx + limit);
+  
+  const pagination = {
+    total: filteredBookings.length,
+    page,
+    limit,
+    totalPages,
+  };
 
   const handleViewBooking = (booking) => {
     navigate("/dashboard/porters/accepted-booking", {
