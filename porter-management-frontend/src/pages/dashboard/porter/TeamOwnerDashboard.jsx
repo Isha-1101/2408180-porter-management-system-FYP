@@ -31,6 +31,10 @@ import {
   Calendar,
   Send,
   Play,
+  CheckCircle2,
+  AlertCircle,
+  ThumbsUp,
+  Ban,
 } from "lucide-react";
 import { usePorter } from "../../../hooks/porter/use-porter";
 import { useGetPorterBookings } from "../../../apis/hooks/porterBookingsHooks";
@@ -38,8 +42,11 @@ import {
   useTeamOwnerReviewBooking,
   useGetTeamDashboard,
   useGetTeamPendingBookings,
+  useGetTeamQuorumReachedBookings,
   useStartTeamBooking,
   useGetTeamBookingHistory,
+  useTeamOwnerConfirmBooking,
+  useTeamOwnerCancelBooking,
 } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
 import { createSSEConnection } from "../../../utils/sse";
@@ -104,6 +111,14 @@ export default function TeamOwnerDashboard() {
   const { mutateAsync: startTeamBooking, isPending: startingJob } =
     useStartTeamBooking();
 
+  const { mutateAsync: confirmBooking, isPending: confirming } = useTeamOwnerConfirmBooking();
+  const { mutateAsync: cancelBooking, isPending: cancelling } = useTeamOwnerCancelBooking();
+
+  const {
+    data: quorumReachedBookings,
+    refetch: refetchQuorumBookings,
+  } = useGetTeamQuorumReachedBookings();
+
   const apiRequests = apiData?.pendingRequests || [];
 
   // Active team bookings for schedule tab — filter server-side history to active statuses
@@ -122,6 +137,7 @@ export default function TeamOwnerDashboard() {
   //  2. Merge in any live socket requests not yet in the API list
   //     (in-flight notifications that arrived before the API caught up)
   const apiPendingBookings = Array.isArray(pendingBookings) ? pendingBookings : [];
+  const apiQuorumBookings = Array.isArray(quorumReachedBookings) ? quorumReachedBookings : [];
 
   const teamLeadRequests = [
     // API bookings formatted as request objects
@@ -191,16 +207,26 @@ export default function TeamOwnerDashboard() {
           // Refresh team data
           refetch();
           refetchPendingBookings();
+          refetchQuorumBookings();
         },
       },
       token,
     );
 
+    socket.on("team-quorum-reached", (data) => {
+      toast.success(`Quorum reached for booking #${String(data.bookingId).slice(-6).toUpperCase()}!`, {
+        duration: 6000,
+        icon: "✅",
+      });
+      refetchQuorumBookings();
+    });
+
     return () => {
       socket.off("team-booking-request", onTeamBookingRequest);
+      socket.off("team-quorum-reached");
       sseRef.current?.close();
     };
-  }, [refetch, refetchPendingBookings, token]);
+  }, [refetch, refetchPendingBookings, refetchQuorumBookings, token]);
 
   const handleForward = async (bookingId) => {
     try {
@@ -219,6 +245,26 @@ export default function TeamOwnerDashboard() {
       setLiveRequests((prev) => prev.filter((r) => String(r.bookingId) !== String(bookingId)));
       refetch();
       refetchPendingBookings();
+      refetchQuorumBookings();
+    } catch {
+      /* toasted by hook */
+    }
+  };
+
+  const handleQuorumAccept = async (bookingId) => {
+    try {
+      await confirmBooking(bookingId);
+      refetch();
+      refetchQuorumBookings();
+    } catch {
+      /* toasted by hook */
+    }
+  };
+
+  const handleQuorumCancel = async (bookingId) => {
+    try {
+      await cancelBooking(bookingId);
+      refetchQuorumBookings();
     } catch {
       /* toasted by hook */
     }
@@ -248,7 +294,7 @@ export default function TeamOwnerDashboard() {
             Manage booking requests, team members, and schedule.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { refetch(); refetchPendingBookings(); }}>
+        <Button variant="outline" size="sm" onClick={() => { refetch(); refetchPendingBookings(); refetchQuorumBookings(); }}>
           <RefreshCw
             className={`h-4 w-4 mr-2 ${bookingsLoading ? "animate-spin" : ""}`}
           />
@@ -305,9 +351,9 @@ export default function TeamOwnerDashboard() {
         >
           <Bell className="w-4 h-4" />
           Requests
-          {teamLeadRequests.length > 0 && (
+          {(teamLeadRequests.length > 0 || apiQuorumBookings.length > 0) && (
             <span className="ml-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-              {teamLeadRequests.length}
+              {teamLeadRequests.length + apiQuorumBookings.length}
             </span>
           )}
         </button>
@@ -361,18 +407,18 @@ export default function TeamOwnerDashboard() {
               </CardTitle>
             </div>
             <CardDescription>
-              Review incoming booking requests. Forward to your team or decline.
+              Review incoming booking requests. Forward to your team or decline. Bookings where quorum is reached will appear here for your confirmation.
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <ScrollArea className="h-[calc(100vh-28rem)] min-h-[300px] pr-2">
-              {bookingsLoading && teamLeadRequests.length === 0 ? (
+              {bookingsLoading && teamLeadRequests.length === 0 && apiQuorumBookings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
                   <p className="text-gray-500">Loading requests…</p>
                 </div>
-              ) : teamLeadRequests.length === 0 ? (
+              ) : teamLeadRequests.length === 0 && apiQuorumBookings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
                   <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
                     <Bell className="w-8 h-8 text-gray-400" />
@@ -385,7 +431,7 @@ export default function TeamOwnerDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {teamLeadRequests.map((request) => {
                     const isLive = request._isLive;
                     const bookingId = isLive
@@ -543,6 +589,195 @@ export default function TeamOwnerDashboard() {
                       </Card>
                     );
                   })}
+
+                  {apiQuorumBookings.length > 0 && (
+                    <>
+                      <div className="border-t pt-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <AlertCircle className="w-5 h-5 text-green-600" />
+                          <h3 className="font-semibold text-gray-800">Quorum Reached</h3>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                            {apiQuorumBookings.length} booking{apiQuorumBookings.length > 1 ? "s" : ""} ready
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-4">
+                          All team members have confirmed. Review the accepted porters and confirm or cancel each booking.
+                        </p>
+                      </div>
+
+                      {apiQuorumBookings.map((booking) => {
+                        const bookingId = booking._id;
+                        const acceptedPorters = (booking.memberResponses || []).filter(
+                          (m) => m.response === "ACCEPTED"
+                        );
+                        const declinedPorters = (booking.memberResponses || []).filter(
+                          (m) => m.response === "DECLINED"
+                        );
+
+                        return (
+                          <Card
+                            key={bookingId}
+                            className="border-l-4 border-l-green-500 hover:shadow-md transition-all"
+                          >
+                            <CardHeader className="p-4 pb-2">
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                                    <ThumbsUp className="w-3 h-3 mr-1" />
+                                    Quorum Reached
+                                  </Badge>
+                                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
+                                    <Users className="w-3 h-3 mr-1" />
+                                    Team Booking
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs font-mono">
+                                    #{String(bookingId).slice(-6).toUpperCase()}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                  <CalendarDays className="h-3 w-3" />
+                                  {booking.bookingDate
+                                    ? new Date(booking.bookingDate).toLocaleDateString()
+                                    : "No date"}
+                                  {booking.bookingTime && ` @ ${booking.bookingTime}`}
+                                </div>
+                              </div>
+                            </CardHeader>
+
+                            <CardContent className="p-4 pt-2 space-y-3">
+                              {booking.userId?.name && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span className="text-gray-500">Customer:</span>
+                                  <span className="font-medium text-gray-700">{booking.userId.name}</span>
+                                  {booking.userId.phone && (
+                                    <span className="text-gray-400">{booking.userId.phone}</span>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Pickup</p>
+                                  <AddressLine location={booking.pickup} dot="green" />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Drop-off</p>
+                                  <AddressLine location={booking.drop} dot="red" />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                                {booking.weightKg && (
+                                  <div className="flex items-center gap-1 text-gray-600">
+                                    <Package className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                    <span>{booking.weightKg} kg</span>
+                                  </div>
+                                )}
+                                {booking.teamSize && (
+                                  <div className="flex items-center gap-1 text-gray-600">
+                                    <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                    <span>{booking.teamSize} porters needed</span>
+                                  </div>
+                                )}
+                                {booking.hasVehicle && booking.vehicleType && (
+                                  <div className="flex items-center gap-1 text-gray-600">
+                                    <Truck className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                    <span className="capitalize">{booking.vehicleType}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {booking.workDescription && (
+                                <div className="bg-purple-50 rounded-lg p-2 text-xs text-gray-600 border border-purple-100">
+                                  <span className="font-medium">Work: </span>
+                                  {booking.workDescription}
+                                </div>
+                              )}
+
+                              <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                  <p className="text-sm font-semibold text-green-700">
+                                    {acceptedPorters.length} Porter{acceptedPorters.length > 1 ? "s" : ""} Ready to Work
+                                  </p>
+                                </div>
+                                {acceptedPorters.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {acceptedPorters.map((member, idx) => {
+                                      const porter = member.porterId;
+                                      const name =
+                                        porter?.userId?.name ||
+                                        `Porter #${String(porter?._id || idx).slice(-4).toUpperCase()}`;
+                                      return (
+                                        <div key={member._id || idx} className="flex items-center gap-2 bg-white rounded-lg p-2 border border-green-100">
+                                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xs">
+                                            {name.charAt(0).toUpperCase()}
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className="text-xs font-medium text-gray-800">{name}</p>
+                                            {porter?.userId?.phone && (
+                                              <p className="text-xs text-gray-400">{porter.userId.phone}</p>
+                                            )}
+                                          </div>
+                                          <ThumbsUp className="w-4 h-4 text-green-600" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-500">No accepted porters</p>
+                                )}
+
+                                {declinedPorters.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-green-100">
+                                    <p className="text-xs text-gray-500 mb-1">
+                                      Declined by {declinedPorters.length} member{declinedPorters.length > 1 ? "s" : ""}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+
+                            <CardFooter className="p-4 pt-0">
+                              <div className="flex gap-2 w-full justify-end">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-28 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  disabled={cancelling}
+                                  onClick={() => handleQuorumCancel(bookingId)}
+                                >
+                                  {cancelling ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Ban className="mr-1 h-3 w-3" />
+                                      Cancel
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  disabled={confirming}
+                                  onClick={() => handleQuorumAccept(bookingId)}
+                                >
+                                  {confirming ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                                      Accept
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </CardFooter>
+                          </Card>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
               )}
             </ScrollArea>

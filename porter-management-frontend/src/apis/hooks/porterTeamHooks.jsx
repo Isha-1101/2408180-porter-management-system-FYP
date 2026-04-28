@@ -7,6 +7,7 @@ import {
   getTeamDashboard,
   getTeamBookingHistory,
   getTeamPendingBookings,
+  getTeamQuorumReachedBookings,
   searchIndividualPorters,
   invitePorterToTeam,
   respondToTeamInvitation,
@@ -23,6 +24,7 @@ import {
   completeTeamBookingService,
   startTeamBookingService,
   teamMemberRespondService,
+  userStartTeamBookingService,
 } from "../services/teamBookingService";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,6 +93,15 @@ export const useGetTeamPendingBookings = () =>
     queryKey: ["team-pending-bookings"],
     queryFn: async () => {
       const response = await getTeamPendingBookings();
+      return response?.data?.data;
+    },
+  });
+
+export const useGetTeamQuorumReachedBookings = () =>
+  useQuery({
+    queryKey: ["team-quorum-reached-bookings"],
+    queryFn: async () => {
+      const response = await getTeamQuorumReachedBookings();
       return response?.data?.data;
     },
   });
@@ -347,6 +358,26 @@ export const useStartTeamBooking = () => {
     onError: (error) => {
       toast.error(
         error?.response?.data?.message || "Failed to start team booking",
+      );
+    },
+  });
+};
+
+export const useUserStartTeamBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId) => {
+      const response = await userStartTeamBookingService(bookingId);
+      return response?.data;
+    },
+    onSuccess: () => {
+      toast.success("Team journey started!");
+      queryClient.invalidateQueries({ queryKey: ["user-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["team-booking-status"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to start team journey",
       );
     },
   });

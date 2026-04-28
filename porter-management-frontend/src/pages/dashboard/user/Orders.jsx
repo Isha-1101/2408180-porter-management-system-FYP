@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserBookingsService } from "@/apis/services/porterBookingsService";
 import { useSubmitRating, useGetBookingRating } from "@/apis/hooks/ratingHooks";
+import { useUserStartTeamBooking } from "@/apis/hooks/porterTeamHooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import {
   Navigation,
   Users,
   Eye,
+  Play,
 } from "lucide-react";
 import PageLayout from "../../../components/common/PageLayout";
 import { AddressLine } from "../../../components/common/AddressLine";
@@ -158,10 +160,11 @@ const TRACKABLE_INDIVIDUAL_STATUSES = [
 // ────────────────────────────────────
 // Booking Card
 // ────────────────────────────────────
-const BookingCard = ({ booking, onRate, onTrack }) => {
+const BookingCard = ({ booking, onRate, onTrack, onStartJourney }) => {
   const sc = getStatusConfig(booking.status);
   const isCompleted = booking.status === "COMPLETED";
   const isTeam = booking.bookingType === "team";
+  const canStartJourney = isTeam && booking.status === "CONFIRMED";
 
   const canTrackTeam = isTeam && TRACKABLE_TEAM_STATUSES.includes(booking.status);
   const canTrackIndividual =
@@ -256,6 +259,18 @@ const BookingCard = ({ booking, onRate, onTrack }) => {
               >
                 <Navigation className="w-3.5 h-3.5" />
                 Track
+              </Button>
+            )}
+
+            {/* Start Journey button for confirmed team bookings */}
+            {canStartJourney && (
+              <Button
+                size="sm"
+                className="flex items-center gap-1.5 min-w-[90px] bg-green-600 hover:bg-green-700"
+                onClick={() => onStartJourney(booking._id)}
+              >
+                <Play className="w-3.5 h-3.5" />
+                Start
               </Button>
             )}
 
@@ -447,6 +462,7 @@ const ACTIVE_STATUSES = [
 const Orders = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { mutateAsync: startJourney, isPending: startingJourney } = useUserStartTeamBooking();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -527,6 +543,15 @@ const Orders = () => {
     }
   };
 
+  const handleStartJourney = async (bookingId) => {
+    try {
+      await startJourney(bookingId);
+      fetchBookings(page);
+    } catch {
+      // Error handled by hook
+    }
+  };
+
   // ────────────────────────────────────────────────────────────────────────────
   return (
     <PageLayout
@@ -593,6 +618,7 @@ const Orders = () => {
                 booking={booking}
                 onRate={handleRate}
                 onTrack={handleTrack}
+                onStartJourney={handleStartJourney}
               />
             ))
           )}

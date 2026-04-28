@@ -28,6 +28,9 @@ export const getTeamBookingHistory = (status) => {
 export const getTeamPendingBookings = () =>
   axiosInstance.get("/team-porters/pending-bookings");
 
+export const getTeamQuorumReachedBookings = () =>
+  axiosInstance.get("/team-porters/quorum-reached-bookings");
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TEAM JOIN REQUESTS (US-005)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,6 +91,9 @@ export const completeTeamBookingService = (bookingId) =>
 
 export const startTeamBookingService = (bookingId) =>
   axiosInstance.post(`/bookings/team/${bookingId}/start`);
+
+export const userStartTeamBookingService = (bookingId) =>
+  axiosInstance.post(`/bookings/team/${bookingId}/user/start`);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEAM BOOKING — TEAM MEMBER SIDE

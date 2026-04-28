@@ -29,6 +29,7 @@ import {
   Hourglass,
   CheckSquare,
   CreditCard,
+  Play,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ import {
   useGetBookingById,
   useCancelBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
-import { useGetTeamBookingStatus } from "../../../apis/hooks/porterTeamHooks";
+import { useGetTeamBookingStatus, useUserStartTeamBooking } from "../../../apis/hooks/porterTeamHooks";
 import socket from "../../../utils/socket";
 import { useAuthStore } from "@/store/auth.store";
 import ChatBox from "@/components/chat/ChatBox";
@@ -127,6 +128,7 @@ const TeamBookingTracking = () => {
   const { data: bookingData, isLoading } = useGetBookingById(bookingId);
   const { data: teamStatusData } = useGetTeamBookingStatus(bookingId);
   const { mutateAsync: cancelBooking, isPending: cancelling } = useCancelBooking();
+  const { mutateAsync: startJourney, isPending: startingJourney } = useUserStartTeamBooking();
 
   // useGetBookingById returns response?.data?.data which is { booking, teamSelection }
   // unwrap the actual booking document
@@ -188,6 +190,15 @@ const TeamBookingTracking = () => {
     try {
       await cancelBooking(bookingId);
       setLocalStatus("CANCELLED");
+    } catch {
+      /* toasted by hook */
+    }
+  };
+
+  const handleStartJourney = async () => {
+    try {
+      await startJourney(bookingId);
+      setLocalStatus("IN_PROGRESS");
     } catch {
       /* toasted by hook */
     }
@@ -403,6 +414,20 @@ const TeamBookingTracking = () => {
               <XCircle className="w-4 h-4 mr-2" />
             )}
             Cancel Booking
+          </Button>
+        )}
+        {currentStatus === "CONFIRMED" && (
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            disabled={startingJourney}
+            onClick={handleStartJourney}
+          >
+            {startingJourney ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Play className="w-4 h-4 mr-2" />
+            )}
+            Start Journey
           </Button>
         )}
         {currentStatus === "COMPLETED" && (
