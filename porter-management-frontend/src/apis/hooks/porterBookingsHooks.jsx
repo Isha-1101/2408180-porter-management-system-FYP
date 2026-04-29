@@ -12,6 +12,7 @@ import {
   getUserBookingsService,
   startBookingService,
   porterCancelBookingService,
+  getPorterBookingHistoryService,
 } from "../services/porterBookingsService.js";
 import { toast } from "react-hot-toast";
 
@@ -54,6 +55,27 @@ export const useGetPorterBookings = () => {
     },
     refetchInterval: 15000, // poll every 15 seconds
     staleTime: 10000,
+  });
+};
+
+// Porter fetches their full booking HISTORY (separate cache from pending requests)
+export const useGetPorterBookingHistory = (params = {}) => {
+  return useQuery({
+    queryKey: ["porter-booking-history", params],
+    queryFn: async () => {
+      const response = await getPorterBookingHistoryService(params);
+      return response?.data?.data ?? {};
+    },
+    select: (data) => ({
+      bookings: data?.bookings ?? [],
+      pagination: data?.pagination ?? {},
+    }),
+    onError: (error) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to load booking history",
+      );
+    },
+    staleTime: 30000,
   });
 };
 

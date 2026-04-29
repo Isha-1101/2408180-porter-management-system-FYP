@@ -23,9 +23,14 @@ export const rejectPorterBookingService = (bookingId) => {
   return axiosInstance.post(`/bookings/individual/${bookingId}/reject`);
 };
 
-// Porter fetches their pending/active booking requests
+// Porter fetches their pending/active booking requests (dashboard)
 export const getPorterBookingsService = (params = {}) => {
   return axiosInstance.get("/bookings/porter", { params });
+};
+
+// Porter fetches their full booking history (Booking History page)
+export const getPorterBookingHistoryService = (params = {}) => {
+  return axiosInstance.get("/bookings/porter/history", { params });
 };
 
 // Legacy: create booking with a pre-selected porter (keep for team flow)

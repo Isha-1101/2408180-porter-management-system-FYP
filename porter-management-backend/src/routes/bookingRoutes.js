@@ -22,6 +22,7 @@ import {
 import {
   getUserBookings,
   getPorterBookings,
+  getPorterBookingHistory,
   getBookingDetails,
   cancelBooking,
   searchNearbyPorters,
@@ -203,8 +204,16 @@ router.post("/team/:id/user/start", ...userOnly, userStartTeamBooking);
 router.get("/user", ...userOnly, getUserBookings);
 
 /**
+ * @route   GET /api/bookings/porter/history
+ * @desc    Get booking history for current porter (all assigned bookings)
+ * @access  Private (Porter)
+ * @query   status, page, limit
+ */
+router.get("/porter/history", ...porterOnly, getPorterBookingHistory);
+
+/**
  * @route   GET /api/bookings/porter
- * @desc    Get all bookings for current porter
+ * @desc    Get pending booking requests for current porter (dashboard)
  * @access  Private (Porter)
  * @query   status, page, limit
  */

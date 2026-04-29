@@ -410,6 +410,63 @@ export const getUserBookings = async (req, res) => {
 };
 
 /**
+ * Get porter booking history (all statuses) for the Booking History page
+ * GET /api/bookings/porter/history
+ */
+export const getPorterBookingHistory = async (req, res) => {
+  try {
+    const porterId = req.user.porterId;
+    const { status, page = 1, limit = 50 } = req.query;
+
+    if (!porterId) {
+      return res.status(403).json({
+        success: false,
+        message: "Porter ID not found. Make sure you are registered as a porter.",
+      });
+    }
+
+    const query = {
+      $or: [
+        { assignedPorterId: porterId },
+        { "assignedPorters.porterId": porterId },
+      ],
+    };
+
+    if (status) {
+      query.status = status;
+    }
+
+    const bookings = await PorterBooking.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate("userId", "name email phone");
+
+    const total = await PorterBooking.countDocuments(query);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        bookings,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching porter booking history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch booking history",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Get all bookings for current porter
  * GET /api/bookings/porter
  */

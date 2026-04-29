@@ -12,13 +12,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageLayout from "../../../components/common/PageLayout";
-import { useGetPorterBookings } from "../../../apis/hooks/porterBookingsHooks";
+import { useGetPorterBookingHistory } from "../../../apis/hooks/porterBookingsHooks";
 
 const STATUS_CONFIG = {
   COMPLETED: {
@@ -53,22 +55,22 @@ const PorterBookingHistory = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useGetPorterBookings();
+  const { data, isLoading, isError, refetch } = useGetPorterBookingHistory();
 
-  // Filter bookings based on status and current page
-  const allBookings = data?.bookings || [];
+  // `data` is shaped by the hook's select: { bookings: [...], pagination: {...} }
+  const allBookings = data?.bookings ?? [];
   let filteredBookings = allBookings;
-  
+
   if (statusFilter !== "all") {
-    filteredBookings = allBookings.filter(b => b.status === statusFilter);
+    filteredBookings = allBookings.filter((b) => b.status === statusFilter);
   }
-  
-  // Implement client-side pagination
+
+  // Client-side pagination
   const limit = 10;
   const totalPages = Math.ceil(filteredBookings.length / limit);
   const startIdx = (page - 1) * limit;
   const bookings = filteredBookings.slice(startIdx, startIdx + limit);
-  
+
   const pagination = {
     total: filteredBookings.length,
     page,
@@ -89,6 +91,26 @@ const PorterBookingHistory = () => {
           <div className="text-center space-y-3">
             <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
             <p className="text-gray-500">Loading booking history...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageLayout title="Booking History" description="Your past and current bookings">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <p className="text-sm font-medium text-gray-900">Failed to load booking history</p>
+            <p className="text-xs text-gray-500">Please check your connection and try again.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry
+            </Button>
           </div>
         </div>
       </PageLayout>
