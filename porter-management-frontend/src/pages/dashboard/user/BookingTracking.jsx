@@ -188,24 +188,43 @@ const BookingTracking = () => {
     setIsSubmittingPayment(true);
     try {
       const axiosInstance = (await import("@/apis/axiosInstance")).default;
-      const response = await axiosInstance.post(
-        `/bookings/individual/${bookingId}/update-payment-method`,
-        { paymentMethod }
-      );
-
-      toast.success("Payment method saved! Redirecting to orders...");
       
-      setTimeout(() => {
-        const pId = acceptedPorter?._id || acceptedPorter?.id || fetchedBooking?.assignedPorterId?._id || fetchedBooking?.assignedPorterId;
-        navigate("/dashboard/orders", {
-          state: {
-            promptRatingFor: pId ? { bookingId, porterId: pId } : null
-          }
+      if (paymentMethod === "digital") {
+        const response = await axiosInstance.post("/payments/initiate", {
+          bookingId,
+          paymentMethod: "digital",
         });
-      }, 1500);
+
+        const { esewaData, gatewayUrl } = response.data.data;
+        
+        navigate("/dashboard/payment/esewa-redirect", {
+          state: {
+            esewaData,
+            gatewayUrl,
+            bookingId,
+          },
+        });
+      } else {
+        // Cash payment flow
+        await axiosInstance.post(
+          `/bookings/individual/${bookingId}/update-payment-method`,
+          { paymentMethod }
+        );
+
+        toast.success("Payment method saved! Redirecting to orders...");
+        
+        setTimeout(() => {
+          const pId = acceptedPorter?._id || acceptedPorter?.id || fetchedBooking?.assignedPorterId?._id || fetchedBooking?.assignedPorterId;
+          navigate("/dashboard/orders", {
+            state: {
+              promptRatingFor: pId ? { bookingId, porterId: pId } : null
+            }
+          });
+        }, 1500);
+      }
     } catch (error) {
       console.error("Error updating payment method:", error);
-      toast.error(error?.response?.data?.message || "Failed to save payment method");
+      toast.error(error?.response?.data?.message || "Failed to process payment");
     } finally {
       setIsSubmittingPayment(false);
     }

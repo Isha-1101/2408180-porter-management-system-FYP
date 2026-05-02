@@ -6,6 +6,9 @@ import UserProfile from "../pages/dashboard/user/UserProfile";
 import BookingConfirmation from "../pages/dashboard/user/BookingConfirmation";
 import BookingTracking from "../pages/dashboard/user/BookingTracking";
 import TeamBookingTracking from "../pages/dashboard/user/TeamBookingTracking";
+import PaymentSuccess from "../pages/dashboard/user/PaymentSuccess";
+import PaymentFailure from "../pages/dashboard/user/PaymentFailure";
+import { EsewaPaymentRedirect } from "../components/payment/EsewaPaymentRedirect";
 
 // User routes configuration array for useRoutes
 const userRoutes = [
@@ -42,6 +45,18 @@ const userRoutes = [
   {
     path: "booking/tracking/:bookingId",
     element: <BookingTracking />,
+  },
+  {
+    path: "payment/success",
+    element: <PaymentSuccess />,
+  },
+  {
+    path: "payment/failure",
+    element: <PaymentFailure />,
+  },
+  {
+    path: "payment/esewa-redirect",
+    element: <EsewaPaymentRedirect />,
   },
   {
     path: "settings",
