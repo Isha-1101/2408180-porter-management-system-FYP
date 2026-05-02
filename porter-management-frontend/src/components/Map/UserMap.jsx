@@ -204,7 +204,7 @@ const UserMap = ({
     };
 
     fetchStaticRoute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [
     selectedPorterId,
     pickupLocation?.lat,

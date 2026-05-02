@@ -46,6 +46,9 @@ import { useGetTeamBookingStatus, useUserStartTeamBooking } from "../../../apis/
 import socket from "../../../utils/socket";
 import { useAuthStore } from "@/store/auth.store";
 import ChatBox from "@/components/chat/ChatBox";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+import toast from "react-hot-toast";
+import axiosInstance from "@/apis/axiosInstance";
 
 const TEAM_BOOKING_STEPS = [
   {
@@ -84,12 +87,6 @@ const TEAM_BOOKING_STEPS = [
     description: "Job completed — please proceed with payment",
     icon: CheckCircle2,
   },
-  {
-    key: "CLOSED",
-    label: "Closed",
-    description: "Booking closed — payment confirmed",
-    icon: CreditCard,
-  },
 ];
 
 const CANCELLABLE_STATUSES = [
@@ -107,7 +104,6 @@ const STATUS_BADGE = {
   CONFIRMED: "bg-green-100 text-green-700 border-green-200",
   IN_PROGRESS: "bg-indigo-100 text-indigo-700 border-indigo-200",
   COMPLETED: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  CLOSED: "bg-gray-100 text-gray-700 border-gray-200",
   DECLINED: "bg-red-100 text-red-700 border-red-200",
   CANCELLED: "bg-gray-200 text-gray-600 border-gray-300",
 };
@@ -124,6 +120,8 @@ const TeamBookingTracking = () => {
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [localStatus, setLocalStatus] = useState(null);
+  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   const { data: bookingData, isLoading } = useGetBookingById(bookingId);
   const { data: teamStatusData } = useGetTeamBookingStatus(bookingId);
@@ -163,6 +161,7 @@ const TeamBookingTracking = () => {
     const onCompleted = (data) => {
       if (String(data.bookingId) === String(bookingId)) {
         setLocalStatus("COMPLETED");
+        setShowPaymentMethod(true);
       }
     };
     const onCancelled = (data) => {
@@ -204,6 +203,29 @@ const TeamBookingTracking = () => {
     }
   };
 
+  const handlePaymentMethodSelect = async (paymentMethod) => {
+    if (!bookingId) return;
+    
+    setIsSubmittingPayment(true);
+    try {
+      await axiosInstance.post(
+        `/bookings/individual/${bookingId}/update-payment-method`,
+        { paymentMethod }
+      );
+
+      toast.success("Payment method saved! Redirecting to orders...");
+      
+      setTimeout(() => {
+        navigate("/dashboard/orders");
+      }, 1500);
+    } catch (error) {
+      console.error("Error updating payment method:", error);
+      toast.error(error?.response?.data?.message || "Failed to save payment method");
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -236,68 +258,6 @@ const TeamBookingTracking = () => {
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-3xl">
       <BackButton />
-
-      {/* Status header */}
-      <Card className="border-l-4 border-l-primary">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Team Booking Tracking</CardTitle>
-            <Badge className={STATUS_BADGE[currentStatus] || "bg-gray-100 text-gray-600"}>
-              {currentStatus.replace(/_/g, " ")}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Progress stepper */}
-          <div className="relative">
-            {TEAM_BOOKING_STEPS.map((step, index) => {
-              const Icon = step.icon;
-              const isCompleted = activeStep > index;
-              const isActive = activeStep === index;
-              const isFuture = activeStep < index;
-
-              return (
-                <div key={step.key} className="flex items-start gap-3 mb-4 last:mb-0">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isCompleted
-                          ? "bg-green-500 text-white"
-                          : isActive
-                          ? "bg-primary text-white animate-pulse"
-                          : "bg-gray-200 text-gray-400"
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5" />
-                      ) : (
-                        <Icon className="w-4 h-4" />
-                      )}
-                    </div>
-                    {index < TEAM_BOOKING_STEPS.length - 1 && (
-                      <div
-                        className={`w-0.5 h-8 ${
-                          isCompleted ? "bg-green-500" : "bg-gray-200"
-                        }`}
-                      />
-                    )}
-                  </div>
-                  <div className="pt-1">
-                    <p
-                      className={`text-sm font-medium ${
-                        isFuture ? "text-gray-400" : "text-gray-900"
-                      }`}
-                    >
-                      {step.label}
-                    </p>
-                    <p className="text-xs text-gray-500">{step.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Member response stats (if available) */}
       {memberStats && (
@@ -400,6 +360,68 @@ const TeamBookingTracking = () => {
         </Card>
       )}
 
+      {/* Status header (Tracking Stepper) */}
+      <Card className="border-l-4 border-l-primary">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Team Booking Tracking</CardTitle>
+            <Badge className={STATUS_BADGE[currentStatus] || "bg-gray-100 text-gray-600"}>
+              {currentStatus.replace(/_/g, " ")}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Progress stepper */}
+          <div className="relative">
+            {TEAM_BOOKING_STEPS.map((step, index) => {
+              const Icon = step.icon;
+              const isCompleted = activeStep > index;
+              const isActive = activeStep === index;
+              const isFuture = activeStep < index;
+
+              return (
+                <div key={step.key} className="flex items-start gap-3 mb-4 last:mb-0">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        isCompleted
+                          ? "bg-green-500 text-white"
+                          : isActive
+                          ? "bg-primary text-white animate-pulse"
+                          : "bg-gray-200 text-gray-400"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        <Icon className="w-4 h-4" />
+                      )}
+                    </div>
+                    {index < TEAM_BOOKING_STEPS.length - 1 && (
+                      <div
+                        className={`w-0.5 h-8 ${
+                          isCompleted ? "bg-green-500" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
+                  </div>
+                  <div className="pt-1">
+                    <p
+                      className={`text-sm font-medium ${
+                        isFuture ? "text-gray-400" : "text-gray-900"
+                      }`}
+                    >
+                      {step.label}
+                    </p>
+                    <p className="text-xs text-gray-500">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Actions */}
       <div className="flex gap-3 justify-end">
         {isCancellable && (
@@ -416,6 +438,7 @@ const TeamBookingTracking = () => {
             Cancel Booking
           </Button>
         )}
+        {/* Start Journey (Only when confirmed) */}
         {currentStatus === "CONFIRMED" && (
           <Button
             className="bg-green-600 hover:bg-green-700"
@@ -430,8 +453,14 @@ const TeamBookingTracking = () => {
             Start Journey
           </Button>
         )}
-        {currentStatus === "COMPLETED" && (
-          <Button onClick={() => navigate("/dashboard/bookings/payment", { state: { bookingId } })}>
+
+        {/* Proceed to Payment (Always visible, unlocked only on COMPLETED) */}
+        {!showPaymentMethod && (
+          <Button 
+            onClick={() => setShowPaymentMethod(true)}
+            disabled={currentStatus !== "COMPLETED"}
+            className={currentStatus === "COMPLETED" ? "bg-green-600 hover:bg-green-700" : ""}
+          >
             <CreditCard className="w-4 h-4 mr-2" />
             Proceed to Payment
           </Button>
@@ -441,6 +470,29 @@ const TeamBookingTracking = () => {
           Chat
         </Button>
       </div>
+
+      {/* Payment Method Selector Section */}
+      {(currentStatus === "COMPLETED" || showPaymentMethod) && (
+        <Card className="mt-6 border-green-200">
+          <CardHeader className="bg-green-50/50 pb-4">
+            <CardTitle className="text-lg text-green-800 flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              Job Completed!
+            </CardTitle>
+            <p className="text-center text-sm text-gray-600 mt-1">
+              Please select your payment method to finalize the booking.
+            </p>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <PaymentMethodSelector
+              amount={booking?.fare || booking?.totalPrice || 0}
+              onMethodSelect={handlePaymentMethodSelect}
+              isLoading={isSubmittingPayment}
+              disabled={isSubmittingPayment}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Chat */}
       {isChatOpen && bookingId && (

@@ -904,30 +904,6 @@ export default function TeamOwnerDashboard() {
 
                         <CardFooter className="p-4 pt-0">
                           <div className="flex gap-2 w-full justify-end">
-                            {booking.status === "CONFIRMED" && (
-                              <Button
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700"
-                                disabled={startingJob}
-                                onClick={async () => {
-                                  try {
-                                    await startTeamBooking(booking._id);
-                                    refetch();
-                                  } catch {
-                                    // Error handled by hook
-                                  }
-                                }}
-                              >
-                                {startingJob ? (
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  <>
-                                    <Play className="mr-1 h-3 w-3" />
-                                    Start Job
-                                  </>
-                                )}
-                              </Button>
-                            )}
                             <Button
                               variant="outline"
                               size="sm"

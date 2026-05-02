@@ -160,7 +160,7 @@ const TRACKABLE_INDIVIDUAL_STATUSES = [
 // ────────────────────────────────────
 // Booking Card
 // ────────────────────────────────────
-const BookingCard = ({ booking, onRate, onTrack, onStartJourney }) => {
+const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney }) => {
   const sc = getStatusConfig(booking.status);
   const isCompleted = booking.status === "COMPLETED";
   const isTeam = booking.bookingType === "team";
@@ -274,27 +274,13 @@ const BookingCard = ({ booking, onRate, onTrack, onStartJourney }) => {
               </Button>
             )}
 
-            {/* View details for completed team bookings */}
-            {isCompleted && isTeam && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-1.5 min-w-[90px]"
-                onClick={() => onTrack(booking)}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                Details
-              </Button>
-            )}
-
-            {/* Rate button for completed individual bookings */}
-            {isCompleted && booking.assignedPorterId && (
-              <RateButton
-                bookingId={booking._id}
-                porterId={
-                  booking.assignedPorterId?._id || booking.assignedPorterId
-                }
+            {/* Actions for completed bookings */}
+            {isCompleted && (
+              <CompletedActions
+                booking={booking}
+                activeTab={activeTab}
                 onRate={onRate}
+                onTrack={onTrack}
               />
             )}
           </div>
@@ -305,34 +291,73 @@ const BookingCard = ({ booking, onRate, onTrack, onStartJourney }) => {
 };
 
 // ────────────────────────────────────
-// Rate Button (fetches existing rating)
+// Completed Actions (Rate Button or Details)
 // ────────────────────────────────────
-const RateButton = ({ bookingId, porterId, onRate }) => {
-  const { data: ratingData, isLoading } = useGetBookingRating(bookingId);
+const CompletedActions = ({ booking, activeTab, onRate, onTrack }) => {
+  const { data: ratingData, isLoading } = useGetBookingRating(booking._id);
   const existingRating = ratingData?.data?.data?.review;
+  const isTeam = booking.bookingType === "team";
 
   if (isLoading) return null;
 
+  // If already rated, show the rating (and the Details button for team bookings)
   if (existingRating) {
     return (
-      <div className="flex flex-col items-end gap-1">
-        <span className="text-xs text-gray-400">Your rating</span>
-        <StarRating value={existingRating.rating} readonly size="sm" />
+      <div className="flex flex-col gap-2 items-end">
+        {isTeam && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-1.5 min-w-[90px]"
+            onClick={() => onTrack(booking)}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Details
+          </Button>
+        )}
+        <div className="flex flex-col items-end gap-1 mt-1">
+          <span className="text-xs text-gray-400">Your rating</span>
+          <StarRating value={existingRating.rating} readonly size="sm" />
+        </div>
       </div>
     );
   }
 
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      className="flex items-center gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 min-w-[90px]"
-      onClick={() => onRate({ bookingId, porterId })}
-    >
-      <Star className="w-3.5 h-3.5" />
-      Rate Porter
-    </Button>
-  );
+  // Not rated yet. If we are in the Completed tab, show Rate Porter instead of Details.
+  if (activeTab === "COMPLETED") {
+    const porterId = isTeam
+      ? (booking.assignedPorters?.[0]?.porterId?._id || booking.assignedPorters?.[0]?.porterId)
+      : (booking.assignedPorterId?._id || booking.assignedPorterId);
+
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="flex items-center gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 min-w-[90px]"
+        onClick={() => onRate({ bookingId: booking._id, porterId })}
+      >
+        <Star className="w-3.5 h-3.5" />
+        Rate Porter
+      </Button>
+    );
+  }
+
+  // Not rated yet, but NOT in Completed tab. Show Details if it's a team booking.
+  if (isTeam) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="flex items-center gap-1.5 min-w-[90px]"
+        onClick={() => onTrack(booking)}
+      >
+        <Eye className="w-3.5 h-3.5" />
+        Details
+      </Button>
+    );
+  }
+
+  return null;
 };
 
 // ────────────────────────────────────
@@ -616,6 +641,7 @@ const Orders = () => {
               <BookingCard
                 key={booking._id}
                 booking={booking}
+                activeTab={activeTab}
                 onRate={handleRate}
                 onTrack={handleTrack}
                 onStartJourney={handleStartJourney}
