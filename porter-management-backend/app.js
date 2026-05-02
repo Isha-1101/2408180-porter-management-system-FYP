@@ -31,6 +31,9 @@ const app = express();
 // Middleware
 app.use(helmet
   ());
+console.log("env", process.env.API_URL,
+  process.env.CLIENT_URL_DEV,
+  process.env.CLIENT_URL_PROD,)
 app.use(
   cors({
     origin: [
