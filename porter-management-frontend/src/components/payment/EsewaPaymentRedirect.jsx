@@ -24,6 +24,8 @@ export const EsewaPaymentRedirect = () => {
 
   const { esewaData, gatewayUrl, bookingId } = location.state || {};
 
+  console.log("EsewaPaymentRedirect State:", location.state);
+
   useEffect(() => {
     if (!esewaData || !gatewayUrl) {
       setError("Missing payment data. Please try again.");
@@ -113,6 +115,7 @@ export const EsewaPaymentRedirect = () => {
           <input type="hidden" name="total_amount" value={esewaData.total_amount} />
           <input type="hidden" name="transaction_uuid" value={esewaData.transaction_uuid} />
           <input type="hidden" name="product_code" value={esewaData.product_code} />
+          <input type="hidden" name="product_name" value={esewaData.product_name} />
           <input type="hidden" name="product_service_charge" value={esewaData.product_service_charge || "0"} />
           <input type="hidden" name="product_delivery_charge" value={esewaData.product_delivery_charge || "0"} />
           <input type="hidden" name="success_url" value={esewaData.success_url} />

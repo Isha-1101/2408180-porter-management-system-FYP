@@ -23,6 +23,7 @@ export const PaymentSuccess = () => {
   const bookingId = searchParams.get("bookingId");
   const transactionCode = searchParams.get("transactionCode");
   const amount = searchParams.get("amount");
+  const porterId = searchParams.get("porterId");
 
   // Auto-redirect to orders after 10 seconds
   useEffect(() => {
@@ -32,7 +33,7 @@ export const PaymentSuccess = () => {
           clearInterval(timer);
           navigate("/dashboard/orders", {
             state: {
-              promptRatingFor: bookingId ? { bookingId } : null,
+              promptRatingFor: bookingId ? { bookingId, porterId } : null,
             },
           });
           return 0;
@@ -42,12 +43,12 @@ export const PaymentSuccess = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate, bookingId]);
+  }, [navigate, bookingId, porterId]);
 
   const handleViewOrders = () => {
     navigate("/dashboard/orders", {
       state: {
-        promptRatingFor: bookingId ? { bookingId } : null,
+        promptRatingFor: bookingId ? { bookingId, porterId } : null,
       },
     });
   };
