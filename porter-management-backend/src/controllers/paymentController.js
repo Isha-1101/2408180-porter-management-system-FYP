@@ -5,6 +5,7 @@ import {
   generateTransactionId,
   generateEsewaPaymentData,
   verifyEsewaSignature,
+  decodeEsewaResponse,
 } from "../config/esewa.config.js";
 
 /**
@@ -14,7 +15,7 @@ import {
 export const initiatePayment = async (req, res) => {
   try {
     const { bookingId, paymentMethod } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     // Validate input
     if (
@@ -38,19 +39,27 @@ export const initiatePayment = async (req, res) => {
     }
 
     // Check if user is the booking creator
-    if (booking.userId.toString() !== userId.toString()) {
+    if (booking?.userId?.toString() !== userId?.toString()) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized to pay for this booking",
       });
     }
 
-    // Check if payment already exists
-    let payment = await Payment.findOne({ bookingId });
-    if (payment && payment.status !== "failed") {
+    // Check if booking is completed (payment only after completion)
+    if (booking.status !== "COMPLETED") {
       return res.status(400).json({
         success: false,
-        message: "Payment already initiated for this booking",
+        message: "Payment can only be initiated after booking completion",
+      });
+    }
+
+    // Check if payment already exists and is not failed
+    let payment = await Payment.findOne({ bookingId });
+    if (payment && payment.status === "confirmed") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment already completed for this booking",
       });
     }
 
@@ -66,6 +75,7 @@ export const initiatePayment = async (req, res) => {
     } else {
       // Update failed payment with new attempt
       payment.status = "pending";
+      payment.method = paymentMethod;
       payment.retryCount = (payment.retryCount || 0) + 1;
       payment.lastRetryAt = new Date();
       payment.failureReason = null;
@@ -79,7 +89,7 @@ export const initiatePayment = async (req, res) => {
       const esewaData = generateEsewaPaymentData(
         booking.totalPrice,
         transactionId,
-        "PORTERS",
+        null, // Use default from config (EPAYTEST)
         `Porter Service - Booking ${bookingId.toString().substring(0, 8)}`,
       );
 
@@ -276,7 +286,7 @@ export const retryEsewaPayment = async (req, res) => {
     const esewaData = generateEsewaPaymentData(
       booking.totalPrice,
       transactionId,
-      "PORTERS",
+      null, // Use default from config
       `Porter Service - Booking ${booking._id.toString().substring(0, 8)}`,
     );
 
@@ -302,162 +312,249 @@ export const retryEsewaPayment = async (req, res) => {
 
 /**
  * eSewa Success Callback
- * GET /core-api/payments/esewa/success
+ * GET /core-api/payments/esewa/success?data=<base64_encoded_json>
+ *
+ * Flow:
+ * 1. Decode base64 data from query param
+ * 2. Verify signature (prevent fraud)
+ * 3. Find payment by transaction_uuid
+ * 4. Update payment.status = "confirmed" (if status === "COMPLETE")
+ * 5. Update booking.paymentStatus = "confirmed"
+ * 6. Redirect to frontend success page
  */
 export const esewaSuccessCallback = async (req, res) => {
   try {
     const { data } = req.query;
 
     if (!data) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing data",
-      });
+      return res.status(400).send(`
+        <html><body>
+        <h2>Payment Error</h2>
+        <p>Missing payment data. Please contact support.</p>
+        <a href="${process.env.CLIENT_URL_DEV || "http://localhost:5173"}">Go to Home</a>
+        </body></html>
+      `);
     }
 
-    // Decode base64 data
-    const decodedData = JSON.parse(Buffer.from(data, "base64").toString());
-    const { total_amount, transaction_uuid, status, signature } = decodedData;
+    // Decode base64 response from eSewa
+    const decodedData = decodeEsewaResponse(data);
+    const { total_amount, transaction_uuid, status, signature, transaction_code } = decodedData;
 
-    // Verify signature
+    console.log("[eSewa Success] Callback received:", decodedData);
+
+    // Verify signature to prevent fraud
     if (!verifyEsewaSignature(decodedData, signature)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid signature - possible fraud attempt",
-      });
+      console.error("[eSewa Success] Invalid signature!");
+      return res.status(400).send(`
+        <html><body>
+        <h2>Payment Verification Failed</h2>
+        <p>Invalid payment signature. Please contact support.</p>
+        <a href="${process.env.CLIENT_URL_DEV || "http://localhost:5173"}">Go to Home</a>
+        </body></html>
+      `);
     }
 
     // Find payment by transaction ID
     const payment = await Payment.findOne({ esewaTxnId: transaction_uuid });
     if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: "Payment record not found",
-      });
+      console.error("[eSewa Success] Payment record not found for transaction:", transaction_uuid);
+      return res.status(404).send(`
+        <html><body>
+        <h2>Payment Record Not Found</h2>
+        <p>We could not find your payment record. Please contact support.</p>
+        <a href="${process.env.CLIENT_URL_DEV || "http://localhost:5173"}">Go to Home</a>
+        </body></html>
+      `);
     }
 
-    // Update payment
-    payment.status = status === "COMPLETE" ? "confirmed" : "failed";
-    await payment.save();
+    // Update payment status
+    if (status === "COMPLETE") {
+      payment.status = "confirmed";
+      payment.esewaMerchantCode = decodedData.transaction_code || transaction_code;
+      await payment.save();
 
-    // Update booking
-    const booking = await PorterBooking.findById(payment.bookingId);
-    if (booking) {
-      booking.paymentStatus = payment.status;
-      await booking.save();
+      // Update booking payment status
+      const booking = await PorterBooking.findById(payment.bookingId);
+      if (booking) {
+        booking.paymentStatus = "confirmed";
+        await booking.save();
+      }
+
+      console.log("[eSewa Success] Payment confirmed for booking:", payment.bookingId);
+    } else {
+      payment.status = "failed";
+      payment.failureReason = `eSewa status: ${status}`;
+      await payment.save();
     }
 
-    // Redirect to frontend with status
-    const clientUrl = process.env.CLIENT_URL_DEV;
-    const redirectUrl = `${clientUrl}/booking/${payment.bookingId}?paymentStatus=${payment.status}`;
-    res.redirect(redirectUrl);
+    // Redirect to frontend success page with porterId for rating
+    const clientUrl = process.env.CLIENT_URL_DEV || "http://localhost:5173";
+    
+    // Fetch booking to get porterId for rating
+    const bookingForRating = await PorterBooking.findById(payment.bookingId);
+    let porterId = null;
+    
+    if (bookingForRating) {
+      // Individual booking
+      if (bookingForRating.assignedPorterId) {
+        porterId = bookingForRating.assignedPorterId.toString();
+      }
+      // Team booking
+      if (!porterId && bookingForRating.assignedPorters && bookingForRating.assignedPorters.length > 0) {
+        const firstPorter = bookingForRating.assignedPorters[0];
+        porterId = firstPorter.porterId?.toString() || firstPorter.porterId?.toString() || null;
+      }
+    }
+    
+    const redirectUrl = `${clientUrl}/dashboard/payment/success?bookingId=${payment.bookingId}&transactionCode=${decodedData.transaction_code || ""}&amount=${total_amount}&porterId=${porterId || ""}`;
+    return res.redirect(redirectUrl);
+
   } catch (error) {
     console.error("eSewa success callback error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error processing payment callback",
-      error: error.message,
-    });
+    const clientUrl = process.env.CLIENT_URL_DEV || "http://localhost:5173";
+    return res.redirect(`${clientUrl}/dashboard/payment/failure?bookingId=${req.query.bookingId || ""}&reason=server_error`);
   }
 };
 
 /**
  * eSewa Failure Callback
- * GET /core-api/payments/esewa/failure
+ * GET /core-api/payments/esewa/failure?data=<base64_encoded_json>
+ *
+ * Flow:
+ * 1. Decode base64 data from query param
+ * 2. Find payment by transaction_uuid
+ * 3. Update payment.status = "failed"
+ * 4. Store failure reason
+ * 5. Update booking.paymentStatus = "failed"
+ * 6. Redirect to frontend failure page
  */
 export const esewaFailureCallback = async (req, res) => {
   try {
     const { data } = req.query;
 
     if (!data) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing data",
-      });
+      const clientUrl = process.env.CLIENT_URL_DEV || "http://localhost:5173";
+      return res.redirect(`${clientUrl}/dashboard/payment/failure?reason=missing_data`);
     }
 
-    // Decode base64 data
-    const decodedData = JSON.parse(Buffer.from(data, "base64").toString());
+    // Decode base64 response from eSewa
+    const decodedData = decodeEsewaResponse(data);
     const { transaction_uuid, status, error_code } = decodedData;
+
+    console.log("[eSewa Failure] Callback received:", decodedData);
 
     // Find payment
     const payment = await Payment.findOne({ esewaTxnId: transaction_uuid });
-    if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: "Payment record not found",
-      });
+
+    if (payment) {
+      // Update payment
+      payment.status = "failed";
+      payment.failureReason = `eSewa Error: ${error_code || "unknown"} - ${status || "failed"}`;
+      await payment.save();
+
+      // Update booking
+      const booking = await PorterBooking.findById(payment.bookingId);
+      if (booking) {
+        booking.paymentStatus = "failed";
+        await booking.save();
+      }
+
+      console.log("[eSewa Failure] Payment marked as failed for booking:", payment.bookingId);
+
+      // Redirect to frontend failure page with booking details
+      const clientUrl = process.env.CLIENT_URL_DEV || "http://localhost:5173";
+      const redirectUrl = `${clientUrl}/dashboard/payment/failure?bookingId=${payment.bookingId}&reason=${encodeURIComponent(payment.failureReason)}`;
+      return res.redirect(redirectUrl);
+    } else {
+      console.error("[eSewa Failure] Payment record not found for transaction:", transaction_uuid);
+      const clientUrl = process.env.CLIENT_URL_DEV || "http://localhost:5173";
+      return res.redirect(`${clientUrl}/dashboard/payment/failure?reason=payment_not_found`);
     }
 
-    // Update payment
-    payment.status = "failed";
-    payment.failureReason = `eSewa Error: ${error_code} - ${status}`;
-    await payment.save();
-
-    // Update booking
-    const booking = await PorterBooking.findById(payment.bookingId);
-    if (booking) {
-      booking.paymentStatus = "failed";
-      await booking.save();
-    }
-
-    // Redirect to frontend with failure status
-    const clientUrl = process.env.CLIENT_URL_DEV;
-    const redirectUrl = `${clientUrl}/booking/${payment.bookingId}?paymentStatus=failed&reason=${error_code}`;
-    res.redirect(redirectUrl);
   } catch (error) {
     console.error("eSewa failure callback error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error processing failure callback",
-      error: error.message,
-    });
+    const clientUrl = process.env.CLIENT_URL_DEV || "http://localhost:5173";
+    return res.redirect(`${clientUrl}/dashboard/payment/failure?reason=server_error`);
   }
 };
 
 /**
  * eSewa Webhook Verification (for additional security)
  * POST /core-api/payments/esewa/webhook
+ *
+ * eSewa may send server-to-server webhook notifications for payment status updates.
+ * This provides an additional layer of security beyond the redirect callbacks.
  */
 export const esewaWebhook = async (req, res) => {
   try {
-    const { data, signature } = req.body;
+    // eSewa webhook sends data in the body
+    const webhookData = req.body;
+    
+    console.log("[eSewa Webhook] Received:", webhookData);
 
-    if (!data || !signature) {
+    // Handle both direct JSON and base64 encoded data
+    let decodedData;
+    if (webhookData.data) {
+      // Base64 encoded in 'data' field
+      decodedData = decodeEsewaResponse(webhookData.data);
+    } else {
+      decodedData = webhookData;
+    }
+
+    const { transaction_uuid, status, signature } = decodedData;
+
+    if (!transaction_uuid) {
       return res.status(400).json({
         success: false,
-        message: "Missing data or signature",
+        message: "Missing transaction_uuid",
       });
     }
 
-    // Verify signature
-    if (!verifyEsewaSignature(data, signature)) {
+    // Verify signature if present
+    if (signature && !verifyEsewaSignature(decodedData, signature)) {
+      console.error("[eSewa Webhook] Invalid signature!");
       return res.status(400).json({
         success: false,
         message: "Invalid signature",
       });
     }
 
-    // Find and update payment
-    const payment = await Payment.findOne({
-      esewaTxnId: data.transaction_uuid,
-    });
+    // Find payment
+    const payment = await Payment.findOne({ esewaTxnId: transaction_uuid });
     if (!payment) {
+      console.error("[eSewa Webhook] Payment not found for transaction:", transaction_uuid);
       return res.status(404).json({
         success: false,
         message: "Payment not found",
       });
     }
 
-    // Update based on status
-    if (data.status === "COMPLETE") {
+    // Idempotent update - only update if status changed
+    if (status === "COMPLETE" && payment.status !== "confirmed") {
       payment.status = "confirmed";
-    } else {
-      payment.status = "failed";
-      payment.failureReason = `Webhook status: ${data.status}`;
-    }
-    await payment.save();
+      payment.esewaMerchantCode = decodedData.transaction_code || "";
+      await payment.save();
 
+      const booking = await PorterBooking.findById(payment.bookingId);
+      if (booking && booking.paymentStatus !== "confirmed") {
+        booking.paymentStatus = "confirmed";
+        await booking.save();
+      }
+
+      console.log("[eSewa Webhook] Payment confirmed via webhook for booking:", payment.bookingId);
+    } else if (status !== "COMPLETE" && payment.status !== "failed") {
+      payment.status = "failed";
+      payment.failureReason = `Webhook status: ${status}`;
+      await payment.save();
+
+      const booking = await PorterBooking.findById(payment.bookingId);
+      if (booking) {
+        booking.paymentStatus = "failed";
+        await booking.save();
+      }
+    }
+
+    // Always return 200 OK for eSewa webhook
     res.status(200).json({
       success: true,
       message: "Webhook processed successfully",
