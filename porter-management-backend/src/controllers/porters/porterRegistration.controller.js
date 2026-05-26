@@ -262,7 +262,9 @@ export const saveVehicleInfo = async (req, res) => {
   const { registrationId } = req.params;
   const { vehicleCategory, vehicleNumber, hasVehicle, capacity } = req.body;
 
-  if (hasVehicle === "true") {
+  const isWalker = hasVehicle === false || hasVehicle === "false";
+
+  if (!isWalker) {
     if (!vehicleCategory || !vehicleNumber) {
       return res.status(400).json({ message: "All fields are required." });
     }
@@ -286,7 +288,26 @@ export const saveVehicleInfo = async (req, res) => {
       completed: true,
       updatedAt: new Date(),
     };
-    registration.currentStep = 4;
+
+    if (isWalker) {
+      // Automatically delete any existing document for this registration to avoid outdated data
+      await PorterDocument.findOneAndDelete({ registrationId: registration._id });
+      
+      registration.steps.documents = {
+        completed: true,
+        updatedAt: new Date(),
+      };
+      registration.currentStep = 5;
+    } else {
+      // Check if a document actually exists to decide if it's completed
+      const documentExists = await PorterDocument.findOne({ registrationId: registration._id });
+      registration.steps.documents = {
+        completed: !!documentExists,
+        updatedAt: new Date(),
+      };
+      registration.currentStep = documentExists ? 5 : 4;
+    }
+
     await registration.save();
 
     res.status(200).json({ success: true, message: "Vehicle info saved" });
@@ -356,7 +377,10 @@ export const submitRegistration = async (req, res) => {
 
     const { basicInfo, vehicle, documents } = registration.steps;
 
-    if (!basicInfo.completed || !vehicle.completed || !documents.completed) {
+    const porterVehicle = await PorterVehicle.findOne({ registrationId: registration._id });
+    const isWalker = porterVehicle && (porterVehicle.hasVehicle === false || porterVehicle.hasVehicle === "false");
+
+    if (!basicInfo.completed || !vehicle.completed || (!isWalker && !documents.completed)) {
       return res.status(400).json({
         message: "Complete all steps before submission",
       });
