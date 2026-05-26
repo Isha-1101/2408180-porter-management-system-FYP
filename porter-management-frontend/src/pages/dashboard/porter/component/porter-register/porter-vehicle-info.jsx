@@ -13,10 +13,13 @@ import { useState } from "react";
 
 const validate = (data) => {
   if (data?.hasVehicle === false) {
-    return { vehicleCategory: "", capacity: "" };
+    return { vehicleCategory: "", vehicleNumber: "", capacity: "" };
   }
   return {
     vehicleCategory: !data?.vehicleCategory ? "Select your vehicle category" : "",
+    vehicleNumber: !data?.vehicleNumber || data.vehicleNumber.trim() === ""
+      ? "Enter your vehicle number"
+      : "",
     capacity: data?.capacity 
       ? (!/^\d+(\.\d+)?$/.test(data.capacity) || Number(data.capacity) <= 0
         ? "Enter a valid positive number"
@@ -55,6 +58,7 @@ const FieldMsg = ({ touched, error, value }) => {
 const VehicleInfo = ({ data, onChange }) => {
   const [touched, setTouched] = useState({
     vehicleCategory: false,
+    vehicleNumber: false,
     capacity: false,
   });
 
@@ -74,7 +78,10 @@ const VehicleInfo = ({ data, onChange }) => {
     onChange("vehicle", "hasVehicle", value);
     if (!value) {
       onChange("vehicle", "vehicleCategory", "");
+      onChange("vehicle", "vehicleNumber", "");
       onChange("vehicle", "capacity", "");
+      onChange("documents", "licenseNumber", "");
+      onChange("documents", "porterLicenseDocument", null);
     }
   };
 
@@ -126,36 +133,57 @@ const VehicleInfo = ({ data, onChange }) => {
 
         {data?.hasVehicle && (
           <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-            {/* Vehicle Category */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                Vehicle Category *
-              </Label>
-              <Select
-                value={data?.vehicleCategory || ""}
-                onValueChange={(value) => {
-                  touch("vehicleCategory");
-                  onChange("vehicle", "vehicleCategory", value);
-                }}
-              >
-                <SelectTrigger className={`w-full transition-colors ${fieldClass(touched.vehicleCategory, errors.vehicleCategory, data?.vehicleCategory)}`}>
-                  <SelectValue placeholder="Select your vehicle category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehicleCategories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      <div className="flex items-center gap-2">
-                        <span>{category.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldMsg touched={touched.vehicleCategory} error={errors.vehicleCategory} value={data?.vehicleCategory} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Vehicle Category */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  Vehicle Category *
+                </Label>
+                <Select
+                  value={data?.vehicleCategory || ""}
+                  onValueChange={(value) => {
+                    touch("vehicleCategory");
+                    onChange("vehicle", "vehicleCategory", value);
+                  }}
+                >
+                  <SelectTrigger className={`w-full transition-colors ${fieldClass(touched.vehicleCategory, errors.vehicleCategory, data?.vehicleCategory)}`}>
+                    <SelectValue placeholder="Select your vehicle category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicleCategories.map((category) => (
+                      <SelectItem key={category.value} value={category.value}>
+                        <div className="flex items-center gap-2">
+                          <span>{category.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldMsg touched={touched.vehicleCategory} error={errors.vehicleCategory} value={data?.vehicleCategory} />
+              </div>
+
+              {/* Vehicle Number */}
+              <div className="space-y-2">
+                <Label htmlFor="vehicleNumber" className="flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  Vehicle Number *
+                </Label>
+                <Input
+                  id="vehicleNumber"
+                  type="text"
+                  value={data?.vehicleNumber || ""}
+                  onChange={(e) => {
+                    touch("vehicleNumber");
+                    onChange("vehicle", "vehicleNumber", e.target.value);
+                  }}
+                  onBlur={() => touch("vehicleNumber")}
+                  placeholder="Enter your vehicle number (e.g. BA-1-PA-1234)"
+                  className={`transition-colors ${fieldClass(touched.vehicleNumber, errors.vehicleNumber, data?.vehicleNumber)}`}
+                />
+                <FieldMsg touched={touched.vehicleNumber} error={errors.vehicleNumber} value={data?.vehicleNumber} />
+              </div>
             </div>
-
-
 
             {/* Capacity Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

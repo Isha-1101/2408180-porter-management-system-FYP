@@ -1,37 +1,50 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Check, ChevronRight, ChevronLeft } from "lucide-react";
+import { Check, ChevronRight, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router";
-
-const steps = [
-  "Registration Type",
-  "Personal Information",
-  "Vehicle Details",
-  "Document Details",
-  "Review Information",
-];
+import { usePorterRegistration } from "../../providers/PorterRegistrationProvider.jsx";
 
 const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
   const navigate = useNavigate();
+  const { formData } = usePorterRegistration();
 
   if (!isOpen) return null;
 
-  const isStepUnlocked = (targetStep) => {
-    if (targetStep <= 1) return true;
-    if (targetStep === 2) return !!registrationSteps?.basicInfo?.completed || true; // Step 2 (Basic Info) is unlocked if Type is selected (which is implicit if on step 2)
-    if (targetStep === 3) return !!registrationSteps?.basicInfo?.completed;
-    if (targetStep === 4) return !!registrationSteps?.vehicle?.completed;
-    if (targetStep === 5) return !!registrationSteps?.documents?.completed;
+  const isWalker = formData?.vehicle?.hasVehicle === false;
+
+  const displayedSteps = [
+    { label: "Registration Type", stepNumber: 1 },
+    { label: "Personal Information", stepNumber: 2 },
+    { label: "Vehicle Details", stepNumber: 3 },
+    ...(!isWalker ? [{ label: "Document Details", stepNumber: 4 }] : []),
+    { label: "Review Information", stepNumber: 5 },
+  ];
+
+  const isStepUnlocked = (targetStepNumber) => {
+    if (targetStepNumber <= 1) return true;
+    if (targetStepNumber === 2) return true;
+    if (targetStepNumber === 3) return !!(registrationSteps?.basicInfo?.completed || registrationSteps?.basicInfo?.isCompleted);
+    if (targetStepNumber === 4) {
+      return !!(registrationSteps?.vehicle?.completed || registrationSteps?.vehicle?.isCompleted);
+    }
+    if (targetStepNumber === 5) {
+      if (isWalker) {
+        return !!(registrationSteps?.vehicle?.completed || registrationSteps?.vehicle?.isCompleted);
+      }
+      return !!(registrationSteps?.documents?.completed || registrationSteps?.documents?.isCompleted);
+    }
     return false;
   };
 
-  const isStepCompleted = (stepNumber) => {
-    if (stepNumber === 1) return true; // Always considered complete if past it
-    if (stepNumber === 2) return !!registrationSteps?.basicInfo?.completed;
-    if (stepNumber === 3) return !!registrationSteps?.vehicle?.completed;
-    if (stepNumber === 4) return !!registrationSteps?.documents?.completed;
+  const isStepCompleted = (targetStepNumber) => {
+    if (targetStepNumber === 1) return true;
+    if (targetStepNumber === 2) return !!(registrationSteps?.basicInfo?.completed || registrationSteps?.basicInfo?.isCompleted);
+    if (targetStepNumber === 3) return !!(registrationSteps?.vehicle?.completed || registrationSteps?.vehicle?.isCompleted);
+    if (targetStepNumber === 4) return !!(registrationSteps?.documents?.completed || registrationSteps?.documents?.isCompleted);
     return false;
   };
+
+  const displayedActiveIndex = displayedSteps.findIndex(item => item.stepNumber === step) + 1;
 
   return (
     <>
@@ -49,7 +62,11 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
               variant="ghost"
               onClick={() => {
                 if (step > 1) {
-                  setStep(step - 1);
+                  if (step === 5 && isWalker) {
+                    setStep(3);
+                  } else {
+                    setStep(step - 1);
+                  }
                 } else {
                   navigate(-1);
                 }
@@ -62,14 +79,14 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
         </CardHeader>
 
         <CardContent className="p-6 space-y-2">
-          {steps.map((label, index) => {
-            const stepNumber = index + 1;
+          {displayedSteps.map((item, index) => {
+            const stepNumber = item.stepNumber;
             const isCompleted = isStepCompleted(stepNumber);
             const isCurrent = step === stepNumber;
             const isUnlocked = isStepUnlocked(stepNumber);
 
             return (
-              <div key={label} className="relative">
+              <div key={item.label} className="relative">
                 <Button
                   variant={isCurrent ? "default" : "ghost"}
                   className={`w-full justify-start h-auto p-3 mb-2 relative z-10 ${isCurrent
@@ -101,7 +118,7 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
                           className={`font-semibold text-sm ${isCurrent ? "text-primary" : "text-gray-500"
                             }`}
                         >
-                          {stepNumber}
+                          {index + 1}
                         </span>
                       )}
                     </div>
@@ -112,7 +129,7 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
                         className={`block font-medium ${isCurrent ? "text-white" : "text-gray-900"
                           }`}
                       >
-                        {label}
+                        {item.label}
                       </span>
                       <span
                         className={`block text-xs ${isCurrent
@@ -145,13 +162,13 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-600">Progress</span>
               <span className="font-medium text-primary">
-                {Math.round((step / steps.length) * 100)}%
+                {Math.round((displayedActiveIndex / displayedSteps.length) * 100)}%
               </span>
             </div>
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-300 ease-out"
-                style={{ width: `${(step / steps.length) * 100}%` }}
+                style={{ width: `${(displayedActiveIndex / displayedSteps.length) * 100}%` }}
               />
             </div>
           </div>
@@ -159,7 +176,7 @@ const SidebarSteps = ({ step, setStep, registrationSteps, isOpen, toggle }) => {
           {/* Help text */}
           <div className="pt-4 text-center">
             <p className="text-xs text-muted-foreground">
-              Step {step} of {steps.length}
+              Step {displayedActiveIndex} of {displayedSteps.length}
             </p>
           </div>
         </CardContent>

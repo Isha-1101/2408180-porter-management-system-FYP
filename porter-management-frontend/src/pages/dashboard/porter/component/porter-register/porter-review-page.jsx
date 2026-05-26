@@ -85,7 +85,7 @@ const ReviewPage = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(1)}
+                onClick={() => onEdit(2)}
                 className="gap-2"
               >
                 <Edit className="h-3 w-3" />
@@ -204,7 +204,7 @@ const ReviewPage = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(2)}
+                onClick={() => onEdit(3)}
                 className="gap-2"
               >
                 <Edit className="h-3 w-3" />
@@ -263,90 +263,92 @@ const ReviewPage = ({
         </Card>
 
         {/* Document Information Card */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                Document Information
-              </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(3)}
-                className="gap-2"
-              >
-                <Edit className="h-3 w-3" />
-                Edit
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <IdCard className="h-4 w-4" />
-                  License Number
-                </p>
-                <p className="font-medium">
-                  {data.documents?.licenseNumber || "Not provided"}
-                </p>
+        {data.vehicle?.hasVehicle !== false && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Document Information
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(4)}
+                  className="gap-2"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <IdCard className="h-4 w-4" />
+                    License Number
+                  </p>
+                  <p className="font-medium">
+                    {data.documents?.licenseNumber || "Not provided"}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    License Document
+                  </p>
+                  {data.documents?.porterLicenseDocument ? (
+                    <Badge variant="secondary" className="gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Uploaded
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-amber-600 border-amber-200 bg-amber-50"
+                    >
+                      Not Uploaded
+                    </Badge>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  License Document
-                </p>
-                {data.documents?.porterLicenseDocument ? (
-                  <Badge variant="secondary" className="gap-1">
-                    <CheckCircle className="h-3 w-3" />
-                    Uploaded
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="text-amber-600 border-amber-200 bg-amber-50"
-                  >
-                    Not Uploaded
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Document Preview */}
-            {data.documents?.porterLicenseDocument && (
-              <div className="pt-4 border-t">
-                <h4 className="text-sm font-medium mb-3 text-muted-foreground">License Document</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <div className="h-40 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
-                      {data.documents.porterLicenseDocument?.type === "application/pdf" || 
-                       data.documents.porterLicenseDocument?.name?.endsWith(".pdf") ? (
-                        <div className="flex flex-col items-center justify-center p-4">
-                          <FileText className="h-12 w-12 text-gray-400 mb-2" />
-                          <p className="text-sm font-medium truncate max-w-full px-2">
-                            {data.documents.porterLicenseDocument.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground bg-gray-200 px-2 py-0.5 rounded mt-1">PDF</p>
-                        </div>
-                      ) : (
-                        <img
-                          src={
-                            data.documents.porterLicenseDocument instanceof File
-                              ? URL.createObjectURL(data.documents.porterLicenseDocument)
-                              : getCloudinaryUrl(data.documents.porterLicenseDocument)
-                          }
-                          alt="License Document"
-                          className="h-full object-contain"
-                        />
-                      )}
+              {/* Document Preview */}
+              {data.documents?.porterLicenseDocument && (
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-medium mb-3 text-muted-foreground">License Document</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div className="h-40 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
+                        {data.documents.porterLicenseDocument?.type === "application/pdf" || 
+                         data.documents.porterLicenseDocument?.name?.endsWith(".pdf") ? (
+                          <div className="flex flex-col items-center justify-center p-4">
+                            <FileText className="h-12 w-12 text-gray-400 mb-2" />
+                            <p className="text-sm font-medium truncate max-w-full px-2">
+                              {data.documents.porterLicenseDocument.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground bg-gray-200 px-2 py-0.5 rounded mt-1">PDF</p>
+                          </div>
+                        ) : (
+                          <img
+                            src={
+                              data.documents.porterLicenseDocument instanceof File
+                                ? URL.createObjectURL(data.documents.porterLicenseDocument)
+                                : getCloudinaryUrl(data.documents.porterLicenseDocument)
+                            }
+                            alt="License Document"
+                            className="h-full object-contain"
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Finalize Registration Section - Moved from sidebar */}
