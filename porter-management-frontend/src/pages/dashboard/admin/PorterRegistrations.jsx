@@ -39,6 +39,7 @@ import {
   ChevronRight,
   FileText,
 } from "lucide-react";
+import { getCloudinaryUrl } from "@/utils/helper";
 
 const STATUS_BADGE = {
   approved: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -438,182 +439,191 @@ const PorterRegistrations = () => {
         </DialogContent>
       </Dialog>      {/* Detail Dialog - centered */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl lg:max-w-6xl w-full max-h-[92vh] overflow-y-auto p-6 md:p-8">
           <DialogHeader className="border-b pb-4">
             <DialogTitle className="text-xl font-bold">
               Applicant Registration Details
             </DialogTitle>
-            <DialogDescription className="font-mono text-xs">
-              {detailReg?.registrationId}
-            </DialogDescription>
           </DialogHeader>
 
           {detailReg && (
             <div className="space-y-6 py-2">
 
               {/* ── Applicant Overview ── */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50/70 border border-slate-100 rounded-xl p-5 shadow-xs">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Applicant</p>
-                  <p className="text-sm font-semibold text-gray-900">{detailReg.userId?.name || "N/A"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Applicant</p>
+                  <p className="text-sm font-semibold text-slate-800">{detailReg.userId?.name || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Email</p>
-                  <p className="text-sm text-gray-700 break-all">{detailReg.userId?.email || "N/A"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Email</p>
+                  <p className="text-sm text-slate-650 break-all">{detailReg.userId?.email || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Phone</p>
-                  <p className="text-sm text-gray-700">{detailReg.userId?.phone || "N/A"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Phone</p>
+                  <p className="text-sm text-slate-650">{detailReg.userId?.phone || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Status</p>
-                  <Badge className={`capitalize flex items-center gap-1 w-fit mt-0.5 ${STATUS_BADGE[detailReg.status]}`}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Status</p>
+                  <Badge className={`capitalize flex items-center gap-1.5 w-fit mt-0.5 px-2.5 py-0.5 border ${STATUS_BADGE[detailReg.status]}`}>
                     {STATUS_ICON[detailReg.status]}
                     {detailReg.status}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Type</p>
-                  <p className="text-sm capitalize text-gray-700">{detailReg.registrationType || "—"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Type</p>
+                  <p className="text-sm capitalize text-slate-650">{detailReg.registrationType || "—"}</p>
                 </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Role</p>
-                  <p className="text-sm capitalize text-gray-700">{detailReg.role || "—"}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Submitted</p>
-                  <p className="text-sm text-gray-700">{new Date(detailReg.updatedAt).toLocaleString()}</p>
+                <div className="col-span-2 sm:col-span-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Submitted</p>
+                  <p className="text-sm text-slate-650">{new Date(detailReg.updatedAt).toLocaleString()}</p>
                 </div>
                 {detailReg.rejectionReason && (
-                  <div className="col-span-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-red-400 mb-1">Rejection Reason</p>
+                  <div className="col-span-4 bg-red-50/70 border border-red-200 rounded-lg p-3.5 mt-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-red-500 mb-1">Rejection Reason</p>
                     <p className="text-sm text-red-700">{detailReg.rejectionReason}</p>
                   </div>
                 )}
               </div>
 
               {detailReg.basicInfo && (
-                <>
-                  {/* ── Basic Info ── */}
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Basic Info</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {[
-                        { label: "Full Name", value: detailReg.basicInfo.fullName },
-                        { label: "Phone", value: detailReg.basicInfo.phone },
-                        { label: "Address", value: detailReg.basicInfo.address },
-                        { label: "Identity Number", value: detailReg.basicInfo.identityNumber },
-                        { label: "Identity Type", value: detailReg.basicInfo.identityType === "verification_id" ? "Verification ID" : detailReg.basicInfo.identityType?.replace("_", " ") },
-                        { label: "Experience", value: detailReg.basicInfo.experienceYears ? `${detailReg.basicInfo.experienceYears} yr(s)` : null },
-                      ].filter(i => i.value).map((item, idx) => (
-                        <div key={idx} className="bg-white rounded-lg border p-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">{item.label}</p>
-                          <p className="text-sm font-medium text-gray-900">{item.value}</p>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Left Column: Details */}
+                  <div className="lg:col-span-7 space-y-6">
+                    {/* ── Basic Info ── */}
+                    <div className="space-y-3.5">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Basic Info</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Full Name</p>
+                          <p className="text-sm font-semibold text-slate-800">{detailReg.basicInfo.fullName}</p>
                         </div>
-                      ))}
+                        <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Phone</p>
+                          <p className="text-sm font-semibold text-slate-800">{detailReg.basicInfo.phone}</p>
+                        </div>
+                        <div className="sm:col-span-2 bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Address</p>
+                          <p className="text-sm font-semibold text-slate-800">{detailReg.basicInfo.address}</p>
+                        </div>
+                        <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Identity Type</p>
+                          <p className="text-sm font-semibold text-slate-800">
+                            {detailReg.basicInfo.identityType === "verification_id"
+                              ? "Verification ID"
+                              : detailReg.basicInfo.identityType?.replace("_", " ")}
+                          </p>
+                        </div>
+                        <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Identity Number</p>
+                          <p className="text-sm font-semibold text-slate-800">{detailReg.basicInfo.identityNumber}</p>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* ── Vehicle Info ── */}
+                    {detailReg.vehicle && (
+                      <div className="space-y-3.5 pt-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Vehicle Info</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Has Vehicle</p>
+                            <p className="text-sm font-semibold text-slate-800">{detailReg.vehicle.hasVehicle ? "Yes" : "No"}</p>
+                          </div>
+                          {detailReg.vehicle.hasVehicle && (
+                            <>
+                              <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Category</p>
+                                <p className="text-sm font-semibold capitalize text-slate-800">{detailReg.vehicle.vehicleCategory}</p>
+                              </div>
+                              <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Number</p>
+                                <p className="text-sm font-semibold text-slate-800">{detailReg.vehicle.vehicleNumber}</p>
+                              </div>
+                              {detailReg.vehicle.capacity && (
+                                <div className="bg-slate-50/40 hover:bg-white rounded-xl border border-slate-100 p-3.5 transition-all shadow-xs">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Capacity</p>
+                                  <p className="text-sm font-semibold text-slate-800">{detailReg.vehicle.capacity}</p>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* ── Vehicle Info ── */}
-                  {detailReg.vehicle && (
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Vehicle Info</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="bg-white rounded-lg border p-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Has Vehicle</p>
-                          <p className="text-sm font-medium text-gray-900">{detailReg.vehicle.hasVehicle ? "Yes" : "No"}</p>
-                        </div>
-                        {detailReg.vehicle.hasVehicle && (
-                          <>
-                            <div className="bg-white rounded-lg border p-3">
-                              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Category</p>
-                              <p className="text-sm font-medium capitalize text-gray-900">{detailReg.vehicle.vehicleCategory}</p>
+                  {/* Right Column: Documents */}
+                  <div className="lg:col-span-5 space-y-6 lg:border-l lg:pl-8 border-slate-100">
+                    <div className="space-y-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Uploaded Documents</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                        {detailReg.basicInfo.porterPhoto && (
+                          <div className="bg-slate-50/30 border border-slate-100 rounded-2xl p-3.5 shadow-xs hover:shadow-sm transition-all">
+                            <p className="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wide">Porter Photo</p>
+                            <a href={getCloudinaryUrl(detailReg.basicInfo.porterPhoto)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200/60 shadow-xs">
+                              <img
+                                src={getCloudinaryUrl(detailReg.basicInfo.porterPhoto)}
+                                alt="Porter"
+                                className="w-full h-40 object-cover hover:scale-[1.03] transition duration-305"
+                              />
+                            </a>
+                          </div>
+                        )}
+                        {detailReg.basicInfo.registrationIdDocument?.flatMap((doc, idx) => [
+                          doc.identityCardImageFront && (
+                            <div key={`front-${idx}`} className="bg-slate-50/30 border border-slate-100 rounded-2xl p-3.5 shadow-xs hover:shadow-sm transition-all">
+                              <p className="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wide">ID Front</p>
+                              <a href={getCloudinaryUrl(doc.identityCardImageFront)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200/60 shadow-xs">
+                                <img
+                                  src={getCloudinaryUrl(doc.identityCardImageFront)}
+                                  alt="ID Front"
+                                  className="w-full h-40 object-cover hover:scale-[1.03] transition duration-305"
+                                />
+                              </a>
                             </div>
-                            <div className="bg-white rounded-lg border p-3">
-                              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Number</p>
-                              <p className="text-sm font-medium text-gray-900">{detailReg.vehicle.vehicleNumber}</p>
+                          ),
+                          doc.identityCardImageBack && (
+                            <div key={`back-${idx}`} className="bg-slate-50/30 border border-slate-100 rounded-2xl p-3.5 shadow-xs hover:shadow-sm transition-all">
+                              <p className="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wide">ID Back</p>
+                              <a href={getCloudinaryUrl(doc.identityCardImageBack)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200/60 shadow-xs">
+                                <img
+                                  src={getCloudinaryUrl(doc.identityCardImageBack)}
+                                  alt="ID Back"
+                                  className="w-full h-40 object-cover hover:scale-[1.03] transition duration-305"
+                                />
+                              </a>
                             </div>
-                            {detailReg.vehicle.capacity && (
-                              <div className="bg-white rounded-lg border p-3">
-                                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Capacity</p>
-                                <p className="text-sm font-medium text-gray-900">{detailReg.vehicle.capacity}</p>
-                              </div>
-                            )}
-                          </>
+                          ),
+                        ].filter(Boolean))}
+                        {detailReg.documents?.porterLicenseDocument && (
+                          <div className="bg-slate-50/30 border border-slate-100 rounded-2xl p-3.5 shadow-xs hover:shadow-sm transition-all">
+                            <p className="text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wide">
+                              License
+                              {detailReg.documents.licenseNumber && (
+                                <span className="font-normal text-slate-400 normal-case ml-1.5">#{detailReg.documents.licenseNumber}</span>
+                              )}
+                            </p>
+                            <a href={getCloudinaryUrl(detailReg.documents.porterLicenseDocument)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200/60 shadow-xs">
+                              <img
+                                src={getCloudinaryUrl(detailReg.documents.porterLicenseDocument)}
+                                alt="License"
+                                className="w-full h-40 object-cover hover:scale-[1.03] transition duration-305"
+                              />
+                            </a>
+                          </div>
                         )}
                       </div>
                     </div>
-                  )}
-
-                  {/* ── Uploaded Documents ── */}
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Uploaded Documents</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {detailReg.basicInfo.porterPhoto && (
-                        <div className="flex flex-col items-center gap-2">
-                          <p className="text-xs font-semibold text-gray-600 self-start">Porter Photo</p>
-                          <a href={detailReg.basicInfo.porterPhoto} target="_blank" rel="noreferrer" className="w-full">
-                            <img
-                              src={detailReg.basicInfo.porterPhoto}
-                              alt="Porter"
-                              className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
-                            />
-                          </a>
-                        </div>
-                      )}
-                      {detailReg.basicInfo.registrationIdDocument?.flatMap((doc, idx) => [
-                        doc.identityCardImageFront && (
-                          <div key={`front-${idx}`} className="flex flex-col items-center gap-2">
-                            <p className="text-xs font-semibold text-gray-600 self-start">ID Front</p>
-                            <a href={doc.identityCardImageFront} target="_blank" rel="noreferrer" className="w-full">
-                              <img
-                                src={doc.identityCardImageFront}
-                                alt="ID Front"
-                                className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
-                              />
-                            </a>
-                          </div>
-                        ),
-                        doc.identityCardImageBack && (
-                          <div key={`back-${idx}`} className="flex flex-col items-center gap-2">
-                            <p className="text-xs font-semibold text-gray-600 self-start">ID Back</p>
-                            <a href={doc.identityCardImageBack} target="_blank" rel="noreferrer" className="w-full">
-                              <img
-                                src={doc.identityCardImageBack}
-                                alt="ID Back"
-                                className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
-                              />
-                            </a>
-                          </div>
-                        ),
-                      ].filter(Boolean))}
-                      {detailReg.documents?.porterLicenseDocument && (
-                        <div className="flex flex-col items-center gap-2">
-                          <p className="text-xs font-semibold text-gray-600 self-start">
-                            License
-                            {detailReg.documents.licenseNumber && (
-                              <span className="font-normal text-gray-400 ml-1">#{detailReg.documents.licenseNumber}</span>
-                            )}
-                          </p>
-                          <a href={detailReg.documents.porterLicenseDocument} target="_blank" rel="noreferrer" className="w-full">
-                            <img
-                              src={detailReg.documents.porterLicenseDocument}
-                              alt="License"
-                              className="w-full h-36 object-cover rounded-xl border shadow-sm hover:opacity-90 transition"
-                            />
-                          </a>
-                        </div>
-                      )}
-                    </div>
                   </div>
-                </>
+                </div>
               )}
 
               {/* ── Actions ── */}
               {detailReg.status === "submitted" && (
-                <DialogFooter className="border-t pt-4 flex gap-3 sm:justify-start">
+                <DialogFooter className="border-t pt-5 flex flex-row gap-4 w-full">
                   <Button
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 py-6 text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center"
                     onClick={() => {
                       handleApprove(detailReg);
                       setIsDetailOpen(false);
@@ -624,7 +634,7 @@ const PorterRegistrations = () => {
                   </Button>
                   <Button
                     variant="destructive"
-                    className="flex-1"
+                    className="flex-1 py-6 text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center"
                     onClick={() => {
                       setSelectedReg(detailReg);
                       setIsDetailOpen(false);
