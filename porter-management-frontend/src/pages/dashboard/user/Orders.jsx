@@ -33,9 +33,14 @@ import {
   Users,
   Eye,
   Play,
+  Wallet,
+  CreditCard,
+  Banknote,
 } from "lucide-react";
 import PageLayout from "../../../components/common/PageLayout";
 import { AddressLine } from "../../../components/common/AddressLine";
+import axiosInstance from "@/apis/axiosInstance";
+import toast from "react-hot-toast";
 
 // ────────────────────────────────────
 // Star Rating Component
@@ -138,6 +143,40 @@ const getStatusConfig = (s) =>
     icon: null,
   };
 
+// ───────────────────────────────────
+// Payment Status Config
+// ───────────────────────────────────
+const PAYMENT_STATUS_CONFIG = {
+  pending: {
+    label: "Payment Pending",
+    cls: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    icon: <Clock className="w-3 h-3" />,
+  },
+  confirmed: {
+    label: "Paid (Digital)",
+    cls: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    icon: <CreditCard className="w-3 h-3" />,
+  },
+  verified: {
+    label: "Paid (Cash)",
+    cls: "bg-blue-100 text-blue-800 border-blue-200",
+    icon: <Banknote className="w-3 h-3" />,
+  },
+  failed: {
+    label: "Payment Failed",
+    cls: "bg-red-100 text-red-800 border-red-200",
+    icon: <XCircle className="w-3 h-3" />,
+  },
+  refunded: {
+    label: "Refunded",
+    cls: "bg-gray-100 text-gray-700 border-gray-200",
+    icon: <RefreshCw className="w-3 h-3" />,
+  },
+};
+
+const getPaymentStatusConfig = (s) =>
+  PAYMENT_STATUS_CONFIG[s] || null;
+
 // ────────────────────────────────────
 // Trackable status sets
 // ────────────────────────────────────
@@ -160,7 +199,7 @@ const TRACKABLE_INDIVIDUAL_STATUSES = [
 // ────────────────────────────────────
 // Booking Card
 // ────────────────────────────────────
-const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney }) => {
+const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney, onPayNow }) => {
   const sc = getStatusConfig(booking.status);
   const isCompleted = booking.status === "COMPLETED";
   const isTeam = booking.bookingType === "team";
@@ -170,6 +209,11 @@ const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney }) =>
   const canTrackIndividual =
     !isTeam && TRACKABLE_INDIVIDUAL_STATUSES.includes(booking.status);
   const canTrack = canTrackTeam || canTrackIndividual;
+
+  // Payment status
+  const paymentSc = getPaymentStatusConfig(booking.paymentStatus);
+  const showPaymentBadge = paymentSc && (booking.paymentMethod === "digital" || booking.paymentStatus);
+  const canPayNow = isCompleted && booking.paymentStatus === "pending" && onPayNow;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -195,6 +239,12 @@ const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney }) =>
               <Badge variant="outline" className="text-xs capitalize">
                 {booking.bookingType}
               </Badge>
+              {showPaymentBadge && (
+                <Badge className={`flex items-center gap-1 text-xs ${paymentSc.cls}`}>
+                  {paymentSc.icon}
+                  {paymentSc.label}
+                </Badge>
+              )}
               <span className="text-xs text-gray-400 ml-auto">
                 {new Date(booking.createdAt).toLocaleDateString("en-US", {
                   day: "numeric",
@@ -282,6 +332,18 @@ const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney }) =>
                 onRate={onRate}
                 onTrack={onTrack}
               />
+            )}
+
+            {/* Pay Now button for completed bookings with pending payment */}
+            {canPayNow && (
+              <Button
+                size="sm"
+                className="flex items-center gap-1.5 min-w-[90px] bg-green-600 hover:bg-green-700"
+                onClick={() => onPayNow(booking)}
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                Pay Now
+              </Button>
             )}
           </div>
         </div>
@@ -577,6 +639,27 @@ const Orders = () => {
     }
   };
 
+  const handlePayNow = async (booking) => {
+    try {
+      const response = await axiosInstance.post("/payments/initiate", {
+        bookingId: booking._id,
+        paymentMethod: "digital",
+      });
+
+      const { esewaData, gatewayUrl } = response.data.data;
+
+      navigate("/dashboard/payment/esewa-redirect", {
+        state: {
+          esewaData,
+          gatewayUrl,
+          bookingId: booking._id,
+        },
+      });
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to initiate payment");
+    }
+  };
+
   // ────────────────────────────────────────────────────────────────────────────
   return (
     <PageLayout
@@ -645,6 +728,7 @@ const Orders = () => {
                 onRate={handleRate}
                 onTrack={handleTrack}
                 onStartJourney={handleStartJourney}
+                onPayNow={handlePayNow}
               />
             ))
           )}

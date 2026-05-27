@@ -24,4 +24,6 @@ dist-ssr
 *.sw?
 .env
 
-.docs
+docs
+.opencode
+graphify-out

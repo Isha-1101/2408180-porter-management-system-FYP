@@ -37,32 +37,32 @@ import axiosInstance from "@/apis/axiosInstance";
 // Status step definitions
 const STATUS_STEPS = [
   { key: "WAITING_PORTER", label: "Waiting for porter", icon: Clock },
-  { key: "CONFIRMED",      label: "Porter accepted",       icon: CheckCircle2 },
-  { key: "IN_PROGRESS",    label: "Pickup in progress",    icon: Navigation },
-  { key: "COMPLETED",      label: "Booking completed",     icon: CheckCircle2 },
+  { key: "CONFIRMED", label: "Porter accepted", icon: CheckCircle2 },
+  { key: "IN_PROGRESS", label: "Pickup in progress", icon: Navigation },
+  { key: "COMPLETED", label: "Booking completed", icon: CheckCircle2 },
 ];
 
 const STATUS_COLORS = {
   WAITING_PORTER: "bg-[#FEF3E0] text-[#E5A03D] border-[#FDB64E]",
-  CONFIRMED:      "bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976]",
-  IN_PROGRESS:    "bg-[#E8F5E8] text-[#0C4C40] border-[#C5E2B6]",
-  COMPLETED:      "bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976]",
-  CANCELLED:      "bg-red-100 text-red-700 border-red-200",
+  CONFIRMED: "bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976]",
+  IN_PROGRESS: "bg-[#E8F5E8] text-[#0C4C40] border-[#C5E2B6]",
+  COMPLETED: "bg-[#C5E2B6] text-[#0C4C40] border-[#8DC976]",
+  CANCELLED: "bg-red-100 text-red-700 border-red-200",
 };
 
 
 const BookingTracking = () => {
-  const location  = useLocation();
-  const navigate  = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { bookingId: paramBookingId } = useParams();
-  const token     = useAuthStore((s) => s.access_token);
+  const token = useAuthStore((s) => s.access_token);
 
   // bookingId: from router state (fresh flow) OR url param (Orders history)
   const {
     bookingId: stateBookingId,
-    pickup:    statePickup,
-    dropoff:   stateDropoff,
-    porter:    statePorter,
+    pickup: statePickup,
+    dropoff: stateDropoff,
+    porter: statePorter,
     fare,
   } = location.state || {};
 
@@ -74,14 +74,14 @@ const BookingTracking = () => {
   const fetchedBooking = bookingData?.booking || bookingData;
 
   // Resolve pickup/drop: prefer router state (already available), else fetched
-  const pickup  = statePickup  || fetchedBooking?.pickup;
+  const pickup = statePickup || fetchedBooking?.pickup;
   const dropoff = stateDropoff || fetchedBooking?.drop;
 
   // Real-time status: socket/SSE override → fetched DB status → default
-  const [liveStatus,     setLiveStatus]     = useState(null);
+  const [liveStatus, setLiveStatus] = useState(null);
   const [porterLocation, setPorterLocation] = useState(null);
   const [acceptedPorter, setAcceptedPorter] = useState(statePorter || null);
-  const [isChatOpen,     setIsChatOpen]     = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [showPaymentMethod, setShowPaymentMethod] = useState(false);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [showCancelForm, setShowCancelForm] = useState(false);
@@ -103,24 +103,24 @@ const BookingTracking = () => {
 
     const match = (data) => String(data.bookingId) === String(bookingId);
 
-    const onConfirmed  = (data) => { if (match(data)) { setLiveStatus("CONFIRMED");  if (data.porter) setAcceptedPorter(data.porter); } };
+    const onConfirmed = (data) => { if (match(data)) { setLiveStatus("CONFIRMED"); if (data.porter) setAcceptedPorter(data.porter); } };
     const onInProgress = (data) => { if (match(data)) setLiveStatus("IN_PROGRESS"); };
-    const onCompleted  = (data) => {
+    const onCompleted = (data) => {
       if (match(data)) {
         setLiveStatus("COMPLETED");
         setShowPaymentMethod(true);
       }
     };
-    const onCancelled  = (data) => { if (match(data)) setLiveStatus("CANCELLED"); };
-    const onPorterLoc  = (data) => {
+    const onCancelled = (data) => { if (match(data)) setLiveStatus("CANCELLED"); };
+    const onPorterLoc = (data) => {
       if (match(data)) setPorterLocation({ lat: data.lat, lng: data.lng });
     };
 
-    socket.on("booking-confirmed",       onConfirmed);
-    socket.on("booking-in-progress",     onInProgress);
-    socket.on("booking-completed",       onCompleted);
-    socket.on("booking-cancelled",       onCancelled);
-    socket.on("porter-location-update",  onPorterLoc);
+    socket.on("booking-confirmed", onConfirmed);
+    socket.on("booking-in-progress", onInProgress);
+    socket.on("booking-completed", onCompleted);
+    socket.on("booking-cancelled", onCancelled);
+    socket.on("porter-location-update", onPorterLoc);
 
     sseRef.current = createSSEConnection(
       "/bookings/sse/user",
@@ -141,10 +141,10 @@ const BookingTracking = () => {
     );
 
     return () => {
-      socket.off("booking-confirmed",      onConfirmed);
-      socket.off("booking-in-progress",    onInProgress);
-      socket.off("booking-completed",      onCompleted);
-      socket.off("booking-cancelled",      onCancelled);
+      socket.off("booking-confirmed", onConfirmed);
+      socket.off("booking-in-progress", onInProgress);
+      socket.off("booking-completed", onCompleted);
+      socket.off("booking-cancelled", onCancelled);
       socket.off("porter-location-update", onPorterLoc);
       sseRef.current?.close();
     };
@@ -184,28 +184,56 @@ const BookingTracking = () => {
 
   const handlePaymentMethodSelect = async (paymentMethod) => {
     if (!bookingId) return;
-    
+
     setIsSubmittingPayment(true);
     try {
       const axiosInstance = (await import("@/apis/axiosInstance")).default;
-      const response = await axiosInstance.post(
-        `/bookings/individual/${bookingId}/update-payment-method`,
-        { paymentMethod }
-      );
 
-      toast.success("Payment method saved! Redirecting to orders...");
-      
-      setTimeout(() => {
-        const pId = acceptedPorter?._id || acceptedPorter?.id || fetchedBooking?.assignedPorterId?._id || fetchedBooking?.assignedPorterId;
-        navigate("/dashboard/orders", {
-          state: {
-            promptRatingFor: pId ? { bookingId, porterId: pId } : null
-          }
+      if (paymentMethod === "digital") {
+        const response = await axiosInstance.post("/payments/initiate", {
+          bookingId,
+          paymentMethod: "digital",
         });
-      }, 1500);
+
+        const { esewaData, gatewayUrl } = response.data.data;
+        console.log(esewaData, "esewaData")
+        navigate("/dashboard/payment/esewa-redirect", {
+          state: {
+            esewaData,
+            gatewayUrl,
+            bookingId,
+          },
+        });
+      } else {
+        // Cash payment flow
+        await axiosInstance.post(
+          `/bookings/individual/${bookingId}/update-payment-method`,
+          { paymentMethod }
+        );
+
+        toast.success("Payment method saved! Redirecting to orders...");
+        
+        setTimeout(() => {
+          // Get porterId from all possible sources
+          const pId = 
+            acceptedPorter?._id || 
+            acceptedPorter?.id || 
+            fetchedBooking?.assignedPorterId?._id || 
+            fetchedBooking?.assignedPorterId ||
+            booking?.assignedPorterId?._id ||
+            booking?.assignedPorterId ||
+            null;
+          
+          navigate("/dashboard/orders", {
+            state: {
+              promptRatingFor: pId ? { bookingId, porterId: pId } : null
+            }
+          });
+        }, 1500);
+      }
     } catch (error) {
       console.error("Error updating payment method:", error);
-      toast.error(error?.response?.data?.message || "Failed to save payment method");
+      toast.error(error?.response?.data?.message || "Failed to process payment");
     } finally {
       setIsSubmittingPayment(false);
     }
@@ -226,7 +254,7 @@ const BookingTracking = () => {
   }
 
   // Derived values
-  const currentStep  = STATUS_STEPS.findIndex((s) => s.key === resolvedStatus);
+  const currentStep = STATUS_STEPS.findIndex((s) => s.key === resolvedStatus);
   const isCancellable =
     resolvedStatus === "WAITING_PORTER" || resolvedStatus === "CONFIRMED";
 
@@ -268,15 +296,14 @@ const BookingTracking = () => {
                 {/* Step tracker */}
                 <div className="space-y-3">
                   {STATUS_STEPS.map((step, i) => {
-                    const Icon  = step.icon;
-                    const done  = i <= currentStep;
+                    const Icon = step.icon;
+                    const done = i <= currentStep;
                     const active = i === currentStep;
                     return (
                       <div key={step.key} className="flex items-center gap-3">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                            done ? "bg-[#0C4C40] text-white" : "bg-gray-100 text-gray-400"
-                          }`}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${done ? "bg-[#0C4C40] text-white" : "bg-gray-100 text-gray-400"
+                            }`}
                         >
                           {active && resolvedStatus === "WAITING_PORTER" ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -285,9 +312,8 @@ const BookingTracking = () => {
                           )}
                         </div>
                         <p
-                          className={`flex-1 text-sm font-medium ${
-                            done ? "text-gray-900" : "text-gray-400"
-                          }`}
+                          className={`flex-1 text-sm font-medium ${done ? "text-gray-900" : "text-gray-400"
+                            }`}
                         >
                           {step.label}
                         </p>

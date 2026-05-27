@@ -29,7 +29,7 @@ let porterLocations = {};
 
 // Socket handlers
 io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
+  // console.log("Socket connected:", socket.id);
 
   // Porter joins their own room so we can send targeted booking-request events
   socket.on("join-porter-room", (porterId) => {
@@ -97,7 +97,7 @@ io.on("connection", (socket) => {
         teamId: porter.teamId || null,
         updatedAt: new Date(),
       });
-      console.log("✅ Location saved and broadcasted");
+      // console.log("✅ Location saved and broadcasted");
     } catch (error) {
       console.error("Error saving location:", error);
     }

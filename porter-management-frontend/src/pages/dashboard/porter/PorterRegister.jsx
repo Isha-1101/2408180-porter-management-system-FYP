@@ -114,9 +114,11 @@ const PorterRegister = () => {
       registrationId,
       data: formData.vehicle,
     });
+    const isWalker = formData.vehicle?.hasVehicle === false;
     setRegistrationSteps((prev) => ({
       ...prev,
       vehicle: { ...prev.vehicle, isCompleted: true },
+      documents: { ...prev.documents, isCompleted: isWalker },
     }));
   };
 
@@ -175,6 +177,10 @@ const PorterRegister = () => {
           return;
         }
         await handleSaveStep2();
+        if (formData.vehicle?.hasVehicle === false) {
+          setStep(5);
+          return;
+        }
       }
 
       if (step === 4) {
@@ -280,7 +286,13 @@ const PorterRegister = () => {
                 <Button
                   variant="outline"
                   disabled={step === 1}
-                  onClick={() => setStep(step - 1)}
+                  onClick={() => {
+                    if (step === 5 && formData.vehicle?.hasVehicle === false) {
+                      setStep(3);
+                    } else {
+                      setStep(step - 1);
+                    }
+                  }}
                 >
                   <ChevronLeft size={16} /> Previous
                 </Button>

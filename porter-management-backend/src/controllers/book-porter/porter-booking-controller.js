@@ -119,7 +119,7 @@ export const searchNearbyPorters = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Search failed",
+      message: `An error occurred: ${error.message}`,
     });
   }
 };

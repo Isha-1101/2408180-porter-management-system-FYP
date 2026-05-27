@@ -11,6 +11,7 @@ export const searchIndividualPorters = async (req, res) => {
 
     const query = {
       porterType: "individual",
+      teamId: null,
       status: "active",
       isVerified: true,
     };
@@ -95,12 +96,12 @@ export const invitePorterToTeam = async (req, res) => {
       });
     }
 
-    if (targetPorter.porterType === "team") {
+    if (targetPorter.porterType === "team" || targetPorter.teamId) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
         success: false,
-        message: "Cannot invite a team porter",
+        message: "Cannot invite a porter who is already linked to a team",
       });
     }
 
@@ -220,7 +221,14 @@ export const respondToTeamInvitation = async (req, res) => {
       );
 
       if (porter && team) {
-        porter.porterType = "team";
+        if (porter.teamId) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({
+            success: false,
+            message: "You are already linked to a team",
+          });
+        }
         porter.teamId = team._id;
         porter.role = "worker";
         await porter.save({ session });

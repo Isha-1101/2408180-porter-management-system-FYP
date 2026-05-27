@@ -208,19 +208,37 @@ const TeamBookingTracking = () => {
     
     setIsSubmittingPayment(true);
     try {
-      await axiosInstance.post(
-        `/bookings/individual/${bookingId}/update-payment-method`,
-        { paymentMethod }
-      );
+      if (paymentMethod === "digital") {
+        const response = await axiosInstance.post("/payments/initiate", {
+          bookingId,
+          paymentMethod: "digital",
+        });
 
-      toast.success("Payment method saved! Redirecting to orders...");
-      
-      setTimeout(() => {
-        navigate("/dashboard/orders");
-      }, 1500);
+        const { esewaData, gatewayUrl } = response.data.data;
+        
+        navigate("/dashboard/payment/esewa-redirect", {
+          state: {
+            esewaData,
+            gatewayUrl,
+            bookingId,
+          },
+        });
+      } else {
+        // Cash payment flow
+        await axiosInstance.post(
+          `/bookings/individual/${bookingId}/update-payment-method`,
+          { paymentMethod }
+        );
+
+        toast.success("Payment method saved! Redirecting to orders...");
+        
+        setTimeout(() => {
+          navigate("/dashboard/orders");
+        }, 1500);
+      }
     } catch (error) {
       console.error("Error updating payment method:", error);
-      toast.error(error?.response?.data?.message || "Failed to save payment method");
+      toast.error(error?.response?.data?.message || "Failed to process payment");
     } finally {
       setIsSubmittingPayment(false);
     }
