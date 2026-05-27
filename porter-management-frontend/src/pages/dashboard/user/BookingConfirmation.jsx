@@ -14,14 +14,16 @@ import PageLayout from "../../../components/common/PageLayout";
 import { BackButton } from "../../../components/common/BackButton";
 import { AddressLine } from "../../../components/common/AddressLine";
 import { getCloudinaryUrl } from "../../../utils/helper";
-import { useCreateIndividualBooking } from "../../../apis/hooks/porterBookingsHooks";
+import { useCreateIndividualBooking, usecreatePorterBooking } from "../../../apis/hooks/porterBookingsHooks";
 const BookingConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { porter, pickup, dropoff, weight, totalPrice, purpose, numberOfFloors, has_lift, hasVehicle, trip } = location.state || {};
+  const { porterId, porter, pickup, dropoff, weight, totalPrice, purpose, numberOfFloors, has_lift, hasVehicle, trip } = location.state || {};
 
-  const { mutateAsync: confirmBooking, isPending } =
-    useCreateIndividualBooking();
+  const { mutateAsync: confirmSelectedPorter, isPending: isSelectingPending } = usecreatePorterBooking();
+  const { mutateAsync: confirmIndividualBooking, isPending: isIndividualPending } = useCreateIndividualBooking();
+
+  const isPending = isSelectingPending || isIndividualPending;
 
   if (!porter) {
     navigate("/dashboard/booking");
@@ -30,7 +32,9 @@ const BookingConfirmation = () => {
 
   const handleConfirm = async () => {
     try {
-      const res = await confirmBooking({
+      const payload = {
+        porterId: porterId || porter?.id || porter?._id,
+        bookingType: "individual",
         pickup: {
           lat: pickup?.lat,
           lng: pickup?.lng,
@@ -50,10 +54,14 @@ const BookingConfirmation = () => {
         hasLift: has_lift || false,
         no_of_trips: trip ? Number(trip) : 1,
         purpose_of_booking: purpose || "transportation",
-      });
+      };
+
+      const res = porterId 
+        ? await confirmSelectedPorter(payload)
+        : await confirmIndividualBooking(payload);
 
       navigate("/dashboard/booking/tracking", {
-        state: { bookingId: res?.data?.bookingId, pickup, dropoff, porter, fare: totalPrice },
+        state: { bookingId: res?.data?.bookingId || res?.bookingId, pickup, dropoff, porter, fare: totalPrice },
       });
     } catch (err) {
       console.error(err);

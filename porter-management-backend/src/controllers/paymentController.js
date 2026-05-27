@@ -7,6 +7,8 @@ import {
   verifyEsewaSignature,
   decodeEsewaResponse,
 } from "../config/esewa.config.js";
+import { calculateFareInternal } from "./calcuate-fare/calculatefare.controller.js";
+import { getDistanceKm } from "../utils/helper.js";
 
 /**
  * Initiate payment for a booking
@@ -52,6 +54,24 @@ export const initiatePayment = async (req, res) => {
         success: false,
         message: "Payment can only be initiated after booking completion",
       });
+    }
+
+    // Fallback: If totalPrice is 0 (common for older team bookings), calculate it now
+    if (!booking.totalPrice || booking.totalPrice === 0) {
+      console.log(`[Payment] Calculating fallback price for booking ${bookingId}`);
+      const distanceKm = getDistanceKm(booking.pickup, booking.drop);
+      const { totalCost } = calculateFareInternal({
+        no_of_floor: booking.noOfFloors || 0,
+        has_lift: booking.hasLift || false,
+        no_of_trips: booking.no_of_trips || 1,
+        weightKg: booking.weightKg || 5,
+        vehicleType: booking.vehicleType,
+        distanceKm,
+        teamSize: booking.teamSize || 1,
+      });
+      
+      booking.totalPrice = totalCost;
+      await booking.save();
     }
 
     // Check if payment already exists and is not failed

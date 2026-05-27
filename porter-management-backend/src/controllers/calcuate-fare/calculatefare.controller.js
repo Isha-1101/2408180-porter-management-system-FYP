@@ -27,78 +27,108 @@ const NO_LIFT_SURCHARGE = 50;  // Rs. added when no lift
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const fareCalculator = async (req, res) => {
-  try {
-    const { no_of_floor, has_lift, no_of_trips, weightKg, vehicleType, distanceKm } = req.query;
+/**
+ * Internal fare calculation logic
+ */
+export const calculateFareInternal = (params) => {
+  const {
+    no_of_floor = 0,
+    has_lift = false,
+    no_of_trips = 1,
+    weightKg = 5,
+    vehicleType,
+    distanceKm = 0,
+    teamSize = 1,
+  } = params;
 
-    const floors    = Number(no_of_floor) || 0;
-    const trips     = Number(no_of_trips) || 1;
-    const weight    = Number(weightKg)    || 5;
-    const distance  = Number(distanceKm)  || 0;
-    const liftAvail = has_lift === "true";
+  const floors = Number(no_of_floor);
+  const trips = Number(no_of_trips);
+  const weight = Number(weightKg);
+  const distance = Number(distanceKm);
+  const liftAvail = String(has_lift) === "true";
+  const size = Number(teamSize) || 1;
 
-    let breakdown = [];
-    let totalCost = 0;
+  let breakdown = [];
+  let totalCost = 0;
 
-    // ── If vehicle booking: only vehicle charge + distance charge ────────────
-    if (vehicleType && VEHICLE_PRICES[vehicleType] !== undefined) {
-      // Vehicle charge (fixed)
-      const vehicleCost = VEHICLE_PRICES[vehicleType];
-      breakdown.push({ title: `Vehicle Charge (${vehicleType})`, amount: vehicleCost });
-      totalCost += vehicleCost;
-
-      // Distance charge
-      const distanceCost = distance <= 5
-        ? BASE_FARE_DISTANCE
-        : BASE_FARE_DISTANCE + Math.ceil(distance - 5) * EXTRA_KM_RATE;
-      breakdown.push({ title: "Distance Charge", amount: distanceCost });
-      totalCost += distanceCost;
-
-      return res.json({ breakdown, totalCost });
-    }
-
-    // ── Individual (no vehicle): full breakdown ──────────────────────────────
-
-    // Labour
-    breakdown.push({ title: "Labour Cost", amount: LABOUR_COST });
-    totalCost += LABOUR_COST;
-
-    // Weight charge
-    const weightCost = weight <= 5
-      ? BASE_FARE_WEIGHT
-      : BASE_FARE_WEIGHT + Math.ceil(weight - 5) * EXTRA_KG_RATE;
-    breakdown.push({ title: "Weight Charge", amount: weightCost });
-    totalCost += weightCost;
+  // ── If vehicle booking: only vehicle charge + distance charge ────────────
+  if (vehicleType && VEHICLE_PRICES[vehicleType] !== undefined) {
+    // Vehicle charge (fixed)
+    const vehicleCost = VEHICLE_PRICES[vehicleType];
+    breakdown.push({
+      title: `Vehicle Charge (${vehicleType})`,
+      amount: vehicleCost,
+    });
+    totalCost += vehicleCost;
 
     // Distance charge
-    const distanceCost = distance <= 5
-      ? BASE_FARE_DISTANCE
-      : BASE_FARE_DISTANCE + Math.ceil(distance - 5) * EXTRA_KM_RATE;
+    const distanceCost =
+      distance <= 5
+        ? BASE_FARE_DISTANCE
+        : BASE_FARE_DISTANCE + Math.ceil(distance - 5) * EXTRA_KM_RATE;
     breakdown.push({ title: "Distance Charge", amount: distanceCost });
     totalCost += distanceCost;
 
-    // Floor charge
-    if (floors > 0) {
-      const floorCost = floors * FLOOR_RATE;
-      breakdown.push({ title: "Floor Charge", amount: floorCost });
-      totalCost += floorCost;
-    }
+    return { breakdown, totalCost };
+  }
 
-    // Trip charge
-    if (trips > 1) {
-      const tripCost = (trips - 1) * TRIP_RATE;
-      breakdown.push({ title: "Trip Charge", amount: tripCost });
-      totalCost += tripCost;
-    }
+  // ── Individual/Team (no vehicle): full breakdown ──────────────────────────────
 
-    // No-lift surcharge
-    if (floors > 0 && !liftAvail) {
-      breakdown.push({ title: "No Lift Surcharge", amount: NO_LIFT_SURCHARGE });
-      totalCost += NO_LIFT_SURCHARGE;
-    }
+  // Labour (proportional to team size)
+  const actualLabourCost = LABOUR_COST * size;
+  breakdown.push({
+    title: size > 1 ? `Labour Cost (${size} porters)` : "Labour Cost",
+    amount: actualLabourCost,
+  });
+  totalCost += actualLabourCost;
 
-    return res.json({ breakdown, totalCost });
+  // Weight charge
+  const weightCost =
+    weight <= 5
+      ? BASE_FARE_WEIGHT
+      : BASE_FARE_WEIGHT + Math.ceil(weight - 5) * EXTRA_KG_RATE;
+  breakdown.push({ title: "Weight Charge", amount: weightCost });
+  totalCost += weightCost;
+
+  // Distance charge
+  const distanceCost =
+    distance <= 5
+      ? BASE_FARE_DISTANCE
+      : BASE_FARE_DISTANCE + Math.ceil(distance - 5) * EXTRA_KM_RATE;
+  breakdown.push({ title: "Distance Charge", amount: distanceCost });
+  totalCost += distanceCost;
+
+  // Floor charge
+  if (floors > 0) {
+    const floorCost = floors * FLOOR_RATE;
+    breakdown.push({ title: "Floor Charge", amount: floorCost });
+    totalCost += floorCost;
+  }
+
+  // Trip charge
+  if (trips > 1) {
+    const tripCost = (trips - 1) * TRIP_RATE;
+    breakdown.push({ title: "Trip Charge", amount: tripCost });
+    totalCost += tripCost;
+  }
+
+  // No-lift surcharge
+  if (floors > 0 && !liftAvail) {
+    breakdown.push({ title: "No Lift Surcharge", amount: NO_LIFT_SURCHARGE });
+    totalCost += NO_LIFT_SURCHARGE;
+  }
+
+  return { breakdown, totalCost };
+};
+
+export const fareCalculator = async (req, res) => {
+  try {
+    const result = calculateFareInternal(req.query);
+    return res.json(result);
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Failed to calculate fare" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to calculate fare" });
   }
 };
+

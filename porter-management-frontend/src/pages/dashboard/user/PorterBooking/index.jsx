@@ -282,8 +282,8 @@ const PorterBooking = () => {
                   />
                 )}
 
-                {/* Fare breakdown (individual only, after search) */}
-                {hasSearched && (
+                {/* Fare breakdown (after search for individual, or always for team if locations set) */}
+                {(hasSearched || (porterType === "team" && pickup.lat && dropoff.lat)) && (
                   <FareEstimateBreakdown
                     numberOfFloors={numberOfFloors}
                     hasLift={hasLift}
@@ -292,6 +292,7 @@ const PorterBooking = () => {
                     vehicleType={vehicleType}
                     weight={weight}
                     distanceKm={distanceKm}
+                    teamSize={porterType === "team" ? portersRequired : 1}
                     showFareBreakdown={showFareBreakdown}
                     setShowFareBreakdown={setShowFareBreakdown}
                     setTotalPrice={setTotalPrice}

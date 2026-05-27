@@ -77,14 +77,16 @@ export const createIndividualBooking = async (req, res) => {
             type: "Point",
             coordinates: [pickup.lng, pickup.lat],
           },
-          maxDistance: (radiusKm || 5) * 1000,
+          maxDistance: (radiusKm || 5) * 10000,
           distanceField: "distanceMeters",
           spherical: true,
           query: {
+            porterType: "individual",
             status: "active",
             isVerified: true,
             canAcceptBooking: true,
             currentStatus: "online",
+            maxWeightKg: { $gte: Number(weightKg) || 0 },
           },
         },
       },
@@ -384,6 +386,7 @@ export const completeBooking = async (req, res) => {
     await Porters.findByIdAndUpdate(porterId, {
       currentStatus: "online",
       canAcceptBooking: true,
+      assigned_status: "not_assigned",
     });
 
     // Socket event
@@ -551,14 +554,16 @@ export const confirmPaymentAndSearchPorters = async (req, res) => {
             type: "Point",
             coordinates: [booking.pickup.lng, booking.pickup.lat],
           },
-          maxDistance: (booking.radiusKm || 5) * 1000,
+          maxDistance: (booking.radiusKm || 5) * 10000,
           distanceField: "distanceMeters",
           spherical: true,
           query: {
+            porterType: "individual",
             status: "active",
             isVerified: true,
             canAcceptBooking: true,
             currentStatus: "online",
+            maxWeightKg: { $gte: Number(booking.weightKg) || 0 },
           },
         },
       },

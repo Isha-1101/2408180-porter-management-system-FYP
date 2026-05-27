@@ -123,12 +123,35 @@ export const cancelBooking = async (req, res) => {
     booking.cancellationReason = reason;
     await booking.save();
 
-    // Reset porter if assigned
-    if (booking.assignedPorterId) {
-      await Porters.findByIdAndUpdate(booking.assignedPorterId, {
-        currentStatus: "online",
-        canAcceptBooking: true,
-      });
+    // Reset porter status to online/available
+    const porterIds = [];
+    if (booking.assignedPorterId) porterIds.push(booking.assignedPorterId);
+    if (booking.assignedPorters && booking.assignedPorters.length > 0) {
+      booking.assignedPorters.forEach((p) => porterIds.push(p.porterId));
+    }
+
+    if (porterIds.length > 0) {
+      await Porters.updateMany(
+        { _id: { $in: porterIds } },
+        {
+          canAcceptBooking: true,
+          assigned_status: "not_assigned",
+          currentStatus: "online",
+        },
+      );
+
+      // Also ensure team lead is reset if they were marked busy
+      if (booking.bookingType === "team") {
+        const teamLead = await Porters.findOne({
+          teamId: booking.assignedTeamId,
+          role: "owner",
+        });
+        if (teamLead) {
+          teamLead.currentStatus = "online";
+          teamLead.canAcceptBooking = true;
+          await teamLead.save();
+        }
+      }
     }
 
     // Mark all pending porter requests as expired

@@ -6,6 +6,8 @@ import TeamBookingSelection from "../../models/TeamBookingSelection.js";
 import User from "../../models/User.js";
 import { getIO } from "../../utils/socketInstance.js";
 import { notifyUser } from "../../utils/notification-service.js";
+import { calculateFareInternal } from "../calcuate-fare/calculatefare.controller.js";
+import { getDistanceKm } from "../../utils/helper.js";
 
 export const createTeamBooking = async (req, res) => {
   const session = await mongoose.startSession();
@@ -68,6 +70,16 @@ export const createTeamBooking = async (req, res) => {
       });
     }
 
+    // Calculate distance and fare
+    const distanceKm = getDistanceKm(pickup, drop);
+    const { totalCost } = calculateFareInternal({
+      weightKg,
+      distanceKm,
+      teamSize: portersRequired,
+      hasVehicle,
+      vehicleType,
+    });
+
     const [bookingDoc] = await PorterBooking.create(
       [
         {
@@ -83,6 +95,7 @@ export const createTeamBooking = async (req, res) => {
           hasVehicle: hasVehicle || false,
           vehicleType: hasVehicle ? vehicleType : null,
           status: "PENDING_TEAM_REVIEW",
+          totalPrice: totalCost,
         },
       ],
       { session },
@@ -508,19 +521,47 @@ export const teamOwnerConfirmBooking = async (req, res) => {
     await booking.save({ session });
 
     const acceptedPorterIds = acceptedPorters.map((p) => p.porterId);
-    await Porters.updateMany(
-      { _id: { $in: acceptedPorterIds } },
-      { canAcceptBooking: false, assigned_status: "assigned", currentStatus: "busy" },
-      { session },
-    );
 
-    await Porters.findByIdAndUpdate(porterId, {
-      currentStatus: "busy",
-    }, { session });
+    // Only set porters to BUSY if the booking is for TODAY
+    const isToday =
+      !booking.bookingDate ||
+      new Date(booking.bookingDate).toDateString() ===
+        new Date().toDateString();
 
-    await PorterTeam.findByIdAndUpdate(booking.assignedTeamId, {
-      $inc: { totalActiveJobs: 1 },
-    }, { session });
+    if (isToday) {
+      await Porters.updateMany(
+        { _id: { $in: acceptedPorterIds } },
+        {
+          canAcceptBooking: false,
+          assigned_status: "assigned",
+          currentStatus: "busy",
+        },
+        { session },
+      );
+
+      await Porters.findByIdAndUpdate(
+        porterId,
+        {
+          currentStatus: "busy",
+        },
+        { session },
+      );
+
+      await PorterTeam.findByIdAndUpdate(
+        booking.assignedTeamId,
+        {
+          $inc: { totalActiveJobs: 1 },
+        },
+        { session },
+      );
+    } else {
+      // Future booking: just mark as assigned but keep them online/available
+      await Porters.updateMany(
+        { _id: { $in: acceptedPorterIds } },
+        { assigned_status: "assigned" },
+        { session },
+      );
+    }
 
     await session.commitTransaction();
     session.endSession();
@@ -615,6 +656,25 @@ export const teamOwnerCancelBooking = async (req, res) => {
     booking.cancellationReason = "Cancelled by team owner";
     await booking.save();
 
+    // Reset all assigned porters
+    const porterIds = booking.assignedPorters?.map((p) => p.porterId) || [];
+    if (porterIds.length > 0) {
+      await Porters.updateMany(
+        { _id: { $in: porterIds } },
+        {
+          canAcceptBooking: true,
+          assigned_status: "not_assigned",
+          currentStatus: "online",
+        },
+      );
+    }
+
+    // Reset team lead
+    await Porters.findByIdAndUpdate(porterId, {
+      currentStatus: "online",
+      canAcceptBooking: true,
+    });
+
     const io = getIO();
     io.to(`user:${booking.userId.toString()}`).emit("team-booking-cancelled", {
       bookingId: booking._id,
@@ -679,6 +739,24 @@ export const startTeamBooking = async (req, res) => {
     booking.startedAt = new Date();
     await booking.save();
 
+    // Mark all assigned porters as busy when the job starts
+    const assignedPorterIds = booking.assignedPorters.map((p) => p.porterId);
+    if (assignedPorterIds.length > 0) {
+      await Porters.updateMany(
+        { _id: { $in: assignedPorterIds } },
+        {
+          canAcceptBooking: false,
+          assigned_status: "assigned",
+          currentStatus: "busy",
+        },
+      );
+    }
+
+    // Mark team lead as busy too
+    await Porters.findByIdAndUpdate(porterId, {
+      currentStatus: "busy",
+    });
+
     const io = getIO();
     const userId = booking.userId;
 
@@ -741,6 +819,30 @@ export const userStartTeamBooking = async (req, res) => {
     booking.startedAt = new Date();
     await booking.save();
 
+    // Mark all assigned porters as busy when the job starts
+    const assignedPorterIds = booking.assignedPorters?.map((p) => p.porterId) || [];
+    if (assignedPorterIds.length > 0) {
+      await Porters.updateMany(
+        { _id: { $in: assignedPorterIds } },
+        {
+          canAcceptBooking: false,
+          assigned_status: "assigned",
+          currentStatus: "busy",
+        },
+      );
+    }
+
+    const teamLead = await Porters.findOne({
+      teamId: booking.assignedTeamId,
+      role: "owner",
+    });
+
+    if (teamLead) {
+      teamLead.currentStatus = "busy";
+      teamLead.canAcceptBooking = false;
+      await teamLead.save();
+    }
+
     const io = getIO();
 
     io.to(`user:${userId.toString()}`).emit("team-booking-started", {
@@ -759,10 +861,6 @@ export const userStartTeamBooking = async (req, res) => {
       }
     }
 
-    const teamLead = await Porters.findOne({
-      teamId: booking.assignedTeamId,
-      role: "owner",
-    });
     if (teamLead) {
       io.to(`porter:${teamLead._id.toString()}`).emit("team-booking-started", {
         bookingId: booking._id,

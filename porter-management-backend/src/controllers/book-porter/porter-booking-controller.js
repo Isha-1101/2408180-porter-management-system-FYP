@@ -202,12 +202,37 @@ export const createBookingWithSelectedPorter = async (req, res) => {
       ],
       { session },
     );
+    // Calculate distance for notification
+    const { getDistanceKm } = await import("../../utils/helper.js");
+    const distanceKm = Number(getDistanceKm(pickup, drop).toFixed(2));
+
     await session.commitTransaction();
     session.endSession();
 
     // Notify ONLY selected porter
-    //   const ns = notifyPorter(porterId, bookingDoc, distanceKm);
-    // console.log("ns",ns)
+    const { notifyPorter } = await import("../../utils/notification-service.js");
+    await notifyPorter(porterId, bookingDoc, distanceKm).catch((err) =>
+      console.error("Notification error:", err),
+    );
+
+    // Socket notification
+    try {
+      const { getIO } = await import("../../utils/socketInstance.js");
+      const io = getIO();
+      io.to(`porter:${porterId.toString()}`).emit("booking-request", {
+        bookingId: bookingDoc._id,
+        pickup,
+        drop,
+        weightKg,
+        hasVehicle: hasVehicle || false,
+        vehicleType: vehicleType || null,
+        totalPrice: bookingDoc.totalPrice,
+        distanceKm,
+        createdAt: bookingDoc.createdAt,
+      });
+    } catch (socketErr) {
+      console.error("Socket emit error:", socketErr.message);
+    }
     return res.status(201).json({
       success: true,
       message: "Booking created. Waiting for porter confirmation.",
@@ -699,6 +724,37 @@ export const cancelBooking = async (req, res) => {
     booking.cancelledBy = userId;
     booking.cancellationReason = reason || "Cancelled by user";
     await booking.save();
+
+    // Reset porter status to online/available
+    const porterIds = [];
+    if (booking.assignedPorterId) porterIds.push(booking.assignedPorterId);
+    if (booking.assignedPorters && booking.assignedPorters.length > 0) {
+      booking.assignedPorters.forEach((p) => porterIds.push(p.porterId));
+    }
+
+    if (porterIds.length > 0) {
+      await Porters.updateMany(
+        { _id: { $in: porterIds } },
+        {
+          canAcceptBooking: true,
+          assigned_status: "not_assigned",
+          currentStatus: "online",
+        },
+      );
+
+      // Also ensure team lead is reset if they were marked busy
+      if (booking.bookingType === "team") {
+        const teamLead = await Porters.findOne({
+          teamId: booking.assignedTeamId,
+          role: "owner",
+        });
+        if (teamLead) {
+          teamLead.currentStatus = "online";
+          teamLead.canAcceptBooking = true;
+          await teamLead.save();
+        }
+      }
+    }
 
     // Expire all pending requests
     await BookintgPorterRequest.updateMany(
