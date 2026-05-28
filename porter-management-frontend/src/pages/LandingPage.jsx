@@ -21,18 +21,18 @@ const LandingPage = () => {
   const features = [
     {
       icon: <Users className="w-6 h-6 text-primary" />,
-      title: "Smart Porter Assignment",
-      description: "AI-powered porter allocation based on location, availability, and expertise."
+      title: "Quick Porter Search",
+      description: "Quick Porter search based on location, availability, and expertise."
     },
     {
       icon: <MapPin className="w-6 h-6 text-primary" />,
       title: "Real-Time Tracking",
-      description: "Live GPS tracking of deliveries with ETA predictions and status updates."
+      description: "Live tracking of deliveries with  status updates."
     },
     {
       icon: <Shield className="w-6 h-6 text-primary" />,
       title: "Secure & Reliable",
-      description: "End-to-end encrypted communications and secure payment processing."
+      description: "Secured communications and secured payment processing."
     },
     {
       icon: <BarChart3 className="w-6 h-6 text-primary" />,
@@ -68,7 +68,7 @@ const LandingPage = () => {
         <section className="mt-4 flex flex-col lg:flex-row gap-8 bg-white rounded-[2.5rem] p-8 lg:p-16 shadow-sm relative overflow-hidden">
           <div className="flex-1 flex flex-col justify-center max-w-xl z-10">
             <h1 className="text-5xl lg:text-[4.5rem] font-bold leading-[1.1] tracking-tight mb-6">
-              Secure & <br /> Easy-to-Use <br /> Porter App
+              Reinventing <br /> Porter Services <br /> for the Digital Age
             </h1>
             <p className="text-gray-500 text-lg mb-10 max-w-sm leading-relaxed font-medium">
               Book, Track & Manage Deliveries with Confidence.
@@ -100,7 +100,7 @@ const LandingPage = () => {
                   <path id="circlePath" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="transparent" />
                   <text className="text-[10px] font-bold tracking-widest uppercase text-gray-800">
                     <textPath href="#circlePath">
-                      • Learn more • Learn more • Learn more 
+                      • Reliable • Quick • Digital 
                     </textPath>
                   </text>
                 </svg>
