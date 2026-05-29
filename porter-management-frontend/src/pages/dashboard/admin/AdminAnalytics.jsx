@@ -86,8 +86,9 @@ const AdminAnalytics = () => {
         ]);
 
       if (trendsRes?.data.success) {
-        setBookingTrends(trendsRes?.data.data.bookingTrends || []);
-        setCancellationTrends(trendsRes?.data.data.cancellationTrends || []);
+        setBookingTrends(trendsRes?.data.data.bookings || []);
+        setRevenueTrends(trendsRes?.data.data.revenue || []);
+        setCancellationTrends(trendsRes?.data.data.cancellations || []);
       }
       if (distributionRes?.data.success) {
         const dist = distributionRes?.data.data;
@@ -98,17 +99,30 @@ const AdminAnalytics = () => {
               ? obj
               : [];
         setStatusDistribution(toArray(dist?.status));
-        setTypeDistribution(toArray(dist?.type));
+        setTypeDistribution(toArray(dist?.bookingType));
         setPaymentMethodBreakdown(toArray(dist?.paymentMethod));
-        setVehicleDistribution(toArray(dist?.vehicleType));
-      }
-      if (revenueRes?.data.success) {
-        setRevenueTrends(revenueRes?.data.data.monthly || []);
-      }
-      if (cancellationRes?.data.success) {
-        if (!cancellationTrends.length) {
-          setCancellationTrends(cancellationRes?.data.data.trends || []);
-        }
+        
+        const rawVehicles = toArray(dist?.vehicleType);
+        const baseVehicles = [
+          { _id: "mini-truck", count: 0 },
+          { _id: "bike", count: 0 },
+          { _id: "truck", count: 0 },
+          { _id: "van", count: 0 },
+          { _id: "no vehicle", count: 0 },
+        ];
+        
+        rawVehicles.forEach((v) => {
+          const typeId = String(v._id).toLowerCase();
+          const target = baseVehicles.find((b) => b._id === typeId);
+          if (target) {
+            target.count += v.count;
+          } else {
+            const noVeh = baseVehicles.find((b) => b._id === "no vehicle");
+            if (noVeh) noVeh.count += v.count;
+          }
+        });
+        
+        setVehicleDistribution(baseVehicles);
       }
     } catch (err) {
       toast.error("Failed to fetch analytics data");
@@ -123,7 +137,7 @@ const AdminAnalytics = () => {
   }, [period]);
 
   const bookingTrendChartData = {
-    labels: bookingTrends?.map((t) => t.label || t.date),
+    labels: bookingTrends?.map((t) => t._id || t.label || t.date),
     datasets: [
       {
         label: "Bookings",
@@ -136,14 +150,14 @@ const AdminAnalytics = () => {
   };
 
   const revenueTrendChartData = {
-    labels: revenueTrends?.map((t) => t.month || t.label),
+    labels: revenueTrends?.map((t) => t._id || t.month || t.label),
     datasets: [
       {
         label: "Revenue (NPR)",
         data: revenueTrends?.map((t) => t.amount || t.revenue),
-        backgroundColor: "rgba(16, 185, 129, 0.6)",
         borderColor: "rgba(16, 185, 129, 1)",
-        borderWidth: 1,
+        backgroundColor: "rgba(16, 185, 129, 0.1)",
+        fill: true,
       },
     ],
   };
@@ -201,6 +215,7 @@ const AdminAnalytics = () => {
           "rgba(168, 85, 247, 0.6)",
           "rgba(34, 197, 94, 0.6)",
           "rgba(251, 191, 36, 0.6)",
+          "rgba(156, 163, 175, 0.6)",
         ],
         borderWidth: 1,
       },
@@ -208,7 +223,7 @@ const AdminAnalytics = () => {
   };
 
   const cancellationTrendChartData = {
-    labels: cancellationTrends?.map((t) => t.label || t.date),
+    labels: cancellationTrends?.map((t) => t._id || t.label || t.date),
     datasets: [
       {
         label: "Cancellations",
@@ -287,7 +302,7 @@ const AdminAnalytics = () => {
           </CardHeader>
           <CardContent>
             <div className="h-72">
-              <Bar data={revenueTrendChartData} options={chartOptions} />
+              <Line data={revenueTrendChartData} options={lineOptions} />
             </div>
           </CardContent>
         </Card>
@@ -341,17 +356,6 @@ const AdminAnalytics = () => {
           <CardContent>
             <div className="h-72">
               <Bar data={vehicleDistChartData} options={chartOptions} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Cancellation Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <Line data={cancellationTrendChartData} options={lineOptions} />
             </div>
           </CardContent>
         </Card>

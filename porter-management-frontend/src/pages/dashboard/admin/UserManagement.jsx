@@ -13,13 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -223,7 +216,6 @@ const UserManagement = () => {
           <option value="">All Roles</option>
           <option value="user">User</option>
           <option value="porter">Porter</option>
-          <option value="admin">Admin</option>
         </select>
         {pagination.total > 0 && (
           <span className="text-sm text-gray-500">
@@ -448,15 +440,15 @@ const UserManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* User Detail Sheet */}
-      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>User Details</SheetTitle>
-            <SheetDescription>
+      {/* User Detail Modal */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>
               Account profile for {detailUser?.name}
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
           {detailUser && (
             <div className="mt-6 space-y-4">
               {/* Avatar */}
@@ -560,8 +552,8 @@ const UserManagement = () => {
               )}
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
