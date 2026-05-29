@@ -211,8 +211,12 @@ const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney, onPa
   const canTrack = canTrackTeam || canTrackIndividual;
 
   // Payment status
-  const paymentSc = getPaymentStatusConfig(booking.paymentStatus);
-  const showPaymentBadge = paymentSc && (booking.paymentMethod === "digital" || booking.paymentStatus);
+  const effectivePaymentStatus =
+    booking.paymentMethod === "cash" && booking.paymentStatus === "pending"
+      ? "verified"
+      : booking.paymentStatus;
+  const paymentSc = getPaymentStatusConfig(effectivePaymentStatus);
+  const showPaymentBadge = !!paymentSc;
   const canPayNow = isCompleted && booking.paymentStatus === "pending" && booking.paymentMethod !== "cash" && onPayNow;
 
   return (

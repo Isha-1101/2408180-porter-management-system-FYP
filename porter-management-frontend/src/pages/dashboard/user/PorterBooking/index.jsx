@@ -322,6 +322,12 @@ const PorterBooking = () => {
                     {porterType === "team" ? "Book Team Porter" : "Find Porters"}
                   </Button>
                 </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <p className="text-[11px] text-gray-400 text-left italic">
+                    Disclaimer: Booking cost is subject to distance, weight, and current market pricing.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </div>
