@@ -63,7 +63,7 @@ const PorterSchema = new mongoose.Schema(
     maxWeightKg: {
       type: Number,
       required: true,
-      default: 500,
+      default: 100000,
     },
     //porter current location
     location: {
