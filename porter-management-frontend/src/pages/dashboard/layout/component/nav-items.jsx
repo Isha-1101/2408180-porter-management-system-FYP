@@ -132,12 +132,6 @@ const getNavItems = (role) => {
       icon: <ClipboardCheck className="w-5 h-5" />,
       end: true,
     },
-    {
-      label: "Porter Management",
-      to: "/dashboard/admin/porters",
-      icon: <Users className="w-5 h-5" />,
-      end: true,
-    },
   ];
 
   if (role === "admin") return adminItems;

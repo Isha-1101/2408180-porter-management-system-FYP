@@ -1,23 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users,
   Truck,
   FileText,
   ClipboardList,
-  ArrowRight,
-  TrendingUp,
   RefreshCw,
   AlertCircle,
   DollarSign,
-  MessageSquare,
-  Activity,
   Ban,
 } from "lucide-react";
-import { getComprehensiveStats, getSystemHealth } from "@/apis/services/adminService";
+import { getComprehensiveStats } from "@/apis/services/adminService";
 import { useNavigate } from "react-router-dom";
 
 const StatCard = ({ title, value, icon, description, to, color, loading }) => {
@@ -50,7 +44,6 @@ const StatCard = ({ title, value, icon, description, to, color, loading }) => {
 const AdminDashboardOverview = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -59,12 +52,8 @@ const AdminDashboardOverview = () => {
     setLoading(true);
     setError(null);
     try {
-      const [statsRes, healthRes] = await Promise.all([
-        getComprehensiveStats(),
-        getSystemHealth(),
-      ]);
+      const statsRes = await getComprehensiveStats();
       if (statsRes.data.success) setStats(statsRes.data.data);
-      if (healthRes.data.success) setHealth(healthRes.data.data);
       setLastUpdated(new Date());
     } catch (err) {
       console.error("Failed to fetch admin data:", err);
@@ -136,25 +125,6 @@ const AdminDashboardOverview = () => {
         </div>
       )}
 
-      {health?.alerts?.length > 0 && (
-        <div className="space-y-2">
-          {health.alerts.map((alert, i) => (
-            <div
-              key={i}
-              className={`flex items-center gap-3 p-3 rounded-lg border ${
-                alert.severity === "critical"
-                  ? "bg-red-50 border-red-200 text-red-700"
-                  : alert.severity === "medium"
-                  ? "bg-yellow-50 border-yellow-200 text-yellow-700"
-                  : "bg-blue-50 border-blue-200 text-blue-700"
-              }`}
-            >
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span className="text-sm">{alert.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard
@@ -171,7 +141,7 @@ const AdminDashboardOverview = () => {
           icon={<Truck className="h-5 w-5 text-emerald-500" />}
           description={`${stats.porters?.busy || 0} busy, ${stats.porters?.offline || 0} offline`}
           color="border-l-emerald-500"
-          to="/dashboard/admin/porters"
+          to="/dashboard/admin/porter-performance"
         />
         <StatCard
           title="Active Bookings"
@@ -214,14 +184,7 @@ const AdminDashboardOverview = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="quick-actions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="quick-actions">Quick Actions</TabsTrigger>
-          <TabsTrigger value="system-status">System Status</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="quick-actions">
-          <Card>
+      <Card>
             <CardHeader>
               <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
             </CardHeader>
@@ -280,60 +243,6 @@ const AdminDashboardOverview = () => {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="system-status">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">
-                System Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Platform Status</span>
-                    <Badge className={health?.status === "healthy" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-yellow-100 text-yellow-700 border-yellow-200"}>
-                      {health?.status === "healthy" ? "Healthy" : "Degraded"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Active Users</span>
-                    <span className="font-semibold">{stats.users?.active || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Online Porters</span>
-                    <span className="font-semibold">{stats.porters?.online || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Busy Porters</span>
-                    <span className="font-semibold">{stats.porters?.busy || 0}</span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Active Bookings</span>
-                    <span className="font-semibold">{stats.bookings?.active || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pending Payments</span>
-                    <span className="font-semibold">{stats.revenue?.pending || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pending Registrations</span>
-                    <span className="font-semibold">{stats.porters?.pendingRegistrations || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Banned Users</span>
-                    <span className="font-semibold">{stats.users?.banned || 0}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
