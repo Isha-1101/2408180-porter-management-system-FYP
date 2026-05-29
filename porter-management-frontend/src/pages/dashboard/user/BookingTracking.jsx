@@ -56,6 +56,7 @@ const BookingTracking = () => {
   const navigate = useNavigate();
   const { bookingId: paramBookingId } = useParams();
   const token = useAuthStore((s) => s.access_token);
+  const user = useAuthStore((s) => s.user);
 
   // bookingId: from router state (fresh flow) OR url param (Orders history)
   const {
@@ -149,6 +150,30 @@ const BookingTracking = () => {
       sseRef.current?.close();
     };
   }, [bookingId, navigate, token]);
+
+  // Chat notifications listener
+  useEffect(() => {
+    if (!bookingId) return;
+    
+    const currentUserId = user?._id || user?.id;
+    const joinRoom = () => socket.emit("join-chat", bookingId);
+    
+    if (socket.connected) joinRoom();
+    socket.on("connect", joinRoom);
+
+    const onReceiveMessage = (msg) => {
+      if (String(msg.senderId) !== String(currentUserId) && !isChatOpen) {
+        toast.success(`New message: ${msg.text}`, { icon: "💬" });
+      }
+    };
+
+    socket.on("receive-message", onReceiveMessage);
+
+    return () => {
+      socket.off("connect", joinRoom);
+      socket.off("receive-message", onReceiveMessage);
+    };
+  }, [bookingId, user, isChatOpen]);
 
   // Handlers
   const handleCancel = async () => {

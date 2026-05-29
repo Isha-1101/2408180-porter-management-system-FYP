@@ -36,9 +36,10 @@ import {
   useStartBooking,
   usePorterCancelBooking,
 } from "../../../apis/hooks/porterBookingsHooks";
-import socket from "../../../utils/socket";
 import ChatBox from "@/components/chat/ChatBox";
 import toast from "react-hot-toast";
+import socket from "../../../utils/socket";
+import { useAuthStore } from "@/store/auth.store";
 
 const normalize = (b) => ({
   id: b._id || b.id || "N/A",
@@ -60,6 +61,7 @@ const normalize = (b) => ({
 const AcceptedBookingDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
 
   const raw = location.state?.booking;
   const booking = normalize(raw || {});
@@ -109,6 +111,30 @@ const AcceptedBookingDetails = () => {
       clearInterval(intervalRef.current);
     };
   }, [booking.bookingId]);
+
+  // Chat notifications listener
+  useEffect(() => {
+    if (!booking.bookingId) return;
+    
+    const currentUserId = user?._id || user?.id;
+    const joinRoom = () => socket.emit("join-chat", booking.bookingId);
+    
+    if (socket.connected) joinRoom();
+    socket.on("connect", joinRoom);
+
+    const onReceiveMessage = (msg) => {
+      if (String(msg.senderId) !== String(currentUserId) && !isChatOpen) {
+        toast.success(`New message: ${msg.text}`, { icon: "💬" });
+      }
+    };
+
+    socket.on("receive-message", onReceiveMessage);
+
+    return () => {
+      socket.off("connect", joinRoom);
+      socket.off("receive-message", onReceiveMessage);
+    };
+  }, [booking.bookingId, user, isChatOpen]);
 
   const handleStartJourney = async () => {
     try {
