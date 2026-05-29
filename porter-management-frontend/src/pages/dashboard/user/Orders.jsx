@@ -213,7 +213,7 @@ const BookingCard = ({ booking, activeTab, onRate, onTrack, onStartJourney, onPa
   // Payment status
   const paymentSc = getPaymentStatusConfig(booking.paymentStatus);
   const showPaymentBadge = paymentSc && (booking.paymentMethod === "digital" || booking.paymentStatus);
-  const canPayNow = isCompleted && booking.paymentStatus === "pending" && onPayNow;
+  const canPayNow = isCompleted && booking.paymentStatus === "pending" && booking.paymentMethod !== "cash" && onPayNow;
 
   return (
     <Card className="hover:shadow-md transition-shadow">

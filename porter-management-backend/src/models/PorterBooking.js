@@ -36,6 +36,11 @@ const bookingSchema = new mongoose.Schema(
       default: 5,
     },
 
+    distance: {
+      type: Number,
+      default: 0,
+    },
+
     // Team booking specific fields
     teamSize: {
       type: Number,

@@ -254,12 +254,12 @@ const AcceptedBookingDetails = () => {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-gray-500 text-xs">Distance</p>
-                  <p className="font-semibold">{booking.distance} km</p>
+                  <p className="font-semibold">{booking.distance ? `${booking.distance} km` : "—"}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-xs">Est. Time</p>
                   <p className="font-semibold flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {estTime} min
+                    <Clock className="w-3 h-3" /> {estTime > 0 ? `${estTime} min` : "—"}
                   </p>
                 </div>
               </div>
@@ -296,7 +296,7 @@ const AcceptedBookingDetails = () => {
                   </span>
                 </div>
                 <span className="text-base font-bold text-green-700">
-                  NPR {booking.fare || "TBD"}
+                  NPR {booking.fare ?? "TBD"}
                 </span>
               </div>
             </CardContent>

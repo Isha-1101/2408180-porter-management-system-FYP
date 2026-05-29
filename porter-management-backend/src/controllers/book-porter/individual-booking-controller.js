@@ -8,6 +8,7 @@ import {
   notifyUser,
   notifyMultiplePorters,
 } from "../../utils/notification-service.js";
+import { getDistanceKm } from "../../utils/helper.js";
 
 /**
  * Create individual porter booking and search nearby porters
@@ -43,6 +44,8 @@ export const createIndividualBooking = async (req, res) => {
       });
     }
 
+    const distanceKm = Number(getDistanceKm(pickup, drop).toFixed(2));
+
     const booking = await PorterBooking.create(
       [
         {
@@ -55,6 +58,7 @@ export const createIndividualBooking = async (req, res) => {
           vehicleType: hasVehicle ? vehicleType : null,
           radiusKm,
           totalPrice,
+          distance: distanceKm,
           paymentMethod: null,
           paymentStatus: "pending",
           noOfFloors: noOfFloors || null,
@@ -66,7 +70,6 @@ export const createIndividualBooking = async (req, res) => {
       ],
       { session },
     );
-
     const bookingDoc = booking[0];
 
     // Find nearby porters

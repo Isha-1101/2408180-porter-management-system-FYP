@@ -136,7 +136,7 @@ export const createBookingWithSelectedPorter = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { porterId, pickup, drop, weightKg, vehicleType, hasVehicle } =
+    const { porterId, pickup, drop, weightKg, vehicleType, hasVehicle, totalPrice } =
       req.body;
 
     const userId = req.user.id;
@@ -182,6 +182,7 @@ export const createBookingWithSelectedPorter = async (req, res) => {
             bookingTime: porter.bookingTime,
           }),
           readiusKm: 5,
+          totalPrice: totalPrice || 0,
           status:
             bookingType === "team" ? "WAITING_TEAM_LEAD" : "WAITING_PORTER",
         },
@@ -205,6 +206,8 @@ export const createBookingWithSelectedPorter = async (req, res) => {
     // Calculate distance for notification
     const { getDistanceKm } = await import("../../utils/helper.js");
     const distanceKm = Number(getDistanceKm(pickup, drop).toFixed(2));
+    bookingDoc.distance = distanceKm;
+    await bookingDoc.save({ session });
 
     await session.commitTransaction();
     session.endSession();
@@ -262,9 +265,13 @@ export const createBookingAndNotifyPorters = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { pickup, drop, weightKg, vehicleCategory } = req.body;
+    const { pickup, drop, weightKg, vehicleCategory, totalPrice } = req.body;
 
     const userId = req.user.id; // assuming auth middleware
+
+    //Calculate distance
+    const { getDistanceKm } = await import("../../utils/helper.js");
+    const distanceKm = Number(getDistanceKm(pickup, drop).toFixed(2));
 
     //Create booking
     const booking = await PorterBooking.create(
@@ -274,6 +281,8 @@ export const createBookingAndNotifyPorters = async (req, res) => {
           pickup,
           drop,
           weightKg,
+          totalPrice: totalPrice || 0,
+          distance: distanceKm,
           status: "SEARCHING",
         },
       ],

@@ -94,6 +94,7 @@ export const createTeamBooking = async (req, res) => {
           bookingTime: bookingTime || null,
           hasVehicle: hasVehicle || false,
           vehicleType: hasVehicle ? vehicleType : null,
+          distance: Number(distanceKm.toFixed(2)),
           status: "PENDING_TEAM_REVIEW",
           totalPrice: totalCost,
         },
