@@ -82,12 +82,7 @@ const LandingPage = () => {
               </Link>
               
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors text-xs font-bold text-gray-600">
-                  App Store
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors text-xs font-bold text-gray-600">
-                  Google Play
-                </button>
+                
               </div>
             </div>
           </div>
@@ -100,7 +95,7 @@ const LandingPage = () => {
                   <path id="circlePath" d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="transparent" />
                   <text className="text-[10px] font-bold tracking-widest uppercase text-gray-800">
                     <textPath href="#circlePath">
-                      • Reliable • Quick • Digital 
+                      •     Reliable     •     Quick     •      Digital 
                     </textPath>
                   </text>
                 </svg>
@@ -135,44 +130,11 @@ const LandingPage = () => {
         {/* Info Split Section (Fast & Low-Cost) */}
         <section className="mt-24 flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           <div className="flex-1 lg:max-w-md w-full relative">
-            <div className="bg-white w-full aspect-[4/5] max-w-[360px] rounded-[2.5rem] mx-auto p-2 relative shadow-sm border border-gray-100">
-               <div className="w-full h-full bg-gray-50 rounded-[2rem] overflow-hidden relative border border-gray-100">
-                 <div className="absolute inset-0 flex flex-col">
-                   <div className="flex-1 p-6 flex flex-col justify-center">
-                      <div className="text-center mb-8">
-                        <div className="w-12 h-12 bg-white rounded-full mx-auto shadow-sm flex items-center justify-center mb-4">
-                          <MapPin className="w-5 h-5 text-gray-800" />
-                        </div>
-                        <div className="text-sm font-bold text-gray-800">Tracking Active</div>
-                        <div className="text-xs text-gray-500">Live GPS Update</div>
-                      </div>
-                      
-                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative">
-                        <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-[#e0f470] rounded-full shadow-md border-2 border-white"></div>
-                        <div className="flex justify-between items-center pl-4">
-                          <div>
-                            <div className="text-xs text-gray-400 font-semibold mb-1">ETA</div>
-                            <div className="text-2xl font-bold text-gray-800">15<span className="text-sm font-medium text-gray-400 ml-1">min</span></div>
-                          </div>
-                          <div className="text-right">
-                             <div className="text-xs text-gray-400 font-semibold mb-1">Distance</div>
-                             <div className="text-sm font-bold text-gray-800">4.2 km</div>
-                          </div>
-                        </div>
-                      </div>
-                   </div>
-                   <div className="h-1/3 bg-gray-900 p-6 flex flex-col justify-end rounded-t-[2rem]">
-                      <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mb-2">
-                        <div className="w-3/4 h-full bg-[#e0f470]"></div>
-                      </div>
-                      <div className="flex justify-between text-[10px] text-white/50 font-semibold uppercase">
-                        <span>Pickup</span>
-                        <span>Dropoff</span>
-                      </div>
-                   </div>
-                 </div>
-               </div>
-            </div>
+            <img 
+              src="/images/landingpage1.png" 
+              alt="Operations Dashboard" 
+              className="w-full max-w-[360px] mx-auto object-contain shadow-sm" 
+            />
           </div>
           
           <div className="flex-1">
