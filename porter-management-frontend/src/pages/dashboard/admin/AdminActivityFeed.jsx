@@ -217,7 +217,7 @@ const AdminActivityFeed = () => {
                           </div>
                           <div className="flex items-center gap-1 text-xs text-gray-500">
                             <Clock className="h-3 w-3" />
-                            {formatTimeAgo(activity.createdAt)}
+                            {formatTimeAgo(activity.timestamp)}
                           </div>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">

@@ -192,37 +192,26 @@ const AdminDashboardOverview = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        <StatCard
-          title="Pending Registrations"
-          value={stats.porters?.pendingRegistrations || 0}
-          icon={<FileText className="h-5 w-5 text-amber-500" />}
-          description="Awaiting approval"
-          color="border-l-amber-500"
-          to="/dashboard/admin/registrations"
-        />
-        <StatCard
-          title="Cancellations Today"
-          value={stats.cancellations?.today || 0}
-          icon={<Ban className="h-5 w-5 text-red-500" />}
-          description={`Total: ${stats.cancellations?.total || 0}`}
-          color="border-l-red-500"
-          to="/dashboard/admin/cancellations"
-        />
-        <StatCard
-          title="Pending Payments"
-          value={stats.revenue?.pending || 0}
-          icon={<DollarSign className="h-5 w-5 text-orange-500" />}
-          description={`${stats.revenue?.failed || 0} failed`}
-          color="border-l-orange-500"
-          to="/dashboard/admin/payments"
-        />
-        <StatCard
-          title="Messages Today"
-          value={stats.activity?.messagesToday || 0}
-          icon={<MessageSquare className="h-5 w-5 text-cyan-500" />}
-          description="User-porter chats"
-          color="border-l-cyan-500"
-        />
+        <div className="xl:col-start-2">
+          <StatCard
+            title="Pending Registrations"
+            value={stats.porters?.pendingRegistrations || 0}
+            icon={<FileText className="h-5 w-5 text-amber-500" />}
+            description="Awaiting approval"
+            color="border-l-amber-500"
+            to="/dashboard/admin/registrations"
+          />
+        </div>
+        <div>
+          <StatCard
+            title="Cancellations Today"
+            value={stats.cancellations?.today || 0}
+            icon={<Ban className="h-5 w-5 text-red-500" />}
+            description={`Total: ${stats.cancellations?.total || 0}`}
+            color="border-l-red-500"
+            to="/dashboard/admin/cancellations"
+          />
+        </div>
       </div>
 
       <Tabs defaultValue="quick-actions" className="space-y-4">
