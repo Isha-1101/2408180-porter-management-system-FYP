@@ -225,8 +225,7 @@ export const getBookingStatusDistribution = async (req, res) => {
     ]);
 
     const vehicleTypeDistribution = await PorterBooking.aggregate([
-      { $match: { vehicleType: { $ne: null } } },
-      { $group: { _id: "$vehicleType", count: { $sum: 1 } } },
+      { $group: { _id: { $ifNull: ["$vehicleType", "no vehicle"] }, count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
 

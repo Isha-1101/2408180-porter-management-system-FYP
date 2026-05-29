@@ -317,9 +317,9 @@ export const getAllUsersDetails = async (req, res) => {
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
 
-    const query = {};
+    const query = { role: { $ne: "admin" } };
 
-    if (role) query.role = role;
+    if (role && role !== "admin") query.role = role;
     if (isBanned !== undefined) query.isBanned = isBanned === "true";
     if (isDeleted !== undefined) query.isDeleted = isDeleted === "true";
     if (searchText) {
