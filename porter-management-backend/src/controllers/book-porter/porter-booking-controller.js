@@ -107,6 +107,19 @@ export const searchNearbyPorters = async (req, res) => {
 
       { $sort: { distanceMeters: 1 } },
       { $limit: 5 },
+      {
+        $lookup: {
+          from: "porter_reviews",
+          localField: "_id",
+          foreignField: "porterId",
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          averageRating: { $ifNull: [{ $avg: "$reviews.rating" }, 0] },
+        },
+      },
     ];
 
     const porters = await Porters.aggregate(pipeline);
