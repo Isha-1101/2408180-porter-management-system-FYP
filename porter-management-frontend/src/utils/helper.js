@@ -40,6 +40,7 @@ export const traverseInPorter = (porters) => {
     data.porterType = por.porterType;
     data.distanceMeters = por.distanceMeters;
     data.maxWeightKg = por.maxWeightKg;
+    data.averageRating = por.averageRating;
     data.id = por._id;
     return data;
   });
