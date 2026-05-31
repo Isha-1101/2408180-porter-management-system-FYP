@@ -1,4 +1,4 @@
-// ── Constants ────────────────────────────────────────────────────────────────
+//Constants
 
 /** Max weight each vehicle type can carry (kg) */
 export const VEHICLE_MAX_WEIGHT = {
@@ -16,20 +16,20 @@ export const VEHICLE_PRICES = {
   truck: 300,
 };
 
-const BASE_FARE_WEIGHT = 20;   // Rs. for first 5 kg
-const BASE_FARE_DISTANCE = 30; // Rs. for first 5 km
-const EXTRA_KM_RATE = 10;      // Rs. per km beyond 5 km
-const EXTRA_KG_RATE = 2;       // Rs. per kg beyond 5 kg
-const LABOUR_COST = 100;       // Rs. base labour
-const FLOOR_RATE = 5;          // Rs. per floor
-const TRIP_RATE = 5;           // Rs. per trip
-const NO_LIFT_SURCHARGE = 50;  // Rs. added when no lift
+const BASE_FARE_WEIGHT = 20;   //Rs. for first 5 kg
+const BASE_FARE_DISTANCE = 30; //Rs. for first 5 km
+const EXTRA_KM_RATE = 10;      //Rs. per km beyond 5 km
+const EXTRA_KG_RATE = 2;       //Rs. per kg beyond 5 kg
+const LABOUR_COST = 100;       //Rs. base labour
+const FLOOR_RATE = 5;          //Rs. per floor
+const TRIP_RATE = 5;           //Rs. per trip
+const NO_LIFT_SURCHARGE = 50;  //Rs. added when no lift
 
-// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Internal fare calculation logic
- */
+
+
+//Internal fare calculation logic
+ 
 export const calculateFareInternal = (params) => {
   const {
     no_of_floor = 0,
@@ -51,7 +51,7 @@ export const calculateFareInternal = (params) => {
   let breakdown = [];
   let totalCost = 0;
 
-  // ── If vehicle booking: only vehicle charge + distance charge ────────────
+  //If vehicle booking: only vehicle charge + distance charge
   if (vehicleType && VEHICLE_PRICES[vehicleType] !== undefined) {
     // Vehicle charge (fixed)
     const vehicleCost = VEHICLE_PRICES[vehicleType];
