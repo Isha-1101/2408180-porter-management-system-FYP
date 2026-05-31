@@ -389,13 +389,24 @@ const CompletedActions = ({ booking, activeTab, onRate, onTrack }) => {
     );
   }
 
-  // Not rated yet. If we are in the Completed tab, show Rate Porter instead of Details.
-  if (activeTab === "COMPLETED") {
-    const porterId = isTeam
-      ? (booking.assignedPorters?.[0]?.porterId?._id || booking.assignedPorters?.[0]?.porterId)
-      : (booking.assignedPorterId?._id || booking.assignedPorterId);
+  // Not rated yet. Always show 'Rate Porter' button (and 'Details' button for team bookings)
+  const porterId = isTeam
+    ? (booking.assignedPorters?.[0]?.porterId?._id || booking.assignedPorters?.[0]?.porterId)
+    : (booking.assignedPorterId?._id || booking.assignedPorterId);
 
-    return (
+  return (
+    <div className="flex flex-col gap-2 items-end">
+      {isTeam && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex items-center gap-1.5 min-w-[90px]"
+          onClick={() => onTrack(booking)}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          Details
+        </Button>
+      )}
       <Button
         size="sm"
         variant="outline"
@@ -405,25 +416,8 @@ const CompletedActions = ({ booking, activeTab, onRate, onTrack }) => {
         <Star className="w-3.5 h-3.5" />
         Rate Porter
       </Button>
-    );
-  }
-
-  // Not rated yet, but NOT in Completed tab. Show Details if it's a team booking.
-  if (isTeam) {
-    return (
-      <Button
-        size="sm"
-        variant="outline"
-        className="flex items-center gap-1.5 min-w-[90px]"
-        onClick={() => onTrack(booking)}
-      >
-        <Eye className="w-3.5 h-3.5" />
-        Details
-      </Button>
-    );
-  }
-
-  return null;
+    </div>
+  );
 };
 
 // ────────────────────────────────────
